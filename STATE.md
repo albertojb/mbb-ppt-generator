@@ -66,16 +66,38 @@ The skill is at **0.1.0, fully feature-complete and committed to git.**
 | `chart-limits.md` | ✅ 3 entries |
 
 ### Examples
-| File | Status |
-|---|---|
-| `examples/minimal_example.py` | ✅ Runs end-to-end S3 → render → S4 with `passed: true`. |
+| File | Status | Notes |
+|---|---|---|
+| `examples/minimal_example.py` | ✅ | 6-slide strategy review. Full S3 → render → S4 workflow with `content.json` round-trip. `passed: true`, score 78/100. |
+| `examples/board_qbr_example.py` | ✅ | 10-slide quarterly business review. Imperative engine API (no JSON). Demonstrates dashboard, RAG, Pareto, Harvey Ball, case study, matrix_2x2. `passed: true`, score 98/100. |
+
+### Packaging (NEW)
+| File | Status | Notes |
+|---|---|---|
+| `pyproject.toml` | ✅ | Setuptools backend; Python 3.10+; deps + 4 optional extras (image, cloud, dev, all). |
+| `requirements.txt` | ✅ | Runtime deps mirror. |
+
+### Tests (NEW)
+| File | Status | Notes |
+|---|---|---|
+| `tests/conftest.py` | ✅ | sys.path bootstrap + `tmp_project_dir` / `project_root` fixtures. |
+| `tests/test_smoke.py` | ✅ | 4 tests: package imports, minimal render, .pptx zip integrity, full_cleanup XML stripping. |
+| `tests/test_layouts.py` | ✅ | 5 tests: structure / data / chart families, storyline build, retired-layout presence. |
+| `tests/test_gates.py` | ✅ | 6 tests: S3 gate passes valid + catches short title / missing source / donut over-count; S4 gate passes clean + handles missing file. |
+| **Test count** | **15** | All passing (verified manually since pytest isn't installed in the dev sandbox; users run `pytest` once installed). |
 
 ### Git status
-- Repo initialized on `main` branch.
-- One commit: `98ccffb` — "Initial commit — MBB PPT Generator 0.1.0".
-- Tag: `v0.1.0` annotated.
-- 43 files tracked, ~4,200+ lines of layout reference + ~200KB engine source.
-- Pre-publish: needs a remote (`git remote add origin ...`) and `git push -u origin main --tags`.
+- Repo on `main` branch.
+- Three commits:
+  - `98ccffb` (tag: `v0.1.0`) — Initial commit (engine + framework + layouts + storyline + first example)
+  - `f57e091` — STATE.md post-commit update
+  - `dc9312d` — Packaging + 15 tests + board QBR example + README polish
+- Tag `v0.1.0` still points at the initial commit. The packaging commit (`dc9312d`) is post-tag and could be:
+  - Rolled into v0.1.0 by force-moving the tag (`git tag -f v0.1.0 dc9312d`) — cleanest if not yet pushed
+  - Tagged `v0.1.1` — semantically correct (fixes/polish, not new features)
+  - Left untagged until the user decides
+- 51 files tracked, ~4,200 lines of layout reference + ~200KB engine source + 15 tests.
+- Pre-publish: needs `git remote add origin <url>` and `git push -u origin main --tags`.
 
 ---
 
@@ -97,9 +119,11 @@ The skill is at **0.1.0, fully feature-complete and committed to git.**
 |---|---|---|
 | `git remote add origin` + `git push -u origin main --tags` | Medium | Needs albertojb's GitHub repo URL. Cannot do without credentials. |
 | Skill marketplace submission | Medium | Specs vary by marketplace — depends which ones albertojb targets. |
-| Replace residual `review.py` regex with English-aware equivalents | Low | Currently no-op for English text. Functional gap is small. |
-| Add `pyproject.toml` for `pip install -e .` style installation | Low | Useful if albertojb wants to package as a pip-installable library. |
-| Build a 2nd richer example (e.g. board-deck variant of the storyline) | Low | One example covers the basics; a second adds variety. |
+| Tag the packaging commit (move v0.1.0 forward, or tag v0.1.1) | Low | Decision to make at push time. |
+| Replace residual `review.py` regex with English-aware equivalents | Low | 14 CJK chars in regex patterns; functional auto-fix gap (currently no-op for English text). |
+| Add a `currency_symbol` parameter to `stacked_area` | Low | Currently hardcoded `$`. Backlog. |
+| Wire up CI (GitHub Actions running `pytest` on push) | Low | Standard practice for public Python projects. |
+| Set up GitHub Pages for the docs / layout reference | Low | Could host the `references/` tree as browsable HTML. |
 
 ---
 
