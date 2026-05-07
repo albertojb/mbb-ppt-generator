@@ -3,6 +3,9 @@
 > Executive-grade PowerPoint generation with consulting-style discipline. Self-contained skill for AI agents (Claude Code, WorkBuddy, ClawHub) that follows the five-stage workflow: brief → outline → content → render+QA → deliver. Two machine-readable gates make pass/fail a program decision, not a model decision.
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Python: 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue)](pyproject.toml)
+[![Tests: 15 passing](https://img.shields.io/badge/Tests-15%20passing-brightgreen)](tests/)
+[![Status: 0.1.0](https://img.shields.io/badge/Status-0.1.0-blue)](CHANGELOG.md)
 
 ## What this is
 
@@ -18,26 +21,44 @@ This skill is a derivative work of [`Mck-ppt-design-skill`](https://github.com/l
 
 See [`NOTICE`](NOTICE) for the full attribution chain and a list of modifications introduced by this fork.
 
-## Install
-
-This skill ships as a single self-contained folder. No external skill installation required.
+## 30-second quickstart
 
 ```bash
-# Clone or download the repo
-git clone https://github.com/<your-org>/mbb-ppt-generator ~/.workbuddy/skills/mbb-ppt-generator
-
-# Install runtime dependencies (small surface)
-pip install python-pptx lxml pyyaml
+git clone https://github.com/<your-org>/mbb-ppt-generator
+cd mbb-ppt-generator
+pip install -e .
+python examples/minimal_example.py
+# → ppt-project-demo/deck.pptx, gate_render.json (passed: true)
 ```
 
-Optional dependencies (only needed if you enable specific features):
+Open `ppt-project-demo/deck.pptx` in PowerPoint. That's the full workflow: a brief → content.json → S3 content gate → render → S4 render gate → delivered deck.
+
+## Install
+
+This skill ships as a single self-contained folder with a `pyproject.toml` for standard Python install. Three install profiles depending on which optional features you want:
 
 ```bash
-# Local image processing (cover_image with rembg cutout)
-pip install pillow numpy rembg
+# Core install (just python-pptx, lxml, pyyaml — sufficient for 95% of decks)
+pip install -e .
 
-# Cloud cover-image generation (Tencent Hunyuan — OFF by default)
-pip install tencentcloud-sdk-python
+# Core + dev tooling (pytest)
+pip install -e ".[dev]"
+
+# Core + local image processing (rembg cutout for real cover images)
+pip install -e ".[image]"
+
+# Core + Tencent Hunyuan cloud cover-image API (OFF by default; enable only when
+# your confidentiality context allows transmitting slide titles to a third party)
+pip install -e ".[cloud]"
+
+# Everything
+pip install -e ".[all]"
+```
+
+After install, run the test suite to confirm setup:
+
+```bash
+pytest                # 15 tests, ~5 seconds
 ```
 
 ## Quick start
@@ -144,14 +165,37 @@ When a pattern-level fix is applied during a run, append a numbered `Experience 
 
 If the rule is mechanizable, also propose a check to add to one of the gate scripts. The skill gets stronger over time — a missed defect today should be a blocked defect tomorrow.
 
+## Examples
+
+Three runnable examples ship with the skill, all passing both gates end-to-end:
+
+| Example | What it shows | Run |
+|---|---|---|
+| `examples/minimal_example.py` | Full S1→S5 workflow on a 6-slide strategy review. Writes `content.json`, runs both gates as subprocesses, renders the deck, prints the verdict. **Best for**: learning the harness workflow. | `python examples/minimal_example.py` |
+| `examples/board_qbr_example.py` | 10-slide quarterly business review. Imperative engine calls (no JSON round-trip). Demonstrates dashboard, RAG status, Pareto, Harvey Ball evaluation, and case study layouts. **Best for**: operating-cadence decks. | `python examples/board_qbr_example.py` |
+| `mck_ppt/storylines/ai_enterprise.py` | 12-slide strategy-review storyline using `DeckBuilder.build()`. Covers cover, TOC, executive_summary, big_number, grouped_bar, table_insight, side_by_side, donut, timeline, key_takeaway, action_items, closing. **Best for**: starting from a complete template. | `python -c "from mck_ppt.deck_builder import DeckBuilder; from mck_ppt.storylines import ai_enterprise; DeckBuilder.build(ai_enterprise.STORYLINE, 'output.pptx')"` |
+
+## Tests
+
+```bash
+pytest                              # all 15 tests
+pytest tests/test_smoke.py          # just the import + render smoke checks
+pytest tests/test_gates.py          # gate-script behavior
+pytest tests/test_layouts.py        # layout family coverage
+pytest -k storyline                 # only the 12-slide storyline build
+```
+
+Coverage spans engine import, .pptx zip integrity, the `full_cleanup()` XML sanitizer, all five layout families (structure, data, narrative, charts, frameworks), the bundled storyline, and both gate scripts (with assertions that the gates correctly catch short titles, missing sources, and donut over-counts).
+
 ## Status
 
-- ✅ Engine bundled and self-contained — no external skill installation needed.
+- ✅ **0.1.0**: feature-complete and tagged. Engine bundled and self-contained; no external skill installation needed.
 - ✅ DM Sans heading typography wired through.
 - ✅ Both gate scripts in English with self-locating `mck_ppt` import.
 - ✅ Experience corpus (overflow, layout-pitfalls, chart-limits) seeded.
-- 🚧 `references/framework/` and `references/layouts/` reference files in progress — the routing table in SKILL.md will start fulfilling its promise as those files land.
-- 🚧 Public release on GitHub + skill marketplaces — pending.
+- ✅ All 12 per-layout reference files complete (~4,200 lines covering 67 layouts).
+- ✅ All 15 tests passing.
+- ✅ `pyproject.toml` for standard Python install.
 
 ## License
 
