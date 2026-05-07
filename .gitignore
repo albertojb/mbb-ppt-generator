@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.coverage
+.tox/
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Project artifacts (do NOT commit working PPT projects to the public repo)
+ppt-project-*/
+output/
+*.pptx
+!examples/**/*.pptx
+
+# Gate output (generated per project, not source)
+gate_content.json
+gate_render.json
+
+# Upstream source archives — kept locally as reference, NOT in public repo
+_likaku_*/
+*.zip
+
+# Original project bootstrap files — local-only
+mbb-ppt-skill-review-prompt.md
+constants_update.py
+
+# Temporary
+*.tmp
+.tmp/
+
+# OS
+Thumbs.db
+desktop.ini

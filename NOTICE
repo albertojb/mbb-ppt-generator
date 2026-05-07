@@ -1,0 +1,76 @@
+MBB PPT Generator
+Copyright 2026 albertojb (adapter)
+
+This product is a derivative work of:
+
+    Mck-ppt-design-skill
+    Copyright 2024-2026 Kaku Li (https://github.com/likaku)
+    https://github.com/likaku/Mck-ppt-design-skill
+    Licensed under the Apache License, Version 2.0
+
+The original work by Kaku Li provides the engine package (`mck_ppt/`),
+including the layout methods, file-integrity / anti-corruption logic,
+BLOCK_ARC chart implementations, the QA module, and the gate-script
+architecture pattern. The five-stage workflow and self-refinement
+protocol concepts are also adapted from Kaku Li's separate skill,
+"harness-skill-upgrader" (https://github.com/likaku/harness-skill-upgrader),
+also licensed under the Apache License, Version 2.0.
+
+Modifications introduced by this derivative work include:
+
+  - English-language documentation (CJK guidance removed).
+  - Heading typography changed from Georgia (transitional serif) to
+    DM Sans (modern neutral sans-serif), with Calibri fallback.
+  - Engine documented under the alias "ExecEngine" (the underlying
+    module name `mck_ppt` and class `MckEngine` are retained for
+    code-level Apache 2.0 compatibility).
+  - Color palette additions: HEADING_ACCENT, SECTION_BG, and an
+    optional warm palette (WARM_NAVY, WARM_GOLD, WARM_STONE).
+  - Production guard rails 11-18 added to the original 1-10 set.
+  - Layout capacity matrix (`references/layout-matrix.yaml`) extended
+    with explicit char_budget and tuple_arity for the S3 content gate.
+  - Gate scripts translated to English and made self-locating
+    relative to the skill root (no hardcoded install path).
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+========================================================================
+
+NOTICE: This file is required by Section 4(d) of the Apache License 2.0.
+Any redistribution of this software — in source or binary form, modified
+or unmodified — MUST include this NOTICE file in its entirety, AND must
+preserve the upstream copyright notice from Kaku Li shown above.
+
+========================================================================
+
+Third-party components:
+
+  - python-pptx (MIT License) — https://github.com/scanny/python-pptx
+  - lxml (BSD License) — https://lxml.de/
+  - PyYAML (MIT License) — https://pyyaml.org/
+
+Optional components (loaded only when explicitly enabled):
+
+  - Pillow (HPND License) — https://python-pillow.org/
+  - rembg (MIT License) — https://github.com/danielgatis/rembg
+  - tencentcloud-sdk-python (Apache 2.0) — used by the optional cloud
+    cover-image feature in `mck_ppt/cover_image.py`. This integration is
+    OFF by default per the skill's security posture; enable only when
+    your confidentiality context allows transmitting prompts to a cloud
+    image-generation service.
+
+All trademarks referenced herein are the property of their respective
+owners and are used solely for identification purposes. The naming
+convention "MBB-style" describes a category of executive consulting
+presentation design and is not affiliated with or endorsed by McKinsey,
+BCG, Bain, or any consulting firm.

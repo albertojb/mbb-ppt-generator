@@ -1,0 +1,412 @@
+# Layout Capacity Matrix — MBB PPT Generator
+#
+# Single source of truth for layout capacity limits and field char_budgets.
+# The S3 content gate (gate_check_content.py) reads this file to enforce limits.
+# AI must not guess capacity boundaries — query this matrix.
+#
+# Adapted from Likaku's Mck-ppt-design-skill v2.3.3 references/layout-matrix.yaml.
+# Apache 2.0.
+
+default_theme: mbb
+
+themes:
+  mbb:
+    style: "MBB-style executive deck"
+    engine: ExecEngine                 # alias of MckEngine
+    color_profile: navy_blue
+    heading_font: "DM Sans"            # falls back to Calibri
+    body_font: "Arial"
+
+# ────────────────────────────────────────────────────────────────
+# Per-layout capacity. Fields:
+#   max_items / max_steps / max_segments  — hard count limits
+#   title_chars                           — action title cap (also Rule 14 = 120 global cap)
+#   char_budget                           — per-field limit, used by S3 gate
+#   tuple_arity                           — required arity for items/steps/quadrants
+#   special                               — layout-specific constraints
+#   status                                — "active" or "retired"
+# ────────────────────────────────────────────────────────────────
+
+layouts:
+
+  # ── Structure ───────────────────────────────────────────────
+  cover:
+    pattern: 1
+    title_chars: 40
+    char_budget:
+      subtitle: 60
+      author: 30
+      date: 30
+    notes: "Title supports \\n; height auto-computed from line count."
+
+  toc:
+    pattern: 6
+    max_items: 6
+    title_chars: 15
+    tuple_arity: 3                       # (num, item_title, desc)
+    char_budget:
+      item_title: 20
+      desc: 40
+
+  section_divider:
+    pattern: 5
+    title_chars: 40
+    char_budget:
+      subtitle: 80
+
+  closing:
+    pattern: 36
+    title_chars: 30
+    char_budget:
+      message: 60
+
+  appendix_title:
+    pattern: 5b
+    title_chars: 40
+
+  # ── Data ────────────────────────────────────────────────────
+  big_number:
+    pattern: 8
+    max_items: 4                         # bullets
+    title_chars: 40
+    char_budget:
+      number: 10
+      description: 60
+      bullet: 40
+
+  two_stat:
+    pattern: 9
+    max_items: 2
+    title_chars: 40
+    char_budget:
+      number: 10
+      label: 20
+
+  three_stat:
+    pattern: 10
+    max_items: 3
+    title_chars: 40
+    char_budget:
+      number: 10
+      label: 20
+
+  data_table:
+    pattern: 11
+    max_rows: 8
+    title_chars: 40
+    char_budget:
+      header: 15
+      cell: 40
+
+  metric_cards:
+    pattern: 12
+    max_items: 4
+    title_chars: 40
+    char_budget:
+      card_title: 20
+      desc: 80
+
+  table_insight:
+    pattern: 71
+    max_rows: 6
+    title_chars: 40
+    char_budget:
+      header: 15
+      cell: 40
+      insight: 60
+
+  # ── Frameworks ──────────────────────────────────────────────
+  matrix_2x2:
+    pattern: 13
+    max_quadrants: 4                     # exactly 4
+    title_chars: 40
+    tuple_arity: 3                       # (label, bg_color, desc)
+    char_budget:
+      quadrant_label: 15
+      desc: 80
+
+  process_chevron:
+    pattern: 16
+    max_steps: 5
+    title_chars: 40
+    tuple_arity: 3                       # (label, step_title, desc)
+    char_budget:
+      step_label: 10
+      step_title: 20
+      desc: 50
+    special:
+      step_label_no_newline: true        # \n in label overflows the oval
+      reason: "> 5 steps shrinks chevrons below readable width."
+
+  swot:
+    pattern: 65
+    max_items: 16                        # 4 quadrants × 4 points
+    title_chars: 40
+    char_budget:
+      point: 50
+
+  # ── Comparison ──────────────────────────────────────────────
+  side_by_side:
+    pattern: 19
+    max_items: 12                        # 2 columns × 6 bullets
+    title_chars: 40
+    char_budget:
+      option_title: 20
+      bullet: 50
+
+  before_after:
+    pattern: 20
+    max_items: 10                        # 2 sides × 5 bullets
+    title_chars: 40
+    char_budget:
+      side_title: 20
+      bullet: 50
+
+  pros_cons:
+    pattern: 21
+    max_items: 10                        # 2 columns × 5 bullets
+    title_chars: 40
+    char_budget:
+      bullet: 50
+
+  rag_status:
+    pattern: 22
+    max_rows: 8
+    title_chars: 40
+    char_budget:
+      label: 25
+      note: 60
+
+  # ── Narrative ───────────────────────────────────────────────
+  executive_summary:
+    pattern: 23
+    max_items: 4
+    title_chars: 40
+    tuple_arity: 3                       # (num, item_title, desc)
+    char_budget:
+      headline: 60
+      item_title: 25
+      desc: 80
+
+  key_takeaway:
+    pattern: 24
+    max_items: 3                         # 3 takeaways
+    title_chars: 40
+    char_budget:
+      left_text_each: 80
+      takeaway: 60
+
+  four_column:
+    pattern: 27
+    max_items: 4                         # exactly or fewer; > 4 overflows
+    title_chars: 40
+    tuple_arity: 3                       # (num, col_title, desc)
+    char_budget:
+      col_title: 20
+      desc: 120
+
+  two_column_text:
+    pattern: 26
+    max_items: 10                        # 2 × 5 bullets
+    title_chars: 40
+    char_budget:
+      bullet: 60
+    global_max_per_deck: 1               # at most one slide of this type per deck
+
+  # ── Process / timeline ──────────────────────────────────────
+  timeline:
+    pattern: 28
+    max_milestones: 6
+    title_chars: 40
+    tuple_arity: 2                       # (label, desc)
+    char_budget:
+      milestone_label: 8
+      desc: 40
+    special:
+      last_milestone_label_max: 6        # engine pins last label right; > 6 chars overflows
+      reason: "Timeline engine right-aligns the last label; > 6 chars goes off canvas."
+
+  vertical_steps:
+    pattern: 29
+    max_steps: 5
+    title_chars: 40
+    char_budget:
+      step_title: 25
+      desc: 80
+
+  value_chain:
+    pattern: 67
+    max_stages: 5
+    title_chars: 40
+    char_budget:
+      stage_title: 15
+      desc: 60
+
+  # ── Team / cases ────────────────────────────────────────────
+  meet_the_team:
+    pattern: 32
+    max_members: 4
+    title_chars: 40
+    char_budget:
+      name: 20
+      role: 25
+      bio: 100
+
+  case_study:
+    pattern: 33
+    max_sections: 3
+    title_chars: 40
+    char_budget:
+      section_title: 15
+      desc: 120
+
+  action_items:
+    pattern: 34
+    max_items: 4
+    title_chars: 40
+    char_budget:
+      action_title: 25
+      timeline: 15
+      owner: 15
+      desc: 80
+
+  # ── Charts ──────────────────────────────────────────────────
+  donut:
+    pattern: 48
+    max_segments: 6
+    title_chars: 30
+    char_budget:
+      segment_label: 15
+    special:
+      excess_strategy: "merge to top-5 + 'Other'"
+
+  grouped_bar:
+    pattern: 37
+    max_categories: 6
+    max_series: 3
+    title_chars: 30
+    char_budget:
+      category: 8
+      series_label: 15
+
+  stacked_bar:
+    pattern: 38
+    max_categories: 6
+    max_series: 5
+    title_chars: 30
+    char_budget:
+      category: 8
+      series_label: 15
+
+  horizontal_bar:
+    pattern: 39
+    max_items: 8
+    title_chars: 30
+    char_budget:
+      item_label: 20
+
+  line_chart:
+    pattern: 50
+    max_series: 4
+    max_x_points: 12
+    title_chars: 30
+
+  waterfall:
+    pattern: 49
+    max_items: 8
+    title_chars: 30
+
+  pareto:
+    pattern: 51
+    max_items: 8
+    title_chars: 30
+
+  stacked_area:
+    pattern: 70
+    max_series: 5
+    title_chars: 30
+
+  bubble:
+    pattern: 53
+    max_bubbles: 10
+    title_chars: 30
+
+  risk_matrix:
+    pattern: 54
+    max_risks: 12
+    title_chars: 40
+
+  multi_bar_panel:
+    pattern: 72
+    max_panels: 3
+    title_chars: 40
+
+  # ── Visual / dashboards ─────────────────────────────────────
+  icon_grid:
+    pattern: 63
+    max_items: 9                         # 3×3 max, also supports 4×2 = 8
+    title_chars: 40
+    char_budget:
+      icon_label: 15
+      desc: 50
+
+  checklist:
+    pattern: 61
+    max_rows: 7
+    title_chars: 40
+    char_budget:
+      cell: 30
+
+  dashboard_kpi_chart:
+    pattern: 57
+    title_chars: 40
+
+  dashboard_table_chart:
+    pattern: 58
+    title_chars: 40
+
+  stakeholder_map:
+    pattern: 59
+    max_stakeholders: 12
+    title_chars: 40
+
+  decision_tree:
+    pattern: 60
+    max_branches: 6
+    title_chars: 40
+
+  scorecard:
+    pattern: 23b
+    max_items: 6
+    title_chars: 40
+
+  # ── Retired ─────────────────────────────────────────────────
+  venn:
+    pattern: 17
+    status: retired
+    replacement: side_by_side
+    reason: "Visual ambiguity at small sizes."
+
+  cycle:
+    pattern: 31
+    status: retired
+    replacement: process_chevron
+    reason: "Better expressed as process_chevron + return arrow."
+
+  funnel:
+    pattern: 32
+    status: retired
+    replacement: horizontal_bar
+    reason: "Superseded by horizontal_bar with descending values."
+
+  pie:
+    pattern: 64
+    status: retired
+    replacement: donut
+    reason: "donut with center label is strictly better."
+
+  gauge:
+    pattern: 55
+    status: retired
+    replacement: big_number
+    reason: "Superseded by big_number + KPI bullet."
