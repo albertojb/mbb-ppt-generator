@@ -15,7 +15,8 @@ Albertojb is building **MBB PPT Generator**, an Apache 2.0-licensed adaptation o
 - Two machine-readable gates: S3 content gate, S4 render gate. `passed` is a Python boolean derived from program logic — never a verbal claim.
 - Self-Refinement loop with append-only `experiences/` directory.
 - **Self-contained** — albertojb's team installs only this folder; no dependency on Likaku's separate skill installation.
-- **Goal:** publish on GitHub and skill marketplaces. **0.1.0 is tagged and ready to push.**
+- **Status:** **published as 0.1.0** at https://github.com/albertojb/mbb-ppt-generator (public, Apache 2.0, topics + description set). Skill marketplace submissions still pending.
+- **For session continuity, read [`BACKLOG.md`](BACKLOG.md) first** — it has the comprehensive roadmap, six tiers of remaining gaps, "first 5 minutes" verification, and the suggested opening prompt for a fresh chat.
 
 ---
 
@@ -97,7 +98,7 @@ The skill is at **0.1.0, fully feature-complete and committed to git.**
   - Tagged `v0.1.1` — semantically correct (fixes/polish, not new features)
   - Left untagged until the user decides
 - 51 files tracked, ~4,200 lines of layout reference + ~200KB engine source + 15 tests.
-- Pre-publish: needs `git remote add origin <url>` and `git push -u origin main --tags`.
+- ✅ **Published.** Remote `origin` set to https://github.com/albertojb/mbb-ppt-generator. `main` and `v0.1.0` tag pushed. Latest commit `5aa46b1` adds `BACKLOG.md`.
 
 ---
 
@@ -113,17 +114,19 @@ The skill is at **0.1.0, fully feature-complete and committed to git.**
 
 ---
 
-## 4. What's left (all low priority — non-blocking for publish)
+## 4. What's left
 
-| Item | Priority | Notes |
-|---|---|---|
-| `git remote add origin` + `git push -u origin main --tags` | Medium | Needs albertojb's GitHub repo URL. Cannot do without credentials. |
-| Skill marketplace submission | Medium | Specs vary by marketplace — depends which ones albertojb targets. |
-| Tag the packaging commit (move v0.1.0 forward, or tag v0.1.1) | Low | Decision to make at push time. |
-| Replace residual `review.py` regex with English-aware equivalents | Low | 14 CJK chars in regex patterns; functional auto-fix gap (currently no-op for English text). |
-| Add a `currency_symbol` parameter to `stacked_area` | Low | Currently hardcoded `$`. Backlog. |
-| Wire up CI (GitHub Actions running `pytest` on push) | Low | Standard practice for public Python projects. |
-| Set up GitHub Pages for the docs / layout reference | Low | Could host the `references/` tree as browsable HTML. |
+**See [`BACKLOG.md`](BACKLOG.md) for the comprehensive roadmap.** It enumerates six tiers of gaps with file references, effort estimates, and a recommended sequencing.
+
+Quick summary:
+- **Tier 1 — Engine correctness (~3 hrs)**: 8 real defects including hardcoded headers in `key_takeaway`/`scorecard`/`stacked_area`, no-op auto-fix for English text, and an XML noise issue from `set_ea_font`. **Fix these before any marketplace submission.**
+- **Tier 2 — Test depth (~3.5 hrs)**: Unit tests for QA module, guard-rail-specific assertions, error-path tests, smoke tests for layouts not yet exercised.
+- **Tier 3 — Docs polish (~5 hrs)**: Screenshots in README, "why this skill" comparison, AI agent integration guide, FAQ, architecture diagram, CONTRIBUTING/CODE_OF_CONDUCT/SECURITY.
+- **Tier 4 — Process (~2 hrs)**: GitHub Actions CI, ruff/pre-commit, build artifact verification, Dependabot.
+- **Tier 5 — Marketplace publishing (1–4 hrs)**: PyPI, Claude Code skill marketplace, ClawHub, WorkBuddy. Each needs different research + manifest. Blocked on albertojb deciding which targets.
+- **Tier 6 — Strategic positioning (~2 hrs)**: One-page "what is this, who for, what's different" doc; long-term roadmap; contribution policy. Blocked on strategic-question input.
+
+Recommended highest-leverage push: Tier 1 + Tier 3 partial (screenshots + diagram) + Tier 4 partial (CI) ≈ 4–5 hours → 0.1.1.
 
 ---
 
