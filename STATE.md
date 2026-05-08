@@ -1,6 +1,6 @@
 # MBB PPT Generator — Project State
 
-> **Pause point: 2026-05-07 (v0.2.0 rebrand).** When albertojb says "resume the MBB PPT skill" (or anything similar), read this file first. Resume instructions are in § 6 below.
+> **Pause point: 2026-05-08 (v0.2.2 — rebrand complete + visual variety mechanism + CI).** When albertojb says "resume the MBB PPT skill" (or anything similar), read this file first. Resume instructions are in § 6 below.
 
 ---
 
@@ -17,13 +17,32 @@ Albertojb is building **MBB PPT Generator**, an Apache 2.0-licensed adaptation o
 - Two machine-readable gates: S3 content gate, S4 render gate. `passed` is a Python boolean derived from program logic — never a verbal claim.
 - Self-Refinement loop with append-only `experiences/` directory.
 - **Self-contained** — pip-installed (`pip install -e ~/.claude/skills/mbb-ppt-generator`); no dependency on Likaku's separate skill installation.
-- **Status:** **0.2.0 in progress (rebrand + Cowork UX).** Published at https://github.com/albertojb/mbb-ppt-generator (public, Apache 2.0, topics + description set).
+- **Status:** **0.2.2 published.** Published at https://github.com/albertojb/mbb-ppt-generator (public, Apache 2.0, topics + description set). GitHub Actions CI green on Python 3.10–3.13.
 
 ---
 
 ## 2. Current status — what's done
 
-### v0.2.0 — rebrand + Cowork-first UX (this round)
+### v0.2.2 — engine correctness + CI + visual-variety reference (latest)
+
+| Change | Status |
+|---|---|
+| `key_takeaway` `left_title` / `right_title` parameters (Tier 1.1) | ✅ |
+| `scorecard` `headers` parameter (Tier 1.2) | ✅ |
+| `stacked_area` `currency_symbol` + `summary_label` parameters (Tier 1.3) | ✅ |
+| `examples/pitch_deck_example.py` — 10-slide reference, 5 visual layouts, 94/100 | ✅ |
+| GitHub Actions CI: pytest matrix (3.10–3.13) + render all examples + brand-leakage scan + Apache 2.0 chain check | ✅ |
+
+### v0.2.1 — visual variety mechanism
+
+| Change | Status |
+|---|---|
+| Visual-density gate in `gate_check_content.py` — ≥ 6 content slides require ≥ 2 chart/diagram/image/process layouts | ✅ |
+| Content-pattern → layout-family rule in SKILL.md § S2 | ✅ |
+| `planning-guide.md` promoted from optional to required at S2 | ✅ |
+| 3 new tests in `tests/test_gates.py` for the density gate | ✅ |
+
+### v0.2.0 — rebrand + Cowork-first UX
 
 | Change | Status |
 |---|---|
