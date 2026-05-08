@@ -15,8 +15,10 @@ The MBB PPT Generator can't be installed from inside this session — Cowork san
 To install, use ONE of these two methods:
 
 **Option 1 — GUI (no terminal needed):**
-1. Download https://github.com/albertojb/mbb-ppt-generator/raw/main/mbb-ppt-generator.skill
-2. Open Cowork → Settings → Skills → Add skill → drag-and-drop or select the downloaded zip
+1. Download THIS EXACT FILE — right-click → Save Link As if needed:
+   https://github.com/albertojb/mbb-ppt-generator/raw/main/mbb-ppt-generator.skill
+   Do NOT use GitHub's "Code → Download ZIP" button (wrong file).
+2. Open Cowork → Settings → Skills → Add skill → drag-and-drop the .skill file
 3. Quit Cowork completely and relaunch
 
 **Option 2 — Terminal (one command, ~30 seconds):**

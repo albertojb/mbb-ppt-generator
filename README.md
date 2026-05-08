@@ -14,8 +14,10 @@ Installation is a **one-time setup**. After that, using the skill is entirely ze
 
 ### Option 1 — GUI (no terminal needed)
 
-1. Download **[mbb-ppt-generator.skill](https://github.com/albertojb/mbb-ppt-generator/raw/main/mbb-ppt-generator.skill)** ← use this link, not the full repo archive
-2. Open Cowork → Settings → Skills → **Add skill** → drag-and-drop or select the downloaded zip
+> ⚠️ **Do NOT click the green "Code → Download ZIP" button on GitHub.** That gives you the full repo archive (`mbb-ppt-generator-main.zip`), which Cowork will reject with *"SKILL.md file must be in the top-level folder."* You need the specific **`.skill`** file linked below.
+
+1. **Download this exact file:** **[mbb-ppt-generator.skill](https://github.com/albertojb/mbb-ppt-generator/raw/main/mbb-ppt-generator.skill)** (right-click → Save Link As… if your browser tries to open it)
+2. Open Cowork → Settings → Skills → **Add skill** (the `+` button) → drag-and-drop the `mbb-ppt-generator.skill` file
 3. Quit Cowork completely and relaunch
 
 The **MBB PPT Generator** skill will appear in your right-sidebar Skills list.
