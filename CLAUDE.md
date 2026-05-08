@@ -1,39 +1,41 @@
 # Agent install instructions for MBB PPT Generator
 
-> **You are reading this because a user asked you to install this skill from `https://github.com/albertojb/mbb-ppt-generator`.** Follow these steps verbatim. Do not improvise.
+> **You are reading this because a user asked you to install this skill from `https://github.com/albertojb/mbb-ppt-generator`.**
 
-## TL;DR — the only command that matters
+## STOP — DO NOT attempt to install this from within a Cowork session.
 
+Cowork sessions cannot write to the skills directory — file writes are sandbox-blocked regardless of Unix permissions. Attempting to run `install.py` or copy files from within this session **will run for 30–40 minutes consuming tokens and then fail**. This is a known platform limitation.
+
+**Tell the user EXACTLY this message, word for word. Do not add preamble, do not explore the repo first, do not attempt any installs:**
+
+---
+
+The MBB PPT Generator can't be installed from inside this session — Cowork sandboxes file writes for security.
+
+To install, use ONE of these two methods:
+
+**Option 1 — GUI (no terminal needed):**
+1. Download https://github.com/albertojb/mbb-ppt-generator/archive/refs/heads/main.zip
+2. Open Cowork → Settings → Skills → Add skill → point to the downloaded zip
+3. Quit Cowork completely and relaunch
+
+**Option 2 — Terminal (one command, ~30 seconds):**
+
+Mac / Linux:
 ```
-python3 -c "import urllib.request,subprocess,sys,tempfile,os; \
-  d=tempfile.mkdtemp(); p=os.path.join(d,'install.py'); \
-  urllib.request.urlretrieve('https://raw.githubusercontent.com/albertojb/mbb-ppt-generator/main/install.py', p); \
-  sys.exit(subprocess.call([sys.executable, p]))"
+python3 -c "import urllib.request,subprocess,sys,tempfile,os; d=tempfile.mkdtemp(); p=os.path.join(d,'install.py'); urllib.request.urlretrieve('https://raw.githubusercontent.com/albertojb/mbb-ppt-generator/main/install.py', p); sys.exit(subprocess.call([sys.executable, p]))"
 ```
 
-That's it. One line. Runs on Mac, Windows, and Linux. Takes ~2 seconds. Downloads `install.py`, runs it, exits with the script's exit code.
-
-If you can't run that one-liner for any reason, fall back to two steps:
-
-```bash
-curl -sSL -o /tmp/mbb_install.py https://raw.githubusercontent.com/albertojb/mbb-ppt-generator/main/install.py
-python3 /tmp/mbb_install.py
+Windows PowerShell:
+```
+python -c "import urllib.request,subprocess,sys,tempfile,os; d=tempfile.mkdtemp(); p=os.path.join(d,'install.py'); urllib.request.urlretrieve('https://raw.githubusercontent.com/albertojb/mbb-ppt-generator/main/install.py', p); sys.exit(subprocess.call([sys.executable, p]))"
 ```
 
-(On Windows, use `Invoke-WebRequest -Uri <url> -OutFile $env:TEMP\mbb_install.py; python $env:TEMP\mbb_install.py`.)
+After either option: quit Cowork completely (Cmd+Q on Mac, File → Exit on Windows) and relaunch. The MBB PPT Generator skill will appear in your Skills sidebar.
 
-## After the script exits
+---
 
-Tell the user, verbatim:
-
-> ✓ MBB PPT Generator is installed.
->
-> Quit Claude Cowork **completely** and relaunch:
-> - **Mac**: Claude menu → Quit Claude (or Cmd+Q)
-> - **Windows**: File → Exit (or close all windows)
-> - **Linux**: `pkill -f Claude`
->
-> After Cowork restarts, the **MBB PPT Generator** skill will be in your right-sidebar Skills list. Then say "*Use the MBB PPT skill to make a deck about [topic]*" in any session.
+After delivering that message, **stop**. Do not git clone. Do not pip install. Do not write any files. Your job is done.
 
 ## What you must NOT do
 

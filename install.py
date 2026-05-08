@@ -252,7 +252,46 @@ def install_python_deps() -> None:
 
 # ── Main ────────────────────────────────────────────────────────────────
 
+_ONELINER_MAC_LINUX = (
+    'python3 -c "import urllib.request,subprocess,sys,tempfile,os; '
+    "d=tempfile.mkdtemp(); p=os.path.join(d,'install.py'); "
+    "urllib.request.urlretrieve('https://raw.githubusercontent.com/albertojb/"
+    "mbb-ppt-generator/main/install.py', p); "
+    'sys.exit(subprocess.call([sys.executable, p]))"'
+)
+_ONELINER_WINDOWS = _ONELINER_MAC_LINUX.replace("python3", "python", 1)
+
+
+def _detect_cowork_sandbox() -> bool:
+    """Return True if running inside a Cowork agent session (sandboxed)."""
+    cwd = str(Path.cwd())
+    if "local-agent-mode-sessions" in cwd:
+        return True
+    for key in ("COWORK_SESSION_ID", "CLAUDE_AGENT_SESSION",
+                "LOCAL_AGENT_MODE", "CLAUDE_SESSION_ID"):
+        if os.environ.get(key):
+            return True
+    return False
+
+
 def main() -> int:
+    # Detect Cowork sandbox before touching any files — writes to the skills
+    # dir are blocked at the namespace level regardless of Unix permissions.
+    if _detect_cowork_sandbox():
+        print(
+            "ERROR: install.py is running inside a Cowork agent session (sandboxed).\n\n"
+            "Cowork sandboxes file writes — this script cannot reach the skills\n"
+            "directory from here. Use one of these instead:\n\n"
+            "  Option 1 — GUI (no terminal needed):\n"
+            "    1. Download https://github.com/albertojb/mbb-ppt-generator"
+            "/archive/refs/heads/main.zip\n"
+            "    2. Cowork → Settings → Skills → Add skill → point to the zip\n"
+            "    3. Quit Cowork completely and relaunch\n\n"
+            f"  Option 2 — Mac / Linux terminal:\n    {_ONELINER_MAC_LINUX}\n\n"
+            f"  Option 3 — Windows PowerShell:\n    {_ONELINER_WINDOWS}\n"
+        )
+        return 1
+
     print("=== MBB PPT Generator — installing into Claude Cowork ===")
 
     # 1. Locate Cowork's skills directory

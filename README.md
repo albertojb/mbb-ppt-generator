@@ -8,17 +8,43 @@
 
 ## Install in Claude Cowork
 
-In a Cowork session, type:
+Installation is a **one-time setup**. After that, using the skill is entirely zero command line — just say *"Use the MBB PPT skill to make a deck about X"* in any Cowork session.
 
-> **Install the skill from https://github.com/albertojb/mbb-ppt-generator**
+> **Important:** Do NOT try to install by typing into a Cowork session. Cowork sandboxes file writes, so the install will fail after 30–40 minutes. Use one of the two methods below instead.
 
-That's it. Then quit Cowork (Cmd+Q on Mac, File → Exit on Windows, `pkill -f Claude` on Linux) and reopen. The **MBB PPT Generator** skill will appear in your right-sidebar Skills list. To use it in any session afterward:
+### Option 1 — GUI (no terminal needed)
+
+1. Download [mbb-ppt-generator-main.zip](https://github.com/albertojb/mbb-ppt-generator/archive/refs/heads/main.zip) from GitHub
+2. Open Cowork → Settings → Skills → **Add skill** → point to the downloaded zip
+3. Quit Cowork completely and relaunch
+
+The **MBB PPT Generator** skill will appear in your right-sidebar Skills list.
+
+### Option 2 — Terminal (one command, ~30 seconds)
+
+**Mac / Linux:**
+```bash
+python3 -c "import urllib.request,subprocess,sys,tempfile,os; d=tempfile.mkdtemp(); p=os.path.join(d,'install.py'); urllib.request.urlretrieve('https://raw.githubusercontent.com/albertojb/mbb-ppt-generator/main/install.py', p); sys.exit(subprocess.call([sys.executable, p]))"
+```
+
+**Windows (PowerShell):**
+```powershell
+python -c "import urllib.request,subprocess,sys,tempfile,os; d=tempfile.mkdtemp(); p=os.path.join(d,'install.py'); urllib.request.urlretrieve('https://raw.githubusercontent.com/albertojb/mbb-ppt-generator/main/install.py', p); sys.exit(subprocess.call([sys.executable, p]))"
+```
+
+Then quit Cowork completely (Cmd+Q on Mac, File → Exit on Windows, `pkill -f Claude` on Linux) and relaunch.
+
+To **update** to a newer version, run the same command again — the install is idempotent.
+
+### After install
+
+In any Cowork session:
 
 > *"Use the MBB PPT skill to make a 6-slide pitch about [topic]."*
 
-To **update** when a new version ships, type the same install line again. The install is idempotent and runs in ~2 seconds.
+---
 
-> **Note for Claude (the agent reading this):** if a user has just asked you to install this skill, the canonical install action is documented in [`CLAUDE.md`](CLAUDE.md) at the repo root. Read that file and follow it verbatim. Do not improvise, manually clone, or pip-install dependencies one at a time — those steps are wrapped in `install.py` and the script handles them all in ~2 seconds. The `claude plugin marketplace add` path does **not** register the skill in Cowork's GUI sidebar; do not use it for Cowork installs.
+> **Note for Claude (the agent reading this):** if a user has just asked you to install this skill from within a Cowork session, **STOP** — do not attempt it. Cowork sandboxes file writes, and the install will silently fail after consuming 30–40 minutes of tokens. Read [`CLAUDE.md`](CLAUDE.md) at the repo root for the correct response to give the user.
 
 ---
 
