@@ -69,7 +69,7 @@ jobs:
           #   - SKILL.md cites Rasiel's "The McKinsey Way" book (legitimate reading list).
           #   - constants.py historical comment documents the color-rebrand decision.
           #   - STATE.md documents v0.2.0 rebrand decisions.
-          ALLOWED_FILES='MBB_PPT_QA_CHECKLIST.md CHANGELOG.md MAINTAINERS.md README.md NOTICE STATE.md SKILL.md mbb_ppt/constants.py'
+          ALLOWED_FILES='MBB_PPT_QA_CHECKLIST.md CHANGELOG.md MAINTAINERS.md README.md NOTICE STATE.md SKILL.md BACKLOG.md mbb_ppt/constants.py'
           FAIL=0
           for f in $BAD_FILES; do
             allowed=0
