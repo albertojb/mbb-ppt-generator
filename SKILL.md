@@ -187,7 +187,17 @@ Every project lives under a working directory named `ppt-project-{slug}/`. Each 
 
 ### S2 — Structure
 
-**Read:** `references/framework/engine-api.md`, `references/layout-matrix.yaml`
+**Read:** `references/api-cheatsheet.md`, `references/layout-matrix.yaml`, `references/framework/planning-guide.md` (sections 3 *Layout selection by task* and 5 *Layout diversity*).
+
+**Visual-layout rule (mechanically enforced at S3):** for any deck with ≥ 6 content slides (excluding cover/TOC/section_divider/closing), pick at least 2 chart, diagram, image, or process-flow layouts. The S3 gate fails decks that are wall-to-wall text columns. Match the layout to the content shape:
+
+- Trend / time series → `grouped_bar`, `line_chart`, `stacked_area`, `multi_bar_panel`
+- Composition / share → `donut`, `stacked_bar`, `horizontal_bar`
+- Ranking / outliers → `horizontal_bar`, `pareto`, `bubble`
+- Two/four-way framework → `matrix_2x2`, `swot`, `risk_matrix`, `harvey_ball_table`
+- Process / phased plan → `process_chevron`, `timeline`, `value_chain`
+- Operating snapshot → `dashboard_kpi_chart`, `dashboard_table_chart`
+- Case proof → `case_study`, `case_study_image`, `content_right_image`
 
 **Tasks:**
 1. Compute slide count from duration.
@@ -444,7 +454,7 @@ These are mandatory and address recurring real-world defects. The render gate (`
 | 4 | Chart legends use colored swatches matching series | render gate |
 | 5 | `add_action_title()` is the default title pattern | code |
 | 6 | Axis labels centered on full axis span | render gate |
-| 7 | Decks ≥ 8 slides include ≥ 1 visual-relief slide | content gate |
+| 7 | Decks ≥ 6 content slides include ≥ 2 chart/diagram/image/process layouts (visual-density floor) | content gate |
 | 8 | Variable-count layouts compute dimensions dynamically | code |
 | 9 | Circular charts use `BLOCK_ARC` (not rect stacks) | code |
 | 10 | Horizontal item layouts compute widths dynamically (no negative gaps) | code |

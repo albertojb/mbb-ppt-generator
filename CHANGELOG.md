@@ -6,6 +6,21 @@ This project is an Apache 2.0-licensed adaptation of [`Mck-ppt-design-skill`](ht
 
 ---
 
+## [0.2.1] — 2026-05-07 (visual variety mechanism)
+
+### Added
+
+- **Visual-density gate** in `gate_check_content.py`: decks with ≥ 6 content slides (excluding cover/TOC/section_divider/closing) must include ≥ 2 chart/diagram/image/process-flow layouts. Pure text-column decks now fail S3. Three new tests in `tests/test_gates.py` cover the gate (fires on text-only, passes with charts, skipped under threshold).
+- **Content-pattern → layout-family rule** in SKILL.md § 5 *S2 — Structure*: a one-glance table mapping content shape (trend / composition / ranking / framework / process / dashboard / case proof) to recommended chart and diagram layouts. Closes the most common output failure where the model defaults to text-column layouts on chart-suitable content.
+- **Adjacency rule** in `planning-guide.md` § 5 *Layout diversity*: hard floor (visual-density gate) + soft adjacency rule.
+
+### Changed
+
+- `references/INDEX.md` promotes `planning-guide.md` to **required reading at S2** (was optional). The cheatsheet alone does not push the model toward chart layouts; the planning-guide layout-by-task matrix does.
+- SKILL.md *Production guard rails* rule 7 reworded — was "≥ 1 visual-relief slide for 8+ slides", now "≥ 2 chart/diagram/image/process layouts for 6+ content slides", matching what the gate actually enforces.
+
+---
+
 ## [0.2.0] — 2026-05-07 (rebrand + Cowork-first UX)
 
 ### Changed

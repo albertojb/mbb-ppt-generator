@@ -138,6 +138,16 @@ Slides 2–5 establish the deck's intellectual register. If the audience has dec
 
 ## 5. Layout diversity
 
+### Hard floor — visual density
+
+The S3 content gate enforces this: **decks with ≥ 6 content slides (excluding cover/TOC/section_divider/closing) must include ≥ 2 chart, diagram, image, or process-flow layouts.** A deck of seven `executive_summary` / `four_column` / `side_by_side` slides will fail the gate, regardless of how well-written the text is.
+
+This is the most common output failure of consulting-style skills: well-written text columns with no visual variety. The gate exists because the failure mode is predictable.
+
+When the gate fires, the fix is in section 3 *Layout selection by task* — pick the layouts that match your data shape. If your deck is genuinely text-heavy (e.g. a legal brief in slide form), state that as a constraint in the brief and use the Fast Track exemption documented in `SKILL.md` § 5.
+
+### Soft rule — adjacency
+
 Two adjacent content slides should not use the same layout method **unless** the analytical structure genuinely demands repetition (e.g. three sequential `case_study` slides for three case studies in a portfolio).
 
 **Diversity is not novelty for its own sake.** A 10-slide deck that uses 10 different layouts to show the same kind of content reads as showy and chaotic. The right rhythm is something like:

@@ -127,6 +127,114 @@ def test_content_gate_catches_donut_overcount(project_root: Path,
     assert "count" in categories
 
 
+def test_content_gate_catches_visual_density_floor(project_root: Path,
+                                                     tmp_project_dir: Path):
+    """A 7-content-slide deck with no chart/diagram/image layouts fails."""
+    def text_slide(idx: int) -> dict:
+        return {
+            "idx": idx,
+            "layout": "executive_summary",
+            "title": f"Action title {idx} reasonably long for the gate",
+            "headline": f"Headline phrase for slide {idx}",
+            "items": [["1", "A", "Description"], ["2", "B", "Description"], ["3", "C", "Description"]],
+            "source": "Source: test",
+        }
+
+    content = {
+        "slides": [
+            {"idx": 1, "layout": "cover", "title": "Cover"},
+            *(text_slide(i) for i in range(2, 9)),  # 7 text-only content slides
+            {"idx": 9, "layout": "closing", "title": "Done"},
+        ]
+    }
+    content_path = tmp_project_dir / "content.json"
+    content_path.write_text(json.dumps(content))
+
+    result = _run_content_gate(project_root, content_path, tmp_project_dir)
+    assert result["passed"] is False, \
+        "Text-only deck of 7 content slides should fail the visual-density gate"
+    categories = {item["check"] for item in result["fail_items"]}
+    assert "visual_density" in categories
+
+
+def test_content_gate_visual_density_passes_with_charts(project_root: Path,
+                                                          tmp_project_dir: Path):
+    """A 7-content-slide deck with two visual layouts passes the density gate."""
+    content = {
+        "slides": [
+            {"idx": 1, "layout": "cover", "title": "Cover"},
+            {"idx": 2, "layout": "executive_summary",
+             "title": "Three actions return revenue to growth quickly",
+             "headline": "Growth concentrated in two channels",
+             "items": [["1", "A", "Desc"], ["2", "B", "Desc"], ["3", "C", "Desc"]],
+             "source": "Source: test"},
+            {"idx": 3, "layout": "horizontal_bar",
+             "title": "Premium products lead the rankings clearly here",
+             "items": [["A", 80], ["B", 70], ["C", 60]],
+             "source": "Source: test"},
+            {"idx": 4, "layout": "matrix_2x2",
+             "title": "Two priorities dominate the decision space here",
+             "quadrants": [["High/High", "#FFE0E0", "fast"], ["Low/High", "#E0FFE0", "wait"],
+                           ["High/Low", "#FFFFE0", "cheap"], ["Low/Low", "#E0E0FF", "skip"]],
+             "source": "Source: test"},
+            {"idx": 5, "layout": "side_by_side",
+             "title": "Two options balance speed and margin tradeoff",
+             "options": [["A", "Description"], ["B", "Description"]],
+             "source": "Source: test"},
+            {"idx": 6, "layout": "vertical_steps",
+             "title": "Three sequential steps deliver the plan",
+             "steps": [["1", "A", "Description"], ["2", "B", "Description"], ["3", "C", "Description"]],
+             "source": "Source: test"},
+            {"idx": 7, "layout": "executive_summary",
+             "title": "Bring it all together with three actions",
+             "headline": "Headline phrase",
+             "items": [["1", "A", "Desc"], ["2", "B", "Desc"], ["3", "C", "Desc"]],
+             "source": "Source: test"},
+            {"idx": 8, "layout": "four_column",
+             "title": "Phased rollout in four stages over time",
+             "items": [["1", "A", "Desc"], ["2", "B", "Desc"], ["3", "C", "Desc"], ["4", "D", "Desc"]],
+             "source": "Source: test"},
+            {"idx": 9, "layout": "closing", "title": "Done"},
+        ]
+    }
+    content_path = tmp_project_dir / "content.json"
+    content_path.write_text(json.dumps(content))
+
+    result = _run_content_gate(project_root, content_path, tmp_project_dir)
+    categories = {item["check"] for item in result["fail_items"]}
+    assert "visual_density" not in categories, \
+        f"Deck with horizontal_bar + matrix_2x2 should pass density gate; failed with: {result['fail_items']}"
+
+
+def test_content_gate_visual_density_skipped_for_short_decks(project_root: Path,
+                                                                tmp_project_dir: Path):
+    """A 5-content-slide text-only deck does not trigger the density gate."""
+    def text_slide(idx: int) -> dict:
+        return {
+            "idx": idx,
+            "layout": "executive_summary",
+            "title": f"Action title {idx} reasonably long for the gate",
+            "headline": f"Headline phrase for slide {idx}",
+            "items": [["1", "A", "Description"], ["2", "B", "Description"], ["3", "C", "Description"]],
+            "source": "Source: test",
+        }
+
+    content = {
+        "slides": [
+            {"idx": 1, "layout": "cover", "title": "Cover"},
+            *(text_slide(i) for i in range(2, 7)),  # only 5 content slides
+            {"idx": 7, "layout": "closing", "title": "Done"},
+        ]
+    }
+    content_path = tmp_project_dir / "content.json"
+    content_path.write_text(json.dumps(content))
+
+    result = _run_content_gate(project_root, content_path, tmp_project_dir)
+    categories = {item["check"] for item in result["fail_items"]}
+    assert "visual_density" not in categories, \
+        "Deck under 6 content slides should not trigger the density gate"
+
+
 def test_render_gate_passes_clean_deck(project_root: Path,
                                         tmp_project_dir: Path):
     """A clean rendered deck passes the S4 render gate."""

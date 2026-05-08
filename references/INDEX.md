@@ -9,8 +9,8 @@
 | Stage | Required reading | Optional reading |
 |---|---|---|
 | **S1 — Brief** | `references/team/brand-guide.md` | — |
-| **S2 — Structure** | `references/api-cheatsheet.md`, `references/layout-matrix.yaml` | `references/framework/engine-api.md`, `references/framework/planning-guide.md` for complex narratives, per-layout files in `references/layouts/` when a specific layout's contract matters |
-| **S3 — Content** | `references/framework/guard-rails.md`, every file in `experiences/` | `references/framework/planning-guide.md` for complex narrative structures |
+| **S2 — Structure** | `references/api-cheatsheet.md`, `references/layout-matrix.yaml`, `references/framework/planning-guide.md` (§ 3 *Layout selection by task* and § 5 *Layout diversity / visual-density floor*) | `references/framework/engine-api.md`, per-layout files in `references/layouts/` when a specific layout's contract matters |
+| **S3 — Content** | `references/framework/guard-rails.md`, every file in `experiences/` | — |
 | **S4 — Render + QA** | only the `references/layouts/*.md` files for layouts actually used | `references/team/presentation-convention.md` for margin/source rules |
 | **S5 — Deliver** | none | — |
 

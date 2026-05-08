@@ -30,6 +30,9 @@ Checks:
     3. Layout-specific constraints — process_chevron label \\n, timeline last label ≤ 6
     4. Source attribution — every content slide has non-empty `source`
     5. Action title — > 10 characters and ≤ 120 characters
+    6. two_column_text — at most one slide per deck (global)
+    7. Visual density — decks with ≥ 6 content slides need ≥ 2 chart/diagram/image
+       layouts; pure text-column decks fail (global)
 """
 
 from __future__ import annotations
@@ -239,6 +242,72 @@ def check_two_column_text_global(slides: List[Dict]) -> List[Dict]:
     return []
 
 
+# ── Visual-density gate ──────────────────────────────────────────────────
+# Layouts that produce a chart, diagram, image, or dashboard. A deck without
+# at least two of these in 6+ content slides reads as a wall of text columns
+# regardless of how good the writing is.
+
+VISUAL_LAYOUTS = {
+    # Charts
+    "grouped_bar", "stacked_bar", "horizontal_bar", "line_chart", "waterfall",
+    "pareto", "stacked_area", "donut", "bubble", "kpi_tracker", "multi_bar_panel",
+    "pie",  # retired but still visual
+    # Frameworks / diagrams
+    "matrix_2x2", "swot", "temple", "pyramid", "stakeholder_map", "risk_matrix",
+    "decision_tree", "harvey_ball_table", "venn",  # venn retired
+    # Images
+    "content_right_image", "three_images", "image_four_points", "full_width_image",
+    "case_study_image", "two_col_image_grid", "goals_illustration", "quote_bg_image",
+    "case_study",  # case_study includes image placeholder by default
+    # Dashboards
+    "dashboard_kpi_chart", "dashboard_table_chart",
+    # Process / flow visuals (visually distinct from text columns)
+    "process_chevron", "timeline", "value_chain", "cycle",  # cycle retired
+}
+
+# Boilerplate slides excluded from the content-slide count for density purposes.
+BOILERPLATE_LAYOUTS = {"cover", "toc", "section_divider", "closing", "appendix_title"}
+
+VISUAL_DENSITY_THRESHOLD_SLIDES = 6   # ≥ 6 content slides triggers the rule
+VISUAL_DENSITY_MIN_VISUAL = 2         # ≥ 2 visual slides required
+
+
+def check_visual_density_global(slides: List[Dict]) -> List[Dict]:
+    """Reject decks ≥ 6 content slides that contain < 2 visual layouts.
+
+    Rationale: the most common output failure of MBB-style skills is a deck
+    that is well-written but visually monotonous — every slide is a text
+    column or a card grid. A hard floor of 2 chart/diagram/image layouts in
+    a 6+ slide deck is the simplest mechanism that rules out that failure.
+    """
+    content_slides = [
+        s for s in slides
+        if s.get("layout") not in BOILERPLATE_LAYOUTS
+    ]
+    if len(content_slides) < VISUAL_DENSITY_THRESHOLD_SLIDES:
+        return []
+    visual_count = sum(
+        1 for s in content_slides if s.get("layout") in VISUAL_LAYOUTS
+    )
+    if visual_count >= VISUAL_DENSITY_MIN_VISUAL:
+        return []
+    return [{
+        "slide_idx": "(global)",
+        "layout": "(deck-level)",
+        "check": "visual_density",
+        "message": (
+            f"Visual-density floor: deck has {len(content_slides)} content slides "
+            f"but only {visual_count} visual (chart/diagram/image) layout(s); "
+            f"≥ {VISUAL_DENSITY_MIN_VISUAL} required. "
+            "Pick at least one chart (grouped_bar / line_chart / donut / pareto / "
+            "horizontal_bar / waterfall) and at least one framework or image layout "
+            "(matrix_2x2 / swot / risk_matrix / harvey_ball_table / case_study_image / "
+            "process_chevron / timeline / dashboard_kpi_chart). See "
+            "references/framework/planning-guide.md § 'Layout selection by task'."
+        ),
+    }]
+
+
 # ── Routing ───────────────────────────────────────────────────────────────
 
 LAYOUT_CHECKERS = {
@@ -290,6 +359,7 @@ def run_gate(content_json_path: str, project_dir: str) -> Dict[str, Any]:
             passed_items.append({"slide_idx": idx, "layout": layout, "status": "ok"})
 
     all_issues.extend(check_two_column_text_global(slides))
+    all_issues.extend(check_visual_density_global(slides))
 
     passed = len(all_issues) == 0
     return {
