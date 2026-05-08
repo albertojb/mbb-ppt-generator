@@ -284,7 +284,7 @@ def main() -> int:
             "directory from here. Use one of these instead:\n\n"
             "  Option 1 — GUI (no terminal needed):\n"
             "    1. Download https://github.com/albertojb/mbb-ppt-generator"
-            "/raw/main/mbb-ppt-generator.skill.zip\n"
+            "/raw/main/mbb-ppt-generator.skill\n"
             "    2. Cowork → Settings → Skills → Add skill → select the zip\n"
             "    3. Quit Cowork completely and relaunch\n\n"
             f"  Option 2 — Mac / Linux terminal:\n    {_ONELINER_MAC_LINUX}\n\n"

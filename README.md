@@ -14,7 +14,7 @@ Installation is a **one-time setup**. After that, using the skill is entirely ze
 
 ### Option 1 — GUI (no terminal needed)
 
-1. Download **[mbb-ppt-generator.skill.zip](https://github.com/albertojb/mbb-ppt-generator/raw/main/mbb-ppt-generator.skill.zip)** ← use this link, not the full repo archive
+1. Download **[mbb-ppt-generator.skill](https://github.com/albertojb/mbb-ppt-generator/raw/main/mbb-ppt-generator.skill)** ← use this link, not the full repo archive
 2. Open Cowork → Settings → Skills → **Add skill** → drag-and-drop or select the downloaded zip
 3. Quit Cowork completely and relaunch
 

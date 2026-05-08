@@ -35,7 +35,7 @@ gate_render.json
 _likaku_*/
 *.zip
 # Exception: the GUI install artifact must be in the repo for direct download
-!mbb-ppt-generator.skill.zip
+!mbb-ppt-generator.skill
 
 # Original project bootstrap files — local-only
 mbb-ppt-skill-review-prompt.md
