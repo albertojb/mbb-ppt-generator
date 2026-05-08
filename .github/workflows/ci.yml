@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Tests + leakage scan
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install package + dev extras
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run pytest
+        run: pytest -v
+
+      - name: Render minimal example end-to-end
+        run: python examples/minimal_example.py
+
+      - name: Render board QBR example end-to-end
+        run: python examples/board_qbr_example.py
+
+      - name: Render pitch deck example end-to-end
+        run: python examples/pitch_deck_example.py
+
+      - name: CLI smoke test
+        run: |
+          python -m mbb_ppt version
+          python -m mbb_ppt --help
+
+  leakage-scan:
+    name: Brand leakage scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan for non-attribution McKinsey/WorkBuddy/Tencent/Hunyuan/ClawHub references
+        run: |
+          # Allowed: legitimate Apache 2.0 attribution to likaku's Mck-ppt-design-skill
+          # in NOTICE, LICENSE, README, and source-file copyright headers.
+          # The lowercase term scan ('mckinsey', 'workbuddy', etc.) catches everything
+          # else; allowed files are listed below by name.
+          set -e
+          # Only scan files that are committed to the repo (git ls-files
+          # respects .gitignore, so it skips _likaku_*/, *.zip, and the
+          # local-only review prompt). Restrict to source extensions.
+          BAD_FILES=$(git ls-files '*.py' '*.md' '*.yaml' '*.yml' '*.toml' \
+            | grep -v '^\.github/' \
+            | xargs -I {} grep -l -i 'mckinsey\|workbuddy\|tencent\|hunyuan\|clawhub' {} \; 2>/dev/null \
+            || true)
+          # Allowlist:
+          #   - QA checklist + CHANGELOG + MAINTAINERS document the scrubbed terms by name.
+          #   - SKILL.md cites Rasiel's "The McKinsey Way" book (legitimate reading list).
+          #   - constants.py historical comment documents the color-rebrand decision.
+          #   - STATE.md documents v0.2.0 rebrand decisions.
+          ALLOWED_FILES='MBB_PPT_QA_CHECKLIST.md CHANGELOG.md MAINTAINERS.md README.md NOTICE STATE.md SKILL.md mbb_ppt/constants.py'
+          FAIL=0
+          for f in $BAD_FILES; do
+            allowed=0
+            for af in $ALLOWED_FILES; do
+              if [ "$f" = "$af" ]; then
+                allowed=1
+                break
+              fi
+            done
+            if [ $allowed -eq 0 ]; then
+              echo "BRAND LEAKAGE in $f:"
+              grep -n -i 'mckinsey\|workbuddy\|tencent\|hunyuan\|clawhub' "$f" || true
+              FAIL=1
+            fi
+          done
+          if [ $FAIL -eq 1 ]; then
+            echo
+            echo "Failure: brand leakage detected in files outside the allowlist."
+            echo "Either fix the leakage or, if intentional, add the file to ALLOWED_FILES in .github/workflows/ci.yml."
+            exit 1
+          fi
+          echo "Leakage scan: clean."
+
+      - name: Verify Apache 2.0 attribution chain still intact
+        run: |
+          set -e
+          test -f LICENSE
+          test -f NOTICE
+          grep -q "Kaku Li" NOTICE
+          grep -q "https://github.com/likaku/Mck-ppt-design-skill" NOTICE
+          grep -q "Apache License, Version 2.0" NOTICE
+          # Every Python source file in the engine retains Kaku Li copyright header
+          for f in mbb_ppt/*.py mbb_ppt/storylines/*.py; do
+            head -3 "$f" | grep -q "Kaku Li" || (echo "Missing Kaku Li copyright in $f" && exit 1)
+          done
+          echo "Attribution chain: intact."

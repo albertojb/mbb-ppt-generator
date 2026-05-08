@@ -463,13 +463,17 @@ class MbbEngine:
         self._footer(s, source)
         return s
 
-    def scorecard(self, title, items, source=''):
+    def scorecard(self, title, items, source='', headers=None):
         """#23 Scorecard — items with progress bars.
-        items: list of (name, score_str, pct_float_0_to_1)
+        items: list of (name, score_str, pct_float_0_to_1).
+        headers: optional list of 3 column headers; defaults to
+            ['Item', 'Score', 'Progress'].
         """
         s = self._ns()
         add_action_title(s, title)
-        headers = ['Domain', 'Score', 'Maturity']
+        headers = list(headers) if headers else ['Item', 'Score', 'Progress']
+        if len(headers) != 3:
+            headers = (headers + ['', '', ''])[:3]
         add_text(s, LM, CONTENT_TOP + Inches(0.1), Inches(4.0), Inches(0.4),
                  headers[0], font_size=BODY_SIZE, font_color=MED_GRAY, bold=True)
         add_text(s, Inches(5.0), CONTENT_TOP + Inches(0.1), Inches(1.5), Inches(0.4),
@@ -1119,15 +1123,17 @@ class MbbEngine:
         self._footer(s, source)
         return s
 
-    def key_takeaway(self, title, left_text, takeaways, source=''):
+    def key_takeaway(self, title, left_text, takeaways, source='',
+                      left_title='Analysis', right_title='Key takeaways'):
         """#25 Key Takeaway — left analysis + right gray panel.
         left_text: list[str], takeaways: list[str].
+        left_title / right_title: optional column headers (default: 'Analysis' / 'Key takeaways').
         """
         s = self._ns()
         add_action_title(s, title)
         left_w = Inches(7.5)
         add_text(s, LM, CONTENT_TOP + Inches(0.1), left_w, Inches(0.4),
-                 'Synergy analysis', font_size=SUB_HEADER_SIZE, font_color=NAVY, bold=True)
+                 left_title, font_size=SUB_HEADER_SIZE, font_color=NAVY, bold=True)
         add_hline(s, LM, CONTENT_TOP + Inches(0.6), left_w, LINE_GRAY)
         add_text(s, LM, CONTENT_TOP + Inches(0.8), left_w, Inches(4.0),
                  left_text, font_size=BODY_SIZE, line_spacing=Pt(4))
@@ -1135,7 +1141,7 @@ class MbbEngine:
         tk_w = Inches(3.5)
         add_rect(s, tk_x, CONTENT_TOP + Inches(0.1), tk_w, Inches(5.2), BG_GRAY)
         add_text(s, tk_x + Inches(0.2), CONTENT_TOP + Inches(0.3), tk_w - Inches(0.4), Inches(0.4),
-                 'Key Takeaways', font_size=BODY_SIZE, font_color=NAVY, bold=True)
+                 right_title, font_size=BODY_SIZE, font_color=NAVY, bold=True)
         add_hline(s, tk_x + Inches(0.2), CONTENT_TOP + Inches(0.8), tk_w - Inches(0.4), LINE_GRAY)
         add_text(s, tk_x + Inches(0.2), CONTENT_TOP + Inches(1.0), tk_w - Inches(0.4), Inches(4.0),
                  takeaways, font_size=BODY_SIZE, line_spacing=Pt(10))
@@ -2471,10 +2477,14 @@ class MbbEngine:
         return s
 
     def stacked_area(self, title, years, series_data, max_val=None,
-                     summary=None, source=''):
+                     summary=None, source='', currency_symbol='$',
+                     summary_label='Trend'):
         """#70 Stacked Area Chart — stacked columns for area approximation.
         years: list[str] x-labels.
         series_data: list of (name, values:list[int], color).
+        currency_symbol: prefix on y-axis ticks and per-column totals
+            (default '$'; pass '€', '£', '¥', '' or '%' to override).
+        summary_label: label for the optional bottom summary bar (default 'Trend').
         """
         s = self._ns()
         add_action_title(s, title)
@@ -2499,7 +2509,7 @@ class MbbEngine:
         for i in range(5):
             val = max_val * i / 4; yy = cb - int(ch * i / 4)
             add_text(s, LM, yy - Inches(0.1), Inches(0.8), Inches(0.2),
-                     f'${int(val)}', font_size=FOOTNOTE_SIZE, font_color=MED_GRAY,
+                     f'{currency_symbol}{int(val)}', font_size=FOOTNOTE_SIZE, font_color=MED_GRAY,
                      alignment=PP_ALIGN.RIGHT)
             if i > 0:
                 add_hline(s, cl, yy, cw_, RGBColor(0xE8, 0xE8, 0xE8), Pt(0.25))
@@ -2515,7 +2525,7 @@ class MbbEngine:
             total = sum(sd[1][yi] for sd in series_data)
             th = int(ch * total / max_val)
             add_text(s, cl + int(cw_ * yi / npt), cb - th - Inches(0.25),
-                     col_w, Inches(0.2), f'${total}',
+                     col_w, Inches(0.2), f'{currency_symbol}{total}',
                      font_size=Pt(10), font_color=DARK_GRAY, bold=True,
                      alignment=PP_ALIGN.CENTER)
             add_text(s, cl + int(cw_ * yi / npt), cb + Inches(0.05),
@@ -2525,7 +2535,7 @@ class MbbEngine:
         if summary:
             add_rect(s, LM, sum_y, CW, sum_h, BG_GRAY)
             add_text(s, LM + Inches(0.3), sum_y, Inches(1.5), sum_h,
-                     'Trend', font_size=BODY_SIZE, font_color=NAVY, bold=True,
+                     summary_label, font_size=BODY_SIZE, font_color=NAVY, bold=True,
                      anchor=MSO_ANCHOR.MIDDLE)
             add_text(s, LM + Inches(2.0), sum_y, CW - Inches(2.3), sum_h,
                      summary, font_size=BODY_SIZE, font_color=DARK_GRAY,

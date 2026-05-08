@@ -6,6 +6,25 @@ This project is an Apache 2.0-licensed adaptation of [`Mck-ppt-design-skill`](ht
 
 ---
 
+## [0.2.2] — 2026-05-07 (engine correctness + CI + visual-variety reference example)
+
+### Added
+
+- **`examples/pitch_deck_example.py`** — 10-slide pitch deck reference that exercises 5 visual layouts (donut, matrix_2x2, horizontal_bar, process_chevron, timeline). Renders at 94/100, both gates pass. Use as a starting template for fundraising / partnership decks.
+- **GitHub Actions CI** (`.github/workflows/ci.yml`):
+  - Runs pytest across Python 3.10–3.13.
+  - Renders all three examples end-to-end (minimal, board QBR, pitch deck) so a regression in any layout fails CI.
+  - Brand-leakage scan — fails on McKinsey/WorkBuddy/Tencent/Hunyuan/ClawHub references outside an explicit allowlist, so the rebrand can't regress silently.
+  - Apache 2.0 attribution-chain integrity check — verifies LICENSE / NOTICE / Kaku Li copyright headers are still present.
+
+### Changed
+
+- `key_takeaway` — added `left_title` and `right_title` parameters (defaults `'Analysis'` and `'Key takeaways'`). Replaces the hardcoded `'Synergy analysis'` left header that surfaced in every key-takeaway slide regardless of context (BACKLOG Tier 1.1).
+- `scorecard` — added `headers` parameter (default `['Item', 'Score', 'Progress']`). Replaces the hardcoded `['Domain', 'Score', 'Maturity']` headers (BACKLOG Tier 1.2).
+- `stacked_area` — added `currency_symbol` parameter (default `'$'`) and `summary_label` parameter (default `'Trend'`). Y-axis ticks and per-column totals now respect the override (BACKLOG Tier 1.3).
+
+---
+
 ## [0.2.1] — 2026-05-07 (visual variety mechanism)
 
 ### Added
