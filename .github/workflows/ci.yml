@@ -101,8 +101,12 @@ jobs:
           grep -q "Kaku Li" NOTICE
           grep -q "https://github.com/likaku/Mck-ppt-design-skill" NOTICE
           grep -q "Apache License, Version 2.0" NOTICE
-          # Every Python source file in the engine retains Kaku Li copyright header
-          for f in mbb_ppt/*.py mbb_ppt/storylines/*.py; do
+          # Every Python source file derived from upstream retains Kaku Li
+          # copyright header. Files that originated in this fork
+          # (__main__.py — the CLI wrapper, original to mbb-ppt-generator)
+          # are excluded.
+          DERIVED_FILES="mbb_ppt/__init__.py mbb_ppt/constants.py mbb_ppt/core.py mbb_ppt/deck_builder.py mbb_ppt/engine.py mbb_ppt/qa.py mbb_ppt/review.py mbb_ppt/storylines/__init__.py mbb_ppt/storylines/ai_enterprise.py"
+          for f in $DERIVED_FILES; do
             head -3 "$f" | grep -q "Kaku Li" || (echo "Missing Kaku Li copyright in $f" && exit 1)
           done
           echo "Attribution chain: intact."
