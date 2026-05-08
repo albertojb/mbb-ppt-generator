@@ -6,23 +6,27 @@
 
 ---
 
-## 1. Where the project is right now (0.1.0 published)
+## 1. Where the project is right now (0.2.2 published)
 
 - **Repo**: [albertojb/mbb-ppt-generator](https://github.com/albertojb/mbb-ppt-generator), public, Apache 2.0
-- **Tag**: `v0.1.0` on commit `98ccffb` (initial commit)
-- **HEAD**: `bec3e3f` (post-tag packaging + tests + second example)
-- **51 files tracked**, ~4,200 lines of layout reference + ~200 KB engine source + 15 passing tests
-- **Self-contained**: bundles Likaku's `mbb_ppt/` engine (Apache 2.0); no external skill installation needed
+- **Tags**: `v0.1.0` (initial), `v0.2.0` (rebrand to mbb_ppt + Cowork UX), `v0.2.1` (visual-density gate), `v0.2.2` (engine correctness + CI + pitch deck reference)
+- **HEAD on main** is the v0.2.2 commit. Public history: v0.1.0 → v0.2.0 → v0.2.1 → v0.2.2
+- **Self-contained**: bundles the engine (Apache 2.0 from likaku's Mck-ppt-design-skill); no external skill installation needed
+- **Module name**: `mbb_ppt` (renamed from upstream `mck_ppt` in v0.2.0). Class `MbbEngine`. Public alias `ExecEngine`.
 - **English-only** (CJK swept from engine, defaults, prompts, comments)
-- **Heading typography**: DM Sans → Inter → Calibri fallback
+- **Heading typography**: DM Sans → Inter → Calibri fallback. Body Arial. Both sans-serif.
+- **Primary color**: forest green `#1B4332` (McKinsey-style navy retired in v0.2.0). Sober muted accents (slate, olive, rust, burgundy).
 - **5-stage workflow**: brief → outline → content → render+QA → deliver, with two machine-readable gates whose `passed` is a Python boolean derived from program logic, never a verbal claim
-- **Tests**: 15 passing — package import, render integrity, layout families, both gates' pass/fail logic
-- **Examples**: 3 runnable demos (minimal_example.py, board_qbr_example.py, the bundled storyline) — all render with `passed: true`
-- **Documentation**: SKILL.md + README.md + 12 per-layout reference files + 3 framework files + 2 team files + INDEX.md + 3 experiences files + STATE.md + this file
+- **CLI**: `mbb-ppt render/gate-content/gate-render/version` (entry: `python -m mbb_ppt`)
+- **Tests**: 18 passing — package import, render integrity, layout families, both gates' pass/fail logic, visual-density gate (3 cases)
+- **Examples**: 3 runnable demos (minimal_example.py 78/100, board_qbr_example.py 98/100, pitch_deck_example.py 94/100) — all render with `passed: true`
+- **CI**: GitHub Actions runs pytest on Python 3.10–3.13 + renders all examples + brand-leakage scan + Apache 2.0 attribution-chain integrity check
+- **Documentation**: SKILL.md (operator-facing) + MAINTAINERS.md (rationale + harness pedagogy) + README.md + CHANGELOG.md + 12 per-layout reference files + 3 framework files + 2 team files + INDEX.md + api-cheatsheet.md + 3 experiences files + STATE.md + this file
+- **Cowork install**: symlink at `~/.claude/skills/mbb-ppt-generator/` → `/home/ajb/Projects/MBB-PPT-2/`. Old `~/.workbuddy/skills/mck-ppt-design/` install removed.
 
 ### What's NOT done (the reason this file exists)
 
-Six tiers of gaps were identified in the prior chat. Tier 1 (engine correctness) has real defects that should be fixed before public marketplace submission. Tiers 2–6 are progressive polish.
+Tier 1 (engine correctness) has 5 remaining defects (1.4 review.py English regex, 1.5 engine_bug whitelist documentation, 1.6 set_ea_font cleanup, 1.7 dead var, 1.8 storylines/__init__.py). Tiers 2/3/5/6 are progressive polish. Tier 4 (CI) is now complete.
 
 ---
 
@@ -34,38 +38,25 @@ Before doing any work, run these to verify your starting state matches:
 cd /home/ajb/Projects/MBB-PPT-2
 
 # 1. State check
-git log --oneline --decorate | head -5
-# Expected: bec3e3f → dc9312d → f57e091 → 98ccffb (tag: v0.1.0)
+git log --oneline --decorate | head -6
+# Expected: HEAD → main with tag v0.2.2 (most recent), then v0.2.1, v0.2.0, v0.1.0
 git status   # should be clean
 
 # 2. Tests pass
-python3 -c "
-import sys, tempfile
-from pathlib import Path
-sys.path.insert(0, '.')
-def _t(): d=Path(tempfile.mkdtemp(prefix='mbb_')); p=d/'p'; p.mkdir(); return p
-PR=Path('.').resolve()
-from tests import test_smoke, test_layouts, test_gates
-n=p=0
-for mod in [test_smoke, test_layouts, test_gates]:
-    for name in dir(mod):
-        if not name.startswith('test_'): continue
-        n+=1
-        try:
-            import inspect
-            args=[(_t() if x=='tmp_project_dir' else PR) for x in inspect.signature(getattr(mod,name)).parameters]
-            getattr(mod,name)(*args); p+=1
-        except Exception as e: print(f'FAIL {name}: {e}')
-print(f'{p}/{n} tests passed')
-"
-# Expected: 15/15 tests passed
+pip install -e ".[dev]"
+pytest -v
+# Expected: 18 passed in ~3s
 
 # 3. Examples render
-python3 examples/minimal_example.py 2>&1 | tail -3
-python3 examples/board_qbr_example.py 2>&1 | tail -3
-# Expected: both DELIVERED with passed: true
+python3 examples/minimal_example.py 2>&1 | tail -3       # → 78/100, passed
+python3 examples/board_qbr_example.py 2>&1 | tail -3     # → 98/100, passed
+python3 examples/pitch_deck_example.py 2>&1 | tail -3    # → 94/100, passed
 
-# 4. Read the lightweight pointer
+# 4. CLI sanity
+python3 -m mbb_ppt version   # → 0.2.2
+python3 -m mbb_ppt --help    # → render / gate-content / gate-render / version
+
+# 5. Read the lightweight pointer
 cat STATE.md   # current pause point + recent commits
 ```
 
