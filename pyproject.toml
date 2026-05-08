@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mbb-ppt-generator"
-version = "0.4.1"
+version = "0.4.2"
 description = "Executive-grade PowerPoint generation with consulting-style discipline. Self-contained skill with a five-stage workflow and machine-readable gates. Adapted from likaku's Mck-ppt-design-skill (Apache 2.0)."
 readme = "README.md"
 requires-python = ">=3.10"
