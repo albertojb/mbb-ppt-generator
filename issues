@@ -1,0 +1,84 @@
+issue #1 when installing or trying to add the skill in Cowork, it still talked about mck ppt skill, i dont know why. see text below:
+"the skill https://github.com/albertojb/mbb-ppt-generator was just updated. can you ensure you have the latest version installed so i can use it here?
+
+Claude responded: No mbb-ppt-generator skill found.
+
+Loaded tools, ran a command
+Loaded tools, ran a command
+No mbb-ppt-generator skill found. Let me fetch and install it from the repo.
+
+
+Ran 4 commands, loaded tools, searched the web
+Ran 4 commands, loaded tools, searched the web
+Good, I can see the repo. Let me fetch the SKILL.md and the mbb_ppt directory contents in parallel.
+
+
+Searched the web
+Searched the web
+Now I need to install the skill. Let me download it and pip-install the package.
+
+
+Ran 10 commands
+Ran 10 commands
+Package installed and importing. Now let me write the SKILL.md to the skills directory so Cowork picks it up.
+
+
+Ran a command, found files
+Ran a command, found files
+Let me check how the existing mck-ppt-design skill handles references to understand the pattern:
+
+
+Read a file, found files
+Read a file, found files
+I can see mck-ppt-design stores all files in the skills directory. I need to do the same. Let me fetch the subdirectory contents and copy everything.
+
+
+Searched the web
+Searched the web
+Let me fetch all subdirectory contents in parallel to know what files to download.
+
+
+Searched the web
+Searched the web
+I have the full picture. The cleanest approach is to write the SKILL.md to the skills plugin directory with an absolute path prefix for all reference files, pointing to the workspace copy I already stored. Let me write the SKILL.md with that adjustment.
+
+
+Created a file
+Created a file
+The skills plugin directory isn't directly writable — it's managed by Cowork's plugin system. But I've got everything else in place. Let me verify what we have:
+
+
+Ran a command
+Ran a command
+Here's where things stand:
+
+Done:
+
+Latest version (v0.2.0) downloaded and mbb_ppt package installed and importable
+Full source stored persistently at claude-cowork-linux/.skills/mbb-ppt-generator/ — all reference docs, gate scripts, engine, experiences
+One caveat: The Cowork skills plugin directory is managed by the system and isn't writable, so mbb-ppt-generator won't auto-appear in the skills sidebar the way mck-ppt-design does. But that doesn't matter for actual usage — I know where the SKILL.md lives and will read it from your workspace whenever you ask for a deck.
+
+Also worth knowing: The pip install only lasts for the current session (the bash sandbox resets). At the start of each new session where you want to generate a deck, I'll run pip install -e ~/.skills/mbb-ppt-generator automatically — no action needed from you.
+
+You're good to go. Just say "create a deck about X" and I'll follow the five-stage MBB workflow."
+
+issue #2 I restarted claude co-work and the skill did not appear. remmber, this skill must be installable as any other skill by non-technical users, this is a failure in implementation. remmber success criteria is that this skill is usable as a user ready skill in claude cowork and claude code. that was the job i was given by my boss to get you to do. please fix. see the transcript below:
+"where's the mbb-ppt-generator skill? can i use it?
+
+Claude responded: There's no mbb-ppt-generator skill installed.
+
+Thought process
+Thought process
+There's no mbb-ppt-generator skill installed. You might be thinking of mck-ppt-design — a McKinsey-style consultant-grade PowerPoint skill that's available and ready to use.
+
+It covers pitch decks, strategy reviews, board presentations, and similar executive-style decks using a Python engine with structured layouts, charts, and design discipline.
+
+Want to use it for something?
+
+"
+
+issue #3 see screenshot here /home/ajb/Pictures/Screenshots/still calling the mck skill.png i still tried running the skill, and for some unexplained reason it's calling the mck-ppt-design skill. rember, this mbb new app should be independent, a new user should not have to have anything build by likaku or the previous mck-ppt-design skill to get mbb-ppt-generator to work. maintain attribution and credit, but functinoally mbb-ppt-generator HAS to be independent
+
+issue #4 i this is still SUPER slow, what recommendations do you have to make this faster?
+issue #5 i ran this test and a page see this screenshot still had overflow issues /home/ajb/Pictures/Screenshots/textoverflowissue.png
+issue #6 in terms of effort, i think it's unnecessary for the skill to waste any energy in creating a final "thank you and questions page" that is wasted cycles for something a user can make very quickly when needed. same for cover, you can ask the user if a cover is needed, but default to no.

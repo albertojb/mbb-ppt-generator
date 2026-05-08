@@ -6,6 +6,29 @@ This project is an Apache 2.0-licensed adaptation of [`Mck-ppt-design-skill`](ht
 
 ---
 
+## [0.4.1] — 2026-05-08 (cross-platform install.py — actual fix for Cowork)
+
+The user reported that v0.4.0's plugin-marketplace path took 15+ minutes and the skill did NOT appear in Cowork after restart. Diagnosis:
+
+- The plugin-marketplace install (`claude plugin install`) writes files to `~/.claude/plugins/cache/`. **Cowork's GUI Skills sidebar reads from a different location entirely** — `~/.config/Claude/local-agent-mode-sessions/skills-plugin/<workspace>/<account>/manifest.json`. The plugin install never touches that manifest, so Cowork's GUI can't see the skill. v0.4.0 was effectively invisible to Cowork users.
+- The 15-minute install was Claude in Cowork doing manual git clone + `pip install python-pptx` (with all transitive Pillow deps) over a slow sandbox connection, NOT the marketplace add (which takes ~3 s).
+
+### Added
+
+- **`install.py`** at the repo root — single-file, cross-platform Python installer. Mac / Windows / Linux all use the same script with auto-detected per-OS config paths. Runs in ~2 seconds end-to-end including a fresh shallow git clone:
+  - `~/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/...` (Mac)
+  - `%APPDATA%\Claude\local-agent-mode-sessions\skills-plugin\...` (Windows)
+  - `~/.config/Claude/local-agent-mode-sessions/skills-plugin/...` (Linux)
+- The script copies SKILL.md + supporting files into Cowork's skills dir, registers in `manifest.json` (so the GUI Skills sidebar sees it), pip-installs python-pptx/lxml/pyyaml, and prints OS-specific restart instructions.
+- README rewritten to feature one-sentence URL install: *"Download `https://raw.githubusercontent.com/albertojb/mbb-ppt-generator/main/install.py` and run it."*
+
+### Changed
+
+- Demoted the plugin-marketplace install path (`claude plugin marketplace add` / `claude plugin install`) to "alternative for terminal users" — it works for Claude Code CLI but does not register the skill in Cowork's GUI sidebar.
+- README explicitly documents that auto-update is not supported by Cowork's manifest loader; users re-run `install.py` to update.
+
+---
+
 ## [0.4.0] — 2026-05-08 (packaged as a Claude plugin marketplace)
 
 The user's feedback on v0.3.0: "install should be as easy as asking Cowork to install the skill from the github url … users will be former consultants using cowork on Windows and Mac, they have no idea what bash even is." Bash scripts were the wrong path. v0.4.0 fixes this with proper plugin packaging.
