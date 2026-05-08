@@ -136,18 +136,84 @@ def _render(content_path: Path, out_path: Path) -> int:
     return 0
 
 
-def _run_gate(script_name: str, args: list[str]) -> int:
+def _import_gate_module(script_name: str):
+    """Import a gate script as a module so we can call its run_gate() in
+    the same Python process — no subprocess cold-start cost.
+
+    Falls back to subprocess if the import fails (defensive)."""
     root = _skill_root()
     script = root / "references" / "scripts" / script_name
     if not script.is_file():
-        print(f"ERROR: gate script not found at {script}", file=sys.stderr)
+        return None, f"gate script not found at {script}"
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        f"_mbb_gate_{script_name.replace('.', '_')}", script
+    )
+    if spec is None or spec.loader is None:
+        return None, f"could not load spec for {script}"
+    mod = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(mod)
+    except Exception as e:
+        return None, f"could not exec {script}: {e}"
+    if not hasattr(mod, "run_gate"):
+        return None, f"{script} does not expose run_gate()"
+    return mod, None
+
+
+def _run_gate(script_name: str, args: list[str]) -> int:
+    """Run a gate in-process. args = [primary_path, project_dir]."""
+    if len(args) < 2:
+        print(f"ERROR: _run_gate needs (input_path, project_dir); got {args}", file=sys.stderr)
         return 2
-    proc = subprocess.run([sys.executable, str(script), *args], capture_output=True, text=True)
-    if proc.stdout:
-        sys.stdout.write(proc.stdout)
-    if proc.stderr:
-        sys.stderr.write(proc.stderr)
-    return proc.returncode
+    input_path, project_dir = args[0], args[1]
+    Path(project_dir).mkdir(parents=True, exist_ok=True)
+
+    mod, err = _import_gate_module(script_name)
+    if mod is None:
+        # Fallback: subprocess (preserves prior behavior if import broke).
+        root = _skill_root()
+        script = root / "references" / "scripts" / script_name
+        if not script.is_file():
+            print(f"ERROR: {err}", file=sys.stderr)
+            return 2
+        proc = subprocess.run([sys.executable, str(script), *args], capture_output=True, text=True)
+        if proc.stdout:
+            sys.stdout.write(proc.stdout)
+        if proc.stderr:
+            sys.stderr.write(proc.stderr)
+        return proc.returncode
+
+    # In-process call.
+    try:
+        result = mod.run_gate(input_path, project_dir)
+    except Exception as e:
+        print(f"ERROR: {script_name} run_gate raised: {e}", file=sys.stderr)
+        return 2
+
+    # Write the gate's JSON output (matching the standalone-script behavior).
+    out_name = "gate_render.json" if "render" in script_name else "gate_content.json"
+    out_path = Path(project_dir) / out_name
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(result, f, ensure_ascii=False, indent=2)
+
+    # Concise stdout summary; matches the standalone scripts' format closely.
+    label = "gate_render" if "render" in script_name else "gate_content"
+    print(f"[{label}] checking: {input_path}")
+    if "render" in script_name:
+        print(f"[{label}] score: {result.get('overall_score', 'n/a')}/100")
+        cl = result.get("checklist", {})
+        print(f"[{label}] user_code_errors: {cl.get('user_code_errors', 0)}")
+        print(f"[{label}] engine_bug_errors (whitelisted): {cl.get('engine_bug_errors', 0)}")
+        print(f"[{label}] warnings: {cl.get('warnings', 0)}")
+    else:
+        print(f"[{label}] slides: {result.get('total_slides', '?')}")
+        print(f"[{label}] fail items: {len(result.get('fail_items', []))}")
+    print(f"[{label}] verdict: {result.get('verdict', '')}")
+    print(f"[{label}] result written to: {out_path}")
+
+    return 0 if result.get("passed") else 1
 
 
 def _read_passed(json_path: Path) -> bool:

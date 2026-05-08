@@ -1,6 +1,6 @@
 # MBB PPT Generator — Project State
 
-> **Pause point: 2026-05-08 (v0.2.2 — rebrand complete + visual variety mechanism + CI).** When albertojb says "resume the MBB PPT skill" (or anything similar), read this file first. Resume instructions are in § 6 below.
+> **Pause point: 2026-05-08 (v0.3.0 — Cowork installer + speed + overflow gate + default no-cover/closing).** When albertojb says "resume the MBB PPT skill" (or anything similar), read this file first. Resume instructions are in § 6 below.
 
 ---
 
@@ -17,13 +17,31 @@ Albertojb is building **MBB PPT Generator**, an Apache 2.0-licensed adaptation o
 - Two machine-readable gates: S3 content gate, S4 render gate. `passed` is a Python boolean derived from program logic — never a verbal claim.
 - Self-Refinement loop with append-only `experiences/` directory.
 - **Self-contained** — pip-installed (`pip install -e ~/.claude/skills/mbb-ppt-generator`); no dependency on Likaku's separate skill installation.
-- **Status:** **0.2.2 published.** Published at https://github.com/albertojb/mbb-ppt-generator (public, Apache 2.0, topics + description set). GitHub Actions CI green on Python 3.10–3.13.
+- **Status:** **0.3.0 published.** Published at https://github.com/albertojb/mbb-ppt-generator (public, Apache 2.0). GitHub Actions CI green on Python 3.10–3.13. Skill registered in Cowork's `~/.config/Claude/local-agent-mode-sessions/skills-plugin/<workspace>/<account>/manifest.json`. Competing skills (`mck-ppt-design`, `mck-vg`) removed from this machine's Cowork install with user authorization.
 
 ---
 
 ## 2. Current status — what's done
 
-### v0.2.2 — engine correctness + CI + visual-variety reference (latest)
+### v0.3.0 — Cowork install + speed + overflow gate + default no-cover/closing (latest)
+
+| Change | Status |
+|---|---|
+| `install_cowork.sh` — auto-detects Cowork skills dir, copies skill, registers in manifest.json, idempotent | ✅ |
+| HARD RULE 8 — lazy load `references/layouts/*.md` (no bulk load) | ✅ |
+| HARD RULE 9 — no cover/closing slide by default | ✅ |
+| Label-length gate (`MAX_OVAL_LABEL_CHARS = 3`) for process_chevron, four_column, executive_summary, vertical_steps, value_chain, numbered_list_panel, toc | ✅ |
+| Defensive truncation in `add_oval()` core.py | ✅ |
+| In-process gates in CLI — `mbb-ppt render` saves ~2-4s wall-clock per call | ✅ |
+| SKILL.md frontmatter sharpened so Cowork's router prefers mbb over mck | ✅ |
+| Fast Track activates automatically for ≤ 5 content slides | ✅ |
+| § S2 default templates: cover/closing OFF, executive_summary first | ✅ |
+| SKILL.md trimmed by ~80 lines; book list + Common mistakes + spacing rules moved to MAINTAINERS.md | ✅ |
+| 4 new label-length gate tests; 22/22 tests passing | ✅ |
+| CLI render benchmark: 0.89s wall-clock (was ~3s with subprocess gates) | ✅ |
+| `mck-ppt-design` and `mck-vg` removed from Cowork (user-authorized) | ✅ |
+
+### v0.2.2 — engine correctness + CI + visual-variety reference
 
 | Change | Status |
 |---|---|

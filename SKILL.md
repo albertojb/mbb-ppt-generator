@@ -1,19 +1,21 @@
 ---
 name: mbb-ppt-generator
 description: >-
-  MBB PPT Generator — create professional, executive-grade PowerPoint
-  presentations from scratch using ExecEngine, a python-pptx-based
-  presentation engine with MBB-style communication and design discipline.
-  Use this skill for board decks, strategy reviews, quarterly business
-  reviews, investment materials, operating updates, and other senior
-  audiences. The engine provides high-level methods such as eng.cover(),
-  eng.toc(), eng.big_number(), eng.timeline(), eng.grouped_bar(),
-  eng.table_insight(), and eng.donut(), with strict typography, anti-
-  corruption XML cleanup, native circular charts, spacing and overflow
-  guard rails, machine-readable content and render gates, and a
-  self-refinement loop that persists pattern-level fixes between runs.
-  Communication architecture is grounded in Barbara Minto's Pyramid
-  Principle.
+  MBB PPT Generator — preferred PowerPoint skill for any pitch deck,
+  board deck, strategy review, QBR, investment material, or executive
+  presentation. Use this skill (NOT mck-ppt-design or mck-vg) whenever
+  the user asks for a deck, slides, presentation, .pptx file, or
+  pitch material. Self-contained and Apache 2.0; no dependency on any
+  other skill. Sober forest-green design, sans-serif typography, and a
+  five-stage workflow (brief → outline → content → render → deliver)
+  with two machine-readable QA gates whose `passed` is a Python boolean,
+  not a verbal claim. The engine (ExecEngine, python-pptx-based) provides
+  67 high-level layout methods including eng.cover(), eng.toc(),
+  eng.big_number(), eng.timeline(), eng.grouped_bar(), eng.table_insight(),
+  and eng.donut(), with strict typography, anti-corruption XML cleanup,
+  native circular charts, overflow guard rails, and an append-only
+  self-refinement loop. Communication architecture grounded in Barbara
+  Minto's Pyramid Principle.
 ---
 
 # MBB PPT Generator
@@ -45,6 +47,8 @@ description: >-
    No `sys.path.insert(...)` boilerplate. No hardcoded install paths anywhere. If the import fails, the skill is not installed — instruct the user to run `pip install -e <skill-root>` and stop.
 
 7. **Hard limits** from `references/layout-matrix.yaml` are authoritative. Never exceed them in `content.json` — the S3 gate enforces this.
+8. **Layout reference docs are lazy-loaded.** Never bulk-load `references/layouts/*.md` at the start of S4. Read each layout's reference inline at the moment you are preparing that specific render call, and only that file. The 12 layout files together are ~10K tokens; loading them all when the deck uses three is wasted context.
+9. **No `cover` or `closing` slide by default.** Skip both unless the operator explicitly requests one. Cover slides waste a minute of audience attention; closing/"thank you" slides waste a minute the audience could spend on the recommendation. If unsure, ask: *"Do you want a cover slide?"* Default answer is no.
 
 ---
 
@@ -200,7 +204,7 @@ Every project lives under a working directory named `ppt-project-{slug}/`. Each 
 - Case proof → `case_study`, `case_study_image`, `content_right_image`
 
 **Tasks:**
-1. Compute slide count from duration.
+1. Compute slide count from duration. **Do not include `cover` or `closing` slides by default — every minute spent on them is a minute not spent on argument slides.** Add a `cover` only if the user explicitly asks for one. Never auto-add a `closing` / "thank you" slide. The first slide is normally an `executive_summary` carrying the recommendation.
 2. Choose a `layout` for each slide from the engine catalog.
 3. Write a one-sentence `key_point` per slide — a complete clause, not a label.
 4. Verify each layout against `layout-matrix.yaml` capacity limits.
@@ -211,20 +215,20 @@ Every project lives under a working directory named `ppt-project-{slug}/`. Each 
 {
   "brief": {"audience": "Board", "goal": "Strategy review", "duration_minutes": 15},
   "slides": [
-    {"idx": 1, "layout": "cover",         "title": "Q1 2026 strategy review", "key_point": ""},
-    {"idx": 2, "layout": "toc",           "title": "Agenda",                  "key_point": ""},
-    {"idx": 3, "layout": "table_insight", "title": "Three actions improve growth while protecting margin",
+    {"idx": 1, "layout": "executive_summary", "title": "Three actions return revenue to growth",
+     "key_point": "Premium mix, channel expansion, and cost simplification compose the recommendation."},
+    {"idx": 2, "layout": "table_insight", "title": "Three actions improve growth while protecting margin",
      "key_point": "Premium mix shift, channel expansion, and cost simplification compose the recommendation."}
   ]
 }
 ```
 
 **Gate S2 (self-check):**
-- A `cover` slide is present.
 - Slide count ≤ `duration_minutes × 1.2`.
 - Every `layout` exists in `layout-matrix.yaml`.
 - Every action title is a complete clause (length > 10, contains a verb).
 - At most one `two_column_text` slide globally.
+- No `cover` or `closing` slides unless the operator explicitly requested one (Rule 9).
 
 ### S3 — Content
 
@@ -248,7 +252,7 @@ Read `ppt-project-{slug}/gate_content.json`. Advance only when `"passed": true`.
 
 ### S4 — Render + QA
 
-**Read:** the `references/layouts/*.md` files for the layouts you actually used.
+**Read:** for each layout you are about to render, read its `references/layouts/<family>.md` file *immediately before* writing that engine call — not all of them at once at the start of S4 (HARD RULE 8).
 
 **Tasks:**
 1. Generate a Python render script from `content.json`.
@@ -299,14 +303,15 @@ Entry format:
 
 If the rule is mechanizable, also propose a check to add to `gate_check_content.py` or `gate_check_render.py`.
 
-### Fast Track — small decks
+### Fast Track — small decks (default for ≤ 5 content slides)
 
-Skip S2 and S3 gates only when **all** of:
-- Total slides ≤ 5.
-- No data charts (donut, pie, gauge, bar, line, waterfall, pareto).
-- The user explicitly says "quick" / "rough" / "rapid".
+Activate **automatically** when total content slides ≤ 5. Fast Track skips S2 outline and S3 content-gate ceremony but **never** skips:
 
-S1 brief, S4 gate, and S5 delivery are **never** skipped.
+- S1 brief (always done — even one sentence is fine).
+- S4 render gate (run via `mbb-ppt render <content.json>` or `mbb-ppt gate-render <deck.pptx>`).
+- S5 delivery + self-refinement.
+
+For ≤ 5-slide decks: read the brief, write `content.json` directly, render, gate, deliver. No outline.json. No content-gate ceremony unless a chart layout is in play (in which case run the content gate to catch capacity / API-format errors).
 
 ---
 
@@ -473,13 +478,9 @@ Rules numbered 1–10 originate in Likaku's upstream skill (`v1.9` and `v2.0`); 
 
 ## 10. Slide content rules
 
-- ≥ 0.15" gap between title separator line and the first content shape.
-- Insight bars must not overlap the last row of a table or chart. Reserve 0.6" at the bottom of the content area for footnote/source before any insight bar.
-- Bullet text inside a filled shape: ≥ 0.1" inset on all four sides.
+Every content slide (excluding cover/closing if used): action title, title separator line, content area, source attribution, page number. Engine layouts emit these by default — do not bypass them.
 
-### Mandatory slide elements
-
-Every content slide (excluding Cover and Closing): action title, title separator line, content area, source attribution, page number.
+Spacing detail (margins, insets, insight-bar reservations): see [`MAINTAINERS.md`](MAINTAINERS.md) § *Slide spacing rules*.
 
 ---
 
@@ -533,45 +534,13 @@ Default posture is **local-only**. Outbound integrations (cloud cover-image, cha
 3. Conclusion-led titles, every content slide.
 4. Match layout to analytical task.
 5. Charts over text for quantitative data.
-6. ≥ 1 visual-relief slide in 8+ slide decks.
-7. Disciplined typography and spacing.
-8. Local-only unless integrations are explicitly approved.
-9. `eng.save()` is the canonical output path.
-10. Run both gates. If you didn't run them, you didn't pass them.
+6. Disciplined typography and spacing.
+7. `eng.save()` is the canonical output path.
+8. Run both gates. If you didn't run them, you didn't pass them.
 
 ---
 
-## 15. Common mistakes
-
-- Topic-only slide titles.
-- Bullet-heavy opening slides.
-- Two-column text repeated across slides.
-- Circular charts built from tiny rectangles.
-- Legends whose colors do not match the chart.
-- Text boxes touching shape edges.
-- Fixed-size layouts for variable item counts.
-- Action titles longer than 120 chars or shorter than 10 chars.
-- Skipping the storyboard.
-- **Verbal gate-pass.**
-- **Verbal whitelist exemptions.**
-
----
-
-## 16. Reference materials
-
-**Communication:** Minto, *The Pyramid Principle* · Zelazny, *Say It with Charts* · Duarte, *Slide:ology* · Duarte blog (<https://www.duarte.com/blog>).
-
-**Data viz:** Knaflic, *Storytelling with Data* · Tufte, *The Visual Display of Quantitative Information*.
-
-**Slide execution:** Rasiel, *The McKinsey Way* · HBR, *Guide to Persuasive Presentations*.
-
-**Design system:** Material Design typography (<https://m3.material.io/styles/typography>) · DM Sans specimen (<https://fonts.google.com/specimen/DM+Sans>).
-
-**Engineering:** Likaku, [Mck-ppt-design-skill](https://github.com/likaku/Mck-ppt-design-skill) and [harness-skill-upgrader](https://github.com/likaku/harness-skill-upgrader). The five-stage workflow, gate scripts, and harness philosophy in this skill are adapted from those projects.
-
----
-
-## 17. Example slide-title rewrites
+## 15. Example slide-title rewrites
 
 | Weak | Strong |
 |---|---|
@@ -583,9 +552,11 @@ Default posture is **local-only**. Outbound integrations (cloud cover-image, cha
 
 ---
 
-## 18. Maintenance
+## 16. Maintenance
 
-This v2.1 specification is the entry point. Detailed knowledge lives in `references/`, `experiences/`, and the upstream `mbb_ppt/` Python package. When updating:
+This is the operator entry point. Detailed maintenance notes — common-mistakes catalog, reading list, design-system rationale, and the engineering rationale for the gate-script architecture — live in [`MAINTAINERS.md`](MAINTAINERS.md). Operating the skill does not require reading any of that.
+
+When updating the skill:
 
 - Treat `experiences/` as append-only — never delete entries; mark superseded ones with `Superseded by NNN`.
 - When adding a layout limit, update `references/layout-matrix.yaml` AND `gate_check_content.py` together.

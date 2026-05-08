@@ -235,6 +235,110 @@ def test_content_gate_visual_density_skipped_for_short_decks(project_root: Path,
         "Deck under 6 content slides should not trigger the density gate"
 
 
+def test_content_gate_catches_long_oval_label_in_process_chevron(project_root: Path,
+                                                                   tmp_project_dir: Path):
+    """A process_chevron step with a long label fails the label_too_long check."""
+    content = {
+        "slides": [
+            {
+                "idx": 1,
+                "layout": "process_chevron",
+                "title": "Founder-led sales prove unit economics before scaling",
+                "steps": [
+                    ["Operations hub", "Phase 1", "Direct sales to known accounts"],   # bad: long label
+                    ["Local-first",    "Phase 2", "Referral outreach in same city"],   # bad: long label
+                    ["Mobile app",     "Phase 3", "Sales hire + playbook"],            # bad: long label
+                ],
+                "source": "Source: test",
+            },
+        ],
+    }
+    content_path = tmp_project_dir / "content.json"
+    content_path.write_text(json.dumps(content))
+
+    result = _run_content_gate(project_root, content_path, tmp_project_dir)
+    assert result["passed"] is False, "Long oval labels should fail the gate"
+    categories = {item["check"] for item in result["fail_items"]}
+    assert "label_too_long" in categories
+
+
+def test_content_gate_passes_short_oval_label_in_process_chevron(project_root: Path,
+                                                                   tmp_project_dir: Path):
+    """Short labels (numbers, codes) pass."""
+    content = {
+        "slides": [
+            {
+                "idx": 1,
+                "layout": "process_chevron",
+                "title": "Founder-led sales prove unit economics before scaling",
+                "steps": [
+                    ["1", "Phase 1", "Direct sales to known accounts"],
+                    ["2", "Phase 2", "Referral outreach in same city"],
+                    ["3", "Phase 3", "Sales hire + playbook"],
+                ],
+                "source": "Source: test",
+            },
+        ],
+    }
+    content_path = tmp_project_dir / "content.json"
+    content_path.write_text(json.dumps(content))
+    result = _run_content_gate(project_root, content_path, tmp_project_dir)
+    cats = {item["check"] for item in result["fail_items"]}
+    assert "label_too_long" not in cats
+
+
+def test_content_gate_catches_long_oval_label_in_four_column(project_root: Path,
+                                                               tmp_project_dir: Path):
+    """four_column items[0] is the oval label too."""
+    content = {
+        "slides": [
+            {
+                "idx": 1,
+                "layout": "four_column",
+                "title": "Four reasons the recommendation holds together",
+                "items": [
+                    ["Admin", "Title", "Description"],   # bad: 5 chars
+                    ["1",     "Title", "Description"],
+                    ["2",     "Title", "Description"],
+                    ["3",     "Title", "Description"],
+                ],
+                "source": "Source: test",
+            },
+        ],
+    }
+    content_path = tmp_project_dir / "content.json"
+    content_path.write_text(json.dumps(content))
+    result = _run_content_gate(project_root, content_path, tmp_project_dir)
+    cats = {item["check"] for item in result["fail_items"]}
+    assert "label_too_long" in cats
+
+
+def test_content_gate_catches_long_oval_label_in_executive_summary(project_root: Path,
+                                                                     tmp_project_dir: Path):
+    """executive_summary items[0] is the oval label."""
+    content = {
+        "slides": [
+            {
+                "idx": 1,
+                "layout": "executive_summary",
+                "title": "Three actions return revenue to growth quickly",
+                "headline": "Concentrated in two channels and one tier",
+                "items": [
+                    ["First!", "Action title", "Why"],   # bad: 6 chars
+                    ["2",      "Action title", "Why"],
+                    ["3",      "Action title", "Why"],
+                ],
+                "source": "Source: test",
+            },
+        ],
+    }
+    content_path = tmp_project_dir / "content.json"
+    content_path.write_text(json.dumps(content))
+    result = _run_content_gate(project_root, content_path, tmp_project_dir)
+    cats = {item["check"] for item in result["fail_items"]}
+    assert "label_too_long" in cats
+
+
 def test_render_gate_passes_clean_deck(project_root: Path,
                                         tmp_project_dir: Path):
     """A clean rendered deck passes the S4 render gate."""

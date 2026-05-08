@@ -46,3 +46,6 @@ constants_update.py
 # OS
 Thumbs.db
 desktop.ini
+
+# Local-only session logs
+mbb skill vs mck skill

@@ -2,6 +2,45 @@
 
 > This file is for skill maintainers — people editing `SKILL.md`, `references/`, gate scripts, or the engine. Operators (people running the skill in Claude Cowork or Claude Code) do not need to read it. The runtime documentation is in `SKILL.md`.
 
+## Common mistakes
+
+These are recurring failure modes the skill is *engineered* to prevent. Understanding them helps when adding new gates or layouts:
+
+- Topic-only slide titles ("Market overview" instead of "Share is shifting to low-cost entrants").
+- Bullet-heavy opening slides — lean into `executive_summary`, `table_insight`, `big_number`, `key_takeaway`.
+- Two-column text repeated across slides — the gate caps this at 1 globally.
+- Circular charts built from tiny rectangles — engine uses native `BLOCK_ARC` instead.
+- Legends whose colors do not match the chart series.
+- Text boxes touching shape edges — Rule 2 (≥ 0.1" inset on all four sides).
+- Fixed-size layouts for variable item counts — Rule 8 (compute dimensions dynamically).
+- Action titles longer than 120 chars or shorter than 10 chars — Rule 14.
+- Skipping the storyboard.
+- Verbal gate-pass.
+- Verbal whitelist exemptions.
+- Auto-adding `cover` / `closing` slides when the user didn't ask (Rule 9).
+
+## Slide spacing rules
+
+The detailed spacing constraints (operator typically does not need these — the engine emits them automatically):
+
+- ≥ 0.15" gap between title separator line and the first content shape.
+- Insight bars must not overlap the last row of a table or chart. Reserve 0.6" at the bottom of the content area for footnote/source before any insight bar.
+- Bullet text inside a filled shape: ≥ 0.1" inset on all four sides.
+- Page numbers locked at `(9.3, 7.05, 0.5×0.25)` — never compute dynamically.
+
+## Reference materials
+
+Books and articles the skill design draws from:
+
+- **Communication:** Minto, *The Pyramid Principle* · Zelazny, *Say It with Charts* · Duarte, *Slide:ology* · Duarte blog (<https://www.duarte.com/blog>).
+- **Data viz:** Knaflic, *Storytelling with Data* · Tufte, *The Visual Display of Quantitative Information*.
+- **Slide execution:** Rasiel, *The McKinsey Way* · HBR, *Guide to Persuasive Presentations*.
+- **Design system:** Material Design typography (<https://m3.material.io/styles/typography>) · DM Sans specimen (<https://fonts.google.com/specimen/DM+Sans>).
+- **Engineering:** Likaku, [Mck-ppt-design-skill](https://github.com/likaku/Mck-ppt-design-skill) and [harness-skill-upgrader](https://github.com/likaku/harness-skill-upgrader). The five-stage workflow, gate scripts, and harness philosophy are adapted from those projects.
+
+---
+
+
 ## Why this skill is structured around mechanisms
 
 Two ideas borrowed from Kaku Li's harness work apply to AI skills generally, not just to PPT.

@@ -49,6 +49,48 @@ LAYOUTS_WITHOUT_SOURCE = {
 }
 LAYOUTS_WITHOUT_ACTION_TITLE = LAYOUTS_WITHOUT_SOURCE
 
+# ── Oval-bound label budget ───────────────────────────────────────────────
+# add_oval() in mbb_ppt/core.py renders text inside a fixed 0.45" circle at
+# 14pt. Anything over 3 characters visually clips. Layouts that pass user
+# data into the oval-label slot must enforce this budget at S3 — otherwise
+# the user sees fragmented text in the rendered .pptx.
+MAX_OVAL_LABEL_CHARS = 3
+
+
+def _check_oval_label(slide: Dict, idx: int, layout: str,
+                      collection_key: str, label_slot: int = 0) -> List[Dict]:
+    """Validate that the first tuple element of each item fits the oval.
+
+    Args:
+        slide: the slide dict from content.json
+        idx: 1-based slide index for error messages
+        layout: layout name for error messages
+        collection_key: name of the items list field (e.g. "steps", "items")
+        label_slot: which tuple position holds the oval label (default 0)
+    """
+    issues: List[Dict] = []
+    items = slide.get(collection_key, [])
+    for i, item in enumerate(items):
+        if not isinstance(item, (list, tuple)) or len(item) <= label_slot:
+            continue
+        label = item[label_slot]
+        try:
+            label_str = str(label)
+        except Exception:
+            continue
+        if len(label_str) > MAX_OVAL_LABEL_CHARS:
+            issues.append({
+                "slide_idx": idx, "layout": layout, "check": "label_too_long",
+                "message": (
+                    f"{layout} {collection_key}[{i}] label {label_str!r} is "
+                    f"{len(label_str)} chars > {MAX_OVAL_LABEL_CHARS}; the engine "
+                    f"renders this inside a 0.45\" oval and will visually clip. "
+                    f"Use a number ('1','2','3'), letter, or 2–3-char code. "
+                    f"Move long text into the next tuple slot (the title)."
+                ),
+            })
+    return issues
+
 
 # ── Per-layout checkers ───────────────────────────────────────────────────
 
@@ -69,6 +111,7 @@ def check_four_column(slide: Dict, idx: int) -> List[Dict]:
                 "message": (f"four_column items[{i}] must be a 3-tuple (num, col_title, desc); "
                             f"got {got} elements. Fix: prepend a number, e.g. ('1', 'Title', 'Description')."),
             })
+    issues += _check_oval_label(slide, idx, "four_column", "items")
     return issues
 
 
@@ -89,7 +132,40 @@ def check_executive_summary(slide: Dict, idx: int) -> List[Dict]:
                 "message": (f"executive_summary items[{i}] must be a 3-tuple "
                             f"(num, item_title, desc); got {got}. Fix: ('1', 'Action', 'Why').") ,
             })
+    issues += _check_oval_label(slide, idx, "executive_summary", "items")
     return issues
+
+
+def check_vertical_steps(slide: Dict, idx: int) -> List[Dict]:
+    """vertical_steps: 3-tuples (label, title, desc). Label goes in an oval."""
+    issues = []
+    steps = slide.get("steps", [])
+    for i, step in enumerate(steps):
+        if not isinstance(step, (list, tuple)) or len(step) < 3:
+            issues.append({
+                "slide_idx": idx, "layout": "vertical_steps", "check": "api_format",
+                "message": f"vertical_steps steps[{i}] must be a 3-tuple (label, title, desc).",
+            })
+    issues += _check_oval_label(slide, idx, "vertical_steps", "steps")
+    return issues
+
+
+def check_value_chain(slide: Dict, idx: int) -> List[Dict]:
+    """value_chain: stages with a label that goes in the small panel header."""
+    issues = []
+    stages = slide.get("stages", [])
+    issues += _check_oval_label(slide, idx, "value_chain", "stages")
+    return issues
+
+
+def check_numbered_list_panel(slide: Dict, idx: int) -> List[Dict]:
+    """numbered_list_panel: items[0] is the oval-bound number."""
+    return _check_oval_label(slide, idx, "numbered_list_panel", "items")
+
+
+def check_toc(slide: Dict, idx: int) -> List[Dict]:
+    """toc: items are (num, title, desc); num goes in oval."""
+    return _check_oval_label(slide, idx, "toc", "items")
 
 
 def check_matrix_2x2(slide: Dict, idx: int) -> List[Dict]:
@@ -141,6 +217,7 @@ def check_process_chevron(slide: Dict, idx: int) -> List[Dict]:
                 "message": (f"process_chevron steps[{i}] desc {len(str(desc))} chars > 50. "
                             f"Preview: {str(desc)[:40]!r}"),
             })
+    issues += _check_oval_label(slide, idx, "process_chevron", "steps")
     return issues
 
 
@@ -311,13 +388,17 @@ def check_visual_density_global(slides: List[Dict]) -> List[Dict]:
 # ── Routing ───────────────────────────────────────────────────────────────
 
 LAYOUT_CHECKERS = {
-    "four_column":       [check_four_column,       check_source, check_action_title],
-    "executive_summary": [check_executive_summary, check_source, check_action_title],
-    "matrix_2x2":        [check_matrix_2x2,        check_source, check_action_title],
-    "process_chevron":   [check_process_chevron,   check_source, check_action_title],
-    "donut":             [check_donut,             check_source, check_action_title],
-    "grouped_bar":       [check_grouped_bar,       check_source, check_action_title],
-    "timeline":          [check_timeline_last_label, check_source, check_action_title],
+    "four_column":         [check_four_column,         check_source, check_action_title],
+    "executive_summary":   [check_executive_summary,   check_source, check_action_title],
+    "matrix_2x2":          [check_matrix_2x2,          check_source, check_action_title],
+    "process_chevron":     [check_process_chevron,     check_source, check_action_title],
+    "donut":               [check_donut,               check_source, check_action_title],
+    "grouped_bar":         [check_grouped_bar,         check_source, check_action_title],
+    "timeline":            [check_timeline_last_label, check_source, check_action_title],
+    "vertical_steps":      [check_vertical_steps,      check_source, check_action_title],
+    "value_chain":         [check_value_chain,         check_source, check_action_title],
+    "numbered_list_panel": [check_numbered_list_panel, check_source, check_action_title],
+    "toc":                 [check_toc],  # toc skips source/action_title (boilerplate)
 }
 DEFAULT_CHECKERS = [check_source, check_action_title]
 

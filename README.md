@@ -23,20 +23,40 @@ See [`NOTICE`](NOTICE) for the full attribution chain and a list of modification
 
 ## Install
 
-### As a Claude skill (recommended for Claude Cowork / Claude Code users)
+### Claude Cowork (recommended for non-technical users)
+
+Cowork stores installed skills in a different directory from Claude Code, and requires registration in a sibling `manifest.json`. The included installer handles both:
+
+```bash
+git clone https://github.com/albertojb/mbb-ppt-generator.git
+cd mbb-ppt-generator
+bash install_cowork.sh
+```
+
+The installer:
+
+1. Auto-detects your Cowork skills directory.
+2. Copies the skill files into it.
+3. Registers the skill in `manifest.json` (idempotent — safe to re-run).
+4. Installs Python dependencies (`python-pptx`, `lxml`, `pyyaml`).
+5. Optionally disables competing PPT skills so "use the MBB skill" is unambiguous.
+
+After it finishes, **quit Cowork completely** (File > Quit, or `pkill -f Claude`) and relaunch. The skill appears in the right-sidebar Skills list.
+
+In a session, just say:
+
+> *"Use the MBB PPT skill to make a 6-slide pitch about X."*  
+> *"Build a board deck from `meeting_notes.md` using the MBB skill."*
+
+The skill takes care of the brief → outline → content → render → QA workflow internally. You do not need to run any Python yourself.
+
+### Claude Code
 
 ```bash
 git clone https://github.com/albertojb/mbb-ppt-generator.git ~/.claude/skills/mbb-ppt-generator
 cd ~/.claude/skills/mbb-ppt-generator
 pip install -e .
 ```
-
-After install, the skill is available in Claude Cowork and Claude Code under the name **MBB PPT Generator**. Non-technical users invoke it by saying:
-
-> *"Use the MBB PPT skill on this brief."*  
-> *"Make me a board deck from `meeting_notes.md` using the MBB skill."*
-
-The skill takes care of the brief → outline → content → render → QA workflow internally; you do not need to run any Python yourself.
 
 ### As a Python package (for direct programmatic use)
 
@@ -202,8 +222,13 @@ Coverage spans engine import, .pptx zip integrity, the `full_cleanup()` XML sani
 
 ## Status
 
+- **0.3.0** — Cowork installer (`install_cowork.sh`); in-process gates (~3s wall-clock saved per render); label-length gate that prevents oval-overflow bugs; default no-cover-no-closing; HARD RULES 8/9; ~80 lines trimmed from SKILL.md.
+- **0.2.2** — engine correctness fixes (key_takeaway/scorecard/stacked_area parameters), GitHub Actions CI, pitch-deck reference example.
+- **0.2.1** — visual-density gate (≥ 2 chart/diagram/image/process layouts required for 6+ slide decks).
 - **0.2.0** — module rebranded `mck_ppt` → `mbb_ppt`; primary color forest-green; CLI added; cloud cover-image integration removed.
 - **0.1.0** — feature-complete and tagged. Engine bundled and self-contained; no external skill installation needed.
+
+**Functional independence verified**: zero `mck_ppt` imports, zero `~/.workbuddy/` paths, zero references to mck-ppt-design or mck-vg files. mbb-ppt-generator works without any other skill installed.
 
 ## License
 

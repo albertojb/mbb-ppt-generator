@@ -6,11 +6,11 @@
 
 ---
 
-## 1. Where the project is right now (0.2.2 published)
+## 1. Where the project is right now (0.3.0 published)
 
 - **Repo**: [albertojb/mbb-ppt-generator](https://github.com/albertojb/mbb-ppt-generator), public, Apache 2.0
-- **Tags**: `v0.1.0` (initial), `v0.2.0` (rebrand to mbb_ppt + Cowork UX), `v0.2.1` (visual-density gate), `v0.2.2` (engine correctness + CI + pitch deck reference)
-- **HEAD on main** is the v0.2.2 commit. Public history: v0.1.0 → v0.2.0 → v0.2.1 → v0.2.2
+- **Tags**: `v0.1.0` → `v0.2.0` (rebrand to mbb_ppt + Cowork UX) → `v0.2.1` (visual-density gate) → `v0.2.2` (engine correctness + CI + pitch deck reference) → `v0.3.0` (Cowork installer + speed + overflow gate + default no-cover/closing).
+- **HEAD on main** is the v0.3.0 commit.
 - **Self-contained**: bundles the engine (Apache 2.0 from likaku's Mck-ppt-design-skill); no external skill installation needed
 - **Module name**: `mbb_ppt` (renamed from upstream `mck_ppt` in v0.2.0). Class `MbbEngine`. Public alias `ExecEngine`.
 - **English-only** (CJK swept from engine, defaults, prompts, comments)

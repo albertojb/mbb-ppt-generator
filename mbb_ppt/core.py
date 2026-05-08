@@ -123,13 +123,28 @@ def add_hline(slide, x, y, length, color=BLACK, thickness=Pt(0.5)):
 
 
 def add_oval(slide, x, y, letter, size=Inches(0.45), bg=NAVY, fg=WHITE):
-    """Add a circle label with a letter/number (e.g. 'A', '1')."""
+    """Add a circle label with a letter/number (e.g. 'A', '1').
+
+    Defensive truncation: anything longer than 3 characters is clipped to
+    the first 2 chars to prevent visual fragmentation when the S3 content
+    gate is bypassed. The gate itself rejects oval labels > 3 chars at
+    validation time — this is just a belt-and-braces fallback.
+    """
+    label_str = '' if letter is None else str(letter)
+    if len(label_str) > 3:
+        import sys
+        print(
+            f"[mbb_ppt] WARN: add_oval received {label_str!r} ({len(label_str)} chars); "
+            f"truncating to {label_str[:2]!r}. Use a number/2-3-char code instead.",
+            file=sys.stderr,
+        )
+        label_str = label_str[:2]
     c = slide.shapes.add_shape(MSO_SHAPE.OVAL, x, y, size, size)
     c.fill.solid()
     c.fill.fore_color.rgb = bg
     c.line.fill.background()
     tf = c.text_frame
-    tf.paragraphs[0].text = letter
+    tf.paragraphs[0].text = label_str
     tf.paragraphs[0].font.size = Pt(14)
     tf.paragraphs[0].font.name = 'Arial'
     tf.paragraphs[0].font.color.rgb = fg

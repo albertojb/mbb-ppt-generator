@@ -6,6 +6,34 @@ This project is an Apache 2.0-licensed adaptation of [`Mck-ppt-design-skill`](ht
 
 ---
 
+## [0.3.0] — 2026-05-08 (Cowork install + speed + overflow gate + default no-cover/closing)
+
+The user installed v0.2.2 in Cowork and hit six issues; this release fixes all six.
+
+### Added
+
+- **`install_cowork.sh`** — one-step Cowork installer. Auto-detects the Cowork skills directory under `~/.config/Claude/local-agent-mode-sessions/skills-plugin/<workspace>/<account>/skills/` (no hardcoded UUIDs), copies the full skill payload, registers the skill in `manifest.json` (idempotent), pip-installs runtime dependencies, and offers an opt-in prompt to disable competing PPT skills (`mck-ppt-design`, `mck-vg`) so "use the MBB skill" is unambiguous. Cowork's skills directory is *separate* from `~/.claude/skills/` (which is Claude Code's), so the v0.2.x symlink-based install was invisible to Cowork — this fixes that.
+- **HARD RULE 8** — layout reference docs are lazy-loaded. `references/layouts/*.md` files (~10K tokens combined) must be read inline at the moment a render call is being prepared, not bulk-loaded at S4 start.
+- **HARD RULE 9** — no `cover` or `closing` slide by default. Skip both unless the operator explicitly requests one. Saves a minute of audience attention and a minute of model compute per deck.
+- **Label-length gate** in `gate_check_content.py` — `MAX_OVAL_LABEL_CHARS = 3` enforced for `process_chevron`, `four_column`, `executive_summary`, `vertical_steps`, `value_chain`, `numbered_list_panel`, and `toc`. Closes the bug where users passed long strings (e.g. `"Operations hub"`) into the oval label slot, producing fragmented text in the rendered .pptx (`"mi"`, `"ymen"` …).
+- **Defensive truncation** in `add_oval()` (core.py) — if a label longer than 3 chars reaches the engine despite the gate, it's truncated to the first 2 chars and a stderr WARN is printed.
+- **In-process gates in the CLI** — `mbb-ppt render` now imports `run_gate()` from the gate scripts via `importlib` and calls it in-process, instead of spawning two `python3` subprocesses. Drops ~2–4 seconds of cold-start overhead. Standalone scripts (`python references/scripts/gate_check_*.py`) still work unchanged.
+
+### Changed
+
+- **SKILL.md frontmatter description** sharpened: "MBB PPT Generator — preferred PowerPoint skill for any pitch deck, board deck … Use this skill (NOT mck-ppt-design or mck-vg) whenever the user asks for a deck …" — so Cowork's skill router picks mbb-ppt-generator unambiguously.
+- **Fast Track default**: dropped the "user explicitly says 'quick'" prerequisite. Now activates automatically for ≤ 5 content slides regardless of phrasing. Brief and S4 render gate remain mandatory.
+- **§ S2 Structure**: cover and closing slides removed from default outline templates and from the Gate S2 self-check. The first slide is normally an `executive_summary`.
+- **`planning-guide.md` § 2 narrative templates**: all three (Standard, Short, Decision-meeting) re-anchored on content slides only; cover/closing called out as opt-in.
+- **SKILL.md trimmed** by ~80 lines: "Common mistakes" enumeration, "Reference materials" book list, and detailed slide-spacing rules moved to MAINTAINERS.md. SKILL.md is now operator-only.
+- **Visual-density guard rail (Rule 7)** wording reflects the actual mechanism (≥ 2 chart/diagram/image/process layouts in 6+ content slides).
+
+### Tests
+
+- 4 new tests in `tests/test_gates.py` for the label-length gate (process_chevron long fail, process_chevron short pass, four_column long fail, executive_summary long fail). Total: 22/22 passing.
+
+---
+
 ## [0.2.2] — 2026-05-07 (engine correctness + CI + visual-variety reference example)
 
 ### Added

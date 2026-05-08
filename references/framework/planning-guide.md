@@ -23,15 +23,15 @@ This is the single most-skipped step and the single most common cause of decks t
 ### Storyboard format
 
 ```
-1. (cover)
-2. Three actions return revenue to double-digit growth                    [executive_summary]
-3. Premium mix shift drives margin without adding cost-to-serve           [grouped_bar]
-4. Two distributor channels remain underdeveloped relative to peers       [horizontal_bar]
-5. Operating simplification can fund execution without harming service    [waterfall]
-6. The three actions are complementary, not sequential                    [table_insight]
-7. A phased rollout reduces execution risk and accelerates learning       [timeline]
-8. (closing)
+1. Three actions return revenue to double-digit growth                    [executive_summary]
+2. Premium mix shift drives margin without adding cost-to-serve           [grouped_bar]
+3. Two distributor channels remain underdeveloped relative to peers       [horizontal_bar]
+4. Operating simplification can fund execution without harming service    [waterfall]
+5. The three actions are complementary, not sequential                    [table_insight]
+6. A phased rollout reduces execution risk and accelerates learning       [timeline]
 ```
+
+(No `cover` or `closing` slides by default — see HARD RULE 9 in `SKILL.md`. Add a cover only if the operator explicitly asks.)
 
 The right column is the layout you intend to use. It can change after the storyboard, but committing to a layout per slide forces you to think about *how* you will say each thing, not just *what*.
 
@@ -39,51 +39,44 @@ The right column is the layout you intend to use. It can change after the storyb
 
 ## 2. Narrative templates
 
-Two templates cover most decks. Clone the closer one and adjust.
+Three templates cover most decks. Clone the closer one and adjust. **None of the templates include a `cover` or `closing` slide by default** (HARD RULE 9 in `SKILL.md`). Add a cover only if the operator asks. Never auto-add a closing/"thank you" slide.
 
-### Standard deck — 10–12 slides (60–90 minute audience)
-
-```
-1.  Cover                                                        [cover]
-2.  Table of contents                                            [toc]
-3.  Executive summary — the recommendation, lead with answer     [executive_summary]   ★
-4.  Why this conclusion is correct (governing argument 1)        [table_insight]       ★
-5.  Why this conclusion is correct (governing argument 2)        [grouped_bar | big_number]
-6.  Why this conclusion is correct (governing argument 3)        [side_by_side | metric_cards]
-7.  Evidence / case study                                        [case_study | data_table]
-8.  Risk and trade-offs                                          [matrix_2x2 | pros_cons]
-9.  Implementation path                                          [timeline | process_chevron]
-10. Synthesis — restate the recommendation in light of evidence  [key_takeaway | executive_summary]
-11. (optional) Roadmap or next-step decisions                    [action_items]
-12. Closing                                                      [closing]
-```
-
-★ = high-impact opening layouts. Slides 3–5 set the deck's tone; lean into `executive_summary` / `table_insight` / `big_number` / `key_takeaway` here, not bullet text.
-
-### Short deck — 6–8 slides (15–30 minute audience)
+### Standard deck — 8–10 content slides (60–90 minute audience)
 
 ```
-1. Cover                                                         [cover]
-2. Executive summary — the recommendation                        [executive_summary]   ★
-3. Argument 1 with supporting data                               [table_insight | grouped_bar]
-4. Argument 2 with supporting data                               [side_by_side | big_number]
-5. Evidence / one strong case                                    [case_study]
-6. Synthesis and recommendation                                  [key_takeaway]
-7. Next steps                                                    [action_items]
-8. Closing                                                       [closing]
+1. Three actions return revenue to double-digit growth         [executive_summary]   ★
+2. Why this conclusion is correct (governing argument 1)       [table_insight]       ★
+3. Why this conclusion is correct (governing argument 2)       [grouped_bar | big_number]
+4. Why this conclusion is correct (governing argument 3)       [side_by_side | metric_cards]
+5. Evidence / case study                                       [case_study | data_table]
+6. Risk and trade-offs                                         [matrix_2x2 | pros_cons]
+7. Implementation path                                         [timeline | process_chevron]
+8. Synthesis — recommendation in light of evidence             [key_takeaway | executive_summary]
+9. (optional) Roadmap or next-step decisions                   [action_items]
 ```
 
-When the audience is senior and time is short, **drop the TOC.** A senior audience does not need a contents page; they need the answer faster.
+★ = high-impact opening layouts. Slides 1–3 set the deck's tone; lean into `executive_summary` / `table_insight` / `big_number` / `key_takeaway` here, not bullet text.
 
-### Decision-meeting deck — 4–6 slides
+### Short deck — 5–6 content slides (15–30 minute audience)
 
 ```
-1. Cover                                                         [cover]
-2. The decision being asked + recommendation                     [executive_summary | big_number]
-3. Three reasons the recommendation holds                        [table_insight | four_column]
-4. The single biggest risk, addressed                            [matrix_2x2 | side_by_side]
-5. Decision request and timeline                                 [action_items]
-6. Closing                                                       [closing]
+1. Executive summary — the recommendation                      [executive_summary]   ★
+2. Argument 1 with supporting data                             [table_insight | grouped_bar]
+3. Argument 2 with supporting data                             [side_by_side | big_number]
+4. Evidence / one strong case                                  [case_study]
+5. Synthesis and recommendation                                [key_takeaway]
+6. Next steps                                                  [action_items]
+```
+
+When the audience is senior and time is short, drop the TOC. A senior audience does not need a contents page; they need the answer faster.
+
+### Decision-meeting deck — 3–4 content slides
+
+```
+1. The decision + recommendation                               [executive_summary | big_number]
+2. Three reasons the recommendation holds                      [table_insight | four_column]
+3. The single biggest risk, addressed                          [matrix_2x2 | side_by_side]
+4. Decision request and timeline                               [action_items]
 ```
 
 ---
