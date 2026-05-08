@@ -60,7 +60,7 @@ eng.waterfall(title, items, max_val=None, legend_items=None,
 ### Example
 
 ```python
-from mck_ppt.constants import NAVY, ACCENT_GREEN, ACCENT_RED
+from mbb_ppt.constants import NAVY, ACCENT_GREEN, ACCENT_RED
 
 eng.waterfall(
     title='Three drivers explain Q4 revenue gain',
@@ -210,7 +210,7 @@ The engine renders y-axis values and totals with a `$` currency prefix by defaul
 ### Example
 
 ```python
-from mck_ppt.constants import NAVY, ACCENT_BLUE, ACCENT_GREEN
+from mbb_ppt.constants import NAVY, ACCENT_BLUE, ACCENT_GREEN
 
 eng.stacked_area(
     title='Total revenue grew $300M with mix shift to premium',
@@ -259,7 +259,7 @@ eng.bubble(title, bubbles, x_label='', y_label='',
 ### Example
 
 ```python
-from mck_ppt.constants import NAVY, ACCENT_BLUE, ACCENT_GREEN, ACCENT_RED
+from mbb_ppt.constants import NAVY, ACCENT_BLUE, ACCENT_GREEN, ACCENT_RED
 
 eng.bubble(
     title='Premium accounts cluster in high-growth, high-margin quadrant',

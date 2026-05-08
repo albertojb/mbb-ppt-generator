@@ -2,7 +2,7 @@
 
 > **Loaded at S2 (Structure).** This file is a scannable index. Pick a layout method, then look up its capacity in [`layout-matrix.yaml`](../layout-matrix.yaml) and any layout-specific contract in `references/layouts/<category>.md`.
 >
-> The implementation lives in `mck_ppt/engine.py`. Class is `MckEngine`, documented as `ExecEngine`. All methods are instance methods on a single engine; each call adds one slide and increments the page counter.
+> The implementation lives in `mbb_ppt/engine.py`. Class is `MbbEngine`, documented as `ExecEngine`. All methods are instance methods on a single engine; each call adds one slide and increments the page counter.
 
 ---
 
@@ -11,8 +11,8 @@
 ```python
 import sys, os
 sys.path.insert(0, '/path/to/mbb-ppt-generator')   # skill root
-from mck_ppt import MckEngine as ExecEngine
-from mck_ppt.constants import *
+from mbb_ppt import MbbEngine as ExecEngine
+from mbb_ppt.constants import *
 
 eng = ExecEngine(total_slides=N)        # N drives the page-number denominator
 eng.cover(...)                          # one method = one slide
@@ -21,7 +21,7 @@ eng.executive_summary(...)
 eng.save('output/deck.pptx')            # runs full_cleanup() automatically
 ```
 
-Constructor: `MckEngine(total_slides=30)`. Pass the actual slide count from your outline so page numbers (`1/N`, `2/N`, …) are correct. Mismatched values render visibly wrong page numbers.
+Constructor: `MbbEngine(total_slides=30)`. Pass the actual slide count from your outline so page numbers (`1/N`, `2/N`, …) are correct. Mismatched values render visibly wrong page numbers.
 
 `eng.save(outpath)` performs three-layer XML cleanup (removes `p:style` from every shape, strips theme shadow / 3D effects, repacks the OOXML zip). Do not call `full_cleanup()` separately — `save()` does it.
 
@@ -179,14 +179,14 @@ A handful of parameter names recur. Get these right once and most other layouts 
 | `segments` | For `donut`: list of `(percent, color, label)` 3-tuples. **≤ 6**. | `[(0.42, NAVY, 'Premium'), …]` |
 | `series` | For `grouped_bar` / `stacked_bar`: list of `(label, color)`. **≤ 3** for `grouped_bar`. | `[('Premium', NAVY), ('Partner', ACCENT_BLUE)]` |
 | `data` | For `grouped_bar`: list of lists, outer = categories, inner = series values. | `[[120, 80], [145, 95], …]` |
-| `cover_image` | `None` / `'auto'` / `'/path/to/local.png'`. `'auto'` requires Tencent SDK and is OFF by default. | `None` |
-| `total_slides` | Constructor — drives page-number denominator. | `MckEngine(total_slides=10)` |
+| `cover_image` | `None` (text-only cover) or `'/path/to/local.png'` (full-bleed background). | `None` |
+| `total_slides` | Constructor — drives page-number denominator. | `MbbEngine(total_slides=10)` |
 
 ---
 
 ## Color constants
 
-Available from `mck_ppt.constants`:
+Available from `mbb_ppt.constants`:
 
 - Primary: `NAVY`, `WHITE`, `BLACK`, `DARK_GRAY`, `MED_GRAY`, `LINE_GRAY`, `BG_GRAY`, `HEADING_ACCENT`, `SECTION_BG`
 - Accent: `ACCENT_BLUE`, `ACCENT_GREEN`, `ACCENT_ORANGE`, `ACCENT_RED` (paired with `LIGHT_*` backgrounds via `ACCENT_PAIRS`)
@@ -210,4 +210,4 @@ Backward-compat aliases retained: `FONT_HEADER` ≡ `HEADING_FONT`, `FONT_BODY` 
 - **Production rules to validate against:** `guard-rails.md` (this directory).
 - **Layout-specific examples and wireframes:** `../layouts/<category>.md` (per layout family).
 - **Past defects and fixes:** `../../experiences/*.md` — read at S3 to avoid recurring traps.
-- **Source code (authoritative truth):** `../../mck_ppt/engine.py`. Every method has a docstring; consult it when this index does not answer.
+- **Source code (authoritative truth):** `../../mbb_ppt/engine.py`. Every method has a docstring; consult it when this index does not answer.

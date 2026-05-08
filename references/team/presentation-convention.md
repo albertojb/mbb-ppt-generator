@@ -13,7 +13,7 @@ prs.slide_width  = Inches(13.333)   # 16:9 widescreen
 prs.slide_height = Inches(7.5)
 ```
 
-The engine sets these in `MckEngine.__init__()`; do not override.
+The engine sets these in `MbbEngine.__init__()`; do not override.
 
 ## Standard margins
 
@@ -65,7 +65,7 @@ Source: <origin>, <year/date>
 Examples:
 
 - `Source: internal analysis, Q1 2026`
-- `Source: McKinsey Global Institute, 2024`
+- `Source: industry research, 2024`
 - `Source: company financials, FY2025`
 
 The S3 content gate (`gate_check_content.py`) flags any non-cover, non-toc, non-divider, non-closing slide missing a non-empty `source` string.
@@ -93,11 +93,11 @@ Position is locked per Rule 18 — never compute dynamically. Page-number drift 
 
 ```python
 import sys, os
-sys.path.insert(0, '/path/to/mbb-ppt-generator')      # the skill root that contains mck_ppt/
-from mck_ppt import MckEngine as ExecEngine
+sys.path.insert(0, '/path/to/mbb-ppt-generator')      # the skill root that contains mbb_ppt/
+from mbb_ppt import MbbEngine as ExecEngine
 ```
 
-The skill is self-contained — no external installation of the upstream Likaku skill is required. The bundled `mck_ppt/` package preserves Kaku Li's copyright headers per Apache 2.0.
+The skill is self-contained — no external installation of the upstream Likaku skill is required. The bundled `mbb_ppt/` package preserves Kaku Li's copyright headers per Apache 2.0.
 
 `eng.save(outpath)` runs three-layer XML cleanup automatically:
 

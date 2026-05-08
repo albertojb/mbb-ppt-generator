@@ -12,7 +12,7 @@ default_theme: mbb
 themes:
   mbb:
     style: "MBB-style executive deck"
-    engine: ExecEngine                 # alias of MckEngine
+    engine: ExecEngine                 # alias of MbbEngine
     color_profile: navy_blue
     heading_font: "DM Sans"            # falls back to Calibri
     body_font: "Arial"

@@ -239,7 +239,7 @@ eng.value_chain(title, stages, source='', bottom_bar=None)
 ### Example
 
 ```python
-from mck_ppt.constants import NAVY, ACCENT_BLUE, ACCENT_GREEN, ACCENT_ORANGE, ACCENT_RED
+from mbb_ppt.constants import NAVY, ACCENT_BLUE, ACCENT_GREEN, ACCENT_ORANGE, ACCENT_RED
 
 eng.value_chain(
     title='End-to-end value chain — service is the under-invested stage',
@@ -287,7 +287,7 @@ eng.decision_tree(title, root, branches, right_panel=None, source='')
 ### Example
 
 ```python
-from mck_ppt.constants import ACCENT_BLUE, ACCENT_ORANGE, ACCENT_GREEN
+from mbb_ppt.constants import ACCENT_BLUE, ACCENT_ORANGE, ACCENT_GREEN
 
 eng.decision_tree(
     title='Where does the margin gap come from?',

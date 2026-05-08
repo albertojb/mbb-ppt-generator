@@ -53,7 +53,7 @@ eng.donut(title, segments, center_label='', center_sub='',
 ### Example
 
 ```python
-from mck_ppt.constants import NAVY, ACCENT_BLUE, ACCENT_GREEN, MED_GRAY
+from mbb_ppt.constants import NAVY, ACCENT_BLUE, ACCENT_GREEN, MED_GRAY
 
 eng.donut(
     title='Premium tier drives 42% of revenue from 18% of volume',
@@ -120,7 +120,7 @@ The S3 content gate does not block `pie` for legacy decks, but the planning guid
 
 ## BLOCK_ARC mechanism
 
-All active circular charts (`donut`, plus the retired `pie` and `gauge`) use native PowerPoint `BLOCK_ARC` shapes via the `add_block_arc()` helper in `mck_ppt/core.py`. This is **Rule 9** — see [`../framework/guard-rails.md`](../framework/guard-rails.md) for the rationale.
+All active circular charts (`donut`, plus the retired `pie` and `gauge`) use native PowerPoint `BLOCK_ARC` shapes via the `add_block_arc()` helper in `mbb_ppt/core.py`. This is **Rule 9** — see [`../framework/guard-rails.md`](../framework/guard-rails.md) for the rationale.
 
 ### Why this matters
 
@@ -169,7 +169,7 @@ Operator-level code rarely calls `add_block_arc()` directly — `donut` and the 
 ### Cross-references
 
 - **Rule 9 in full:** [`../framework/guard-rails.md`](../framework/guard-rails.md).
-- **Implementation:** `mck_ppt/core.py` → `add_block_arc()`.
+- **Implementation:** `mbb_ppt/core.py` → `add_block_arc()`.
 
 ---
 

@@ -2,7 +2,6 @@
 # For development with optional features, see pyproject.toml extras:
 #   pip install -e ".[dev]"        # core + pytest
 #   pip install -e ".[image]"      # core + rembg/Pillow/numpy for image processing
-#   pip install -e ".[cloud]"      # core + tencentcloud SDK (opt-in cloud cover image)
 #   pip install -e ".[all]"        # everything
 
 python-pptx>=0.6.21

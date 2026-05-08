@@ -27,7 +27,7 @@
 **Problem**: Code that placed first content element at `Inches(1.0)` collided with the action title separator at `Inches(1.05)`.
 **Root Cause**: Inconsistent assumption about where the title bar ends.
 **Fix**: Content starts at `CONTENT_TOP = Inches(1.3)` after `add_action_title()`.
-**Rule**: Always import `CONTENT_TOP` from `mck_ppt.constants` rather than hand-coding the value.
+**Rule**: Always import `CONTENT_TOP` from `mbb_ppt.constants` rather than hand-coding the value.
 
 ## Experience 004 — Bottom bar cuts off last table row
 

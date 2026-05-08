@@ -1,9 +1,9 @@
 # Copyright 2024-2026 Kaku Li (https://github.com/likaku)
 # Licensed under the Apache License, Version 2.0 — see LICENSE and NOTICE.
-# Part of "Mck-ppt-design-skill" (McKinsey PPT Design Framework).
+# Originally from "Mck-ppt-design-skill"; bundled in mbb-ppt-generator
 # NOTICE: This file must be retained in all copies or substantial portions.
 #
-"""Low-level drawing primitives for McKinsey PPT framework.
+"""Low-level drawing primitives for MBB PPT framework.
 
 All coordinate calculations, shape creation, XML cleanup happen here.
 Higher-level code should NOT import pptx directly — use these helpers.

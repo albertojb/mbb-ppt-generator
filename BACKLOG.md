@@ -12,7 +12,7 @@
 - **Tag**: `v0.1.0` on commit `98ccffb` (initial commit)
 - **HEAD**: `bec3e3f` (post-tag packaging + tests + second example)
 - **51 files tracked**, ~4,200 lines of layout reference + ~200 KB engine source + 15 passing tests
-- **Self-contained**: bundles Likaku's `mck_ppt/` engine (Apache 2.0); no external skill installation needed
+- **Self-contained**: bundles Likaku's `mbb_ppt/` engine (Apache 2.0); no external skill installation needed
 - **English-only** (CJK swept from engine, defaults, prompts, comments)
 - **Heading typography**: DM Sans → Inter → Calibri fallback
 - **5-stage workflow**: brief → outline → content → render+QA → deliver, with two machine-readable gates whose `passed` is a Python boolean derived from program logic, never a verbal claim
@@ -83,7 +83,7 @@ If any of these fail, **stop and diagnose before proceeding.** Don't do new work
 | `NOTICE` | Apache 2.0 attribution chain (Kaku Li → albertojb) |
 | `references/INDEX.md` | Routing table — what to load at each stage |
 | `references/layouts/*.md` | 12 per-layout reference files (4,200 lines covering 67 active layouts) |
-| `mck_ppt/engine.py` | The 67-method layout library (~3,200 lines) |
+| `mbb_ppt/engine.py` | The 67-method layout library (~3,200 lines) |
 
 ---
 
@@ -96,7 +96,7 @@ These are not "do work" tasks — they're decisions that shape later work. Surfa
 | **Who is the primary user?** AI agents writing decks autonomously, humans who want a Python library, or consultants who want a sample-deck library? | Each implies different documentation, different examples, different marketplaces. |
 | **What's the differentiator vs. raw `python-pptx`?** | python-pptx alone could do everything. The value-add is the design system + harness + gates. README touches this but doesn't articulate it concisely. |
 | **What's the differentiator vs. AI tools that generate slides directly** (Gamma, Beautiful.ai, Pitch)? | Those are end-to-end consumer tools. This skill is for someone who wants programmatic control + version control + diff-able decks. Narrow but real audience. |
-| **Which marketplaces are the targets?** Claude Code skill marketplace, ClawHub, WorkBuddy, PyPI, all of them? | Each has different submission formats, manifests, metadata requirements. Tier 5 below is gated on this. |
+| **Which marketplaces are the targets?** Claude Code skill marketplace, Claude Cowork, PyPI, all of them? | Each has different submission formats, manifests, metadata requirements. Tier 5 below is gated on this. |
 | **Long-term scope: chart library? Presentation framework? AI deck-design DSL?** | Decisions about scope inform what makes 0.2.0 vs. 1.0.0 vs. "out of scope, decline the feature request." |
 
 ---
@@ -109,14 +109,14 @@ Estimated total ~12 hours of focused work to go from "tagged 0.1.0" to "I'd be p
 
 | # | Gap | File | Effort | Recommendation |
 |---|---|---|---|---|
-| 1.1 | `key_takeaway` hardcoded `'Synergy analysis'` left header | `mck_ppt/engine.py` line ~1134 | 15 min — add `left_title` parameter with sensible default | **Fix.** Visible defect on a high-impact layout. |
-| 1.2 | `scorecard` hardcoded `['Domain', 'Score', 'Maturity']` headers | `mck_ppt/engine.py` line ~476 | 10 min — add `headers` parameter | **Fix.** Trivial. |
-| 1.3 | `stacked_area` hardcoded `$` currency in y-axis labels and totals | `mck_ppt/engine.py` lines ~2506, 2522 | 10 min — add `currency_symbol='$'` parameter | **Fix.** |
-| 1.4 | `review.py` redundancy/compression regex are no-ops for English | `mck_ppt/review.py` lines 318–337 | 60–90 min — write English equivalents (hedging removal, compression patterns, jargon replacements) | **Fix or document as "experimental, Chinese-only".** Currently misleading: `AutoFixPipeline` is exposed, advertised in docstrings, does nothing useful for English decks. |
-| 1.5 | 5 whitelisted `engine_bug_errors` per render | `references/scripts/gate_check_render.py` ENGINE_BUG_WHITELIST + `mck_ppt/engine.py` (the layouts that trigger them) | 30–45 min investigation | **Investigate.** Confirm `peer_font_inconsistency` is truly intentional design; if so, document each instance with an inline comment in `engine.py` linking to the rationale. The current whitelist comment is generic. |
-| 1.6 | `set_ea_font` writes `'Arial'` to East Asian font slot on every text run | `mck_ppt/core.py` lines 61–68 | 20–30 min — make `set_ea_font` a true no-op when `typeface == BODY_FONT`, OR remove the function entirely (engine code that calls it would also need adjustment) | **Fix.** Generates pointless XML noise. |
-| 1.7 | `_LANG_REPLACEMENTS = {}` dead variable | `mck_ppt/review.py` line 315 | 2 min — remove | Easy cleanup. |
-| 1.8 | `mck_ppt/storylines/__init__.py` is empty | `mck_ppt/storylines/__init__.py` | 5 min — add proper exports / docstring | Idiomatic cleanup. |
+| 1.1 | `key_takeaway` hardcoded `'Synergy analysis'` left header | `mbb_ppt/engine.py` line ~1134 | 15 min — add `left_title` parameter with sensible default | **Fix.** Visible defect on a high-impact layout. |
+| 1.2 | `scorecard` hardcoded `['Domain', 'Score', 'Maturity']` headers | `mbb_ppt/engine.py` line ~476 | 10 min — add `headers` parameter | **Fix.** Trivial. |
+| 1.3 | `stacked_area` hardcoded `$` currency in y-axis labels and totals | `mbb_ppt/engine.py` lines ~2506, 2522 | 10 min — add `currency_symbol='$'` parameter | **Fix.** |
+| 1.4 | `review.py` redundancy/compression regex are no-ops for English | `mbb_ppt/review.py` lines 318–337 | 60–90 min — write English equivalents (hedging removal, compression patterns, jargon replacements) | **Fix or document as "experimental, Chinese-only".** Currently misleading: `AutoFixPipeline` is exposed, advertised in docstrings, does nothing useful for English decks. |
+| 1.5 | 5 whitelisted `engine_bug_errors` per render | `references/scripts/gate_check_render.py` ENGINE_BUG_WHITELIST + `mbb_ppt/engine.py` (the layouts that trigger them) | 30–45 min investigation | **Investigate.** Confirm `peer_font_inconsistency` is truly intentional design; if so, document each instance with an inline comment in `engine.py` linking to the rationale. The current whitelist comment is generic. |
+| 1.6 | `set_ea_font` writes `'Arial'` to East Asian font slot on every text run | `mbb_ppt/core.py` lines 61–68 | 20–30 min — make `set_ea_font` a true no-op when `typeface == BODY_FONT`, OR remove the function entirely (engine code that calls it would also need adjustment) | **Fix.** Generates pointless XML noise. |
+| 1.7 | `_LANG_REPLACEMENTS = {}` dead variable | `mbb_ppt/review.py` line 315 | 2 min — remove | Easy cleanup. |
+| 1.8 | `mbb_ppt/storylines/__init__.py` is empty | `mbb_ppt/storylines/__init__.py` | 5 min — add proper exports / docstring | Idiomatic cleanup. |
 
 **Total Tier 1: ~3 hours.**
 
@@ -146,7 +146,7 @@ Marketplace polish.
 |---|---|---|
 | 3.1 | **Screenshot or visual** of generated output in README — single biggest first-impression lever | 20 min — generate a deck, screenshot 3 slides, add to README |
 | 3.2 | "Why this skill?" comparison vs. alternatives (raw python-pptx, Gamma, Beautiful.ai, Pitch, Marp, Slidev) | 30 min |
-| 3.3 | AI agent integration guide (concrete examples for Claude Code, WorkBuddy, ClawHub) | 45 min |
+| 3.3 | AI agent integration guide (concrete examples for Claude Code, Claude Cowork) | 45 min |
 | 3.4 | Troubleshooting / FAQ section | 30 min |
 | 3.5 | Architecture diagram (Mermaid or ASCII) showing the 5-stage workflow + 14 files involved | 30 min |
 | 3.6 | `CONTRIBUTING.md` — how to file issues, run tests, propose features | 20 min |
@@ -180,8 +180,8 @@ Depends entirely on which marketplaces are targeted. **Confirm targets in §3 be
 | GitHub | ✅ Already done. | — |
 | PyPI | Name reservation check, `python -m build`, `twine upload`. Metadata already correct. | 30 min |
 | Claude Code skill marketplace | Probably needs a `.claude-skill.yaml` manifest. **Research current spec first.** | Unknown |
-| WorkBuddy | Unknown format. **Research first.** | Unknown |
-| ClawHub | Unknown format. **Research first.** | Unknown |
+| Claude Cowork | Unknown format. **Research first.** | Unknown |
+| Claude Cowork | Unknown format. **Research first.** | Unknown |
 | Hugging Face Spaces (optional) | Could host a deck-generation demo Space. | 60 min |
 | AI agent install instructions | Parallel install paths in README for Claude Code, etc. | 30 min |
 
@@ -248,9 +248,9 @@ Major-version semantics for this project (proposed; confirm with albertojb):
 
 If a fresh chat is tempted to "improve" any of these, push back — they were deliberate:
 
-- **Apache 2.0 attribution to Kaku Li in every `mck_ppt/*.py` file header.** Required by the license and ethically right. Don't strip it.
-- **The `mck_ppt/` module name** (vs. renaming to `mbb_ppt`). Keeping the original name preserves Apache 2.0 lineage and is documented as an "implementation detail" in SKILL.md.
-- **`MckEngine` class name.** Same reason. Documented under the `ExecEngine` alias.
+- **Apache 2.0 attribution to Kaku Li in every `mbb_ppt/*.py` file header.** Required by the license and ethically right. Don't strip it.
+- **The `mbb_ppt/` module name** (vs. renaming to `mbb_ppt`). Keeping the original name preserves Apache 2.0 lineage and is documented as an "implementation detail" in SKILL.md.
+- **`MbbEngine` class name.** Same reason. Documented under the `ExecEngine` alias.
 - **`experiences/` is append-only.** Mark superseded entries with `Superseded by NNN`; never delete.
 - **Five retired layouts** (Venn, Cycle, Funnel, Pie, Gauge). Methods still exist for backward compat; not promoted in new decks. Do not delete the methods.
 - **Both gate scripts use English error messages.** Don't accept "minor" Chinese reintroductions.
@@ -292,8 +292,8 @@ python3 examples/board_qbr_example.py
 
 # Build the storyline
 python3 -c "
-from mck_ppt.deck_builder import DeckBuilder
-from mck_ppt.storylines import ai_enterprise
+from mbb_ppt.deck_builder import DeckBuilder
+from mbb_ppt.storylines import ai_enterprise
 DeckBuilder.build(ai_enterprise.STORYLINE, 'storyline.pptx')
 "
 
@@ -305,14 +305,14 @@ python3 references/scripts/gate_check_render.py <pptx> <project_dir>
 git ls-files '*.py' '*.md' '*.yaml' | xargs grep -lP '[\x{4E00}-\x{9FFF}]' 2>/dev/null
 
 # Verify CJK hasn't crept back into the engine
-grep -cP '[\x{4E00}-\x{9FFF}]' mck_ppt/*.py mck_ppt/storylines/*.py
+grep -cP '[\x{4E00}-\x{9FFF}]' mbb_ppt/*.py mbb_ppt/storylines/*.py
 # Expected: review.py: 14 (intentional regex no-ops); everything else: 0
 
 # Engine smoke test from clean slate
 python3 -c "
 import sys; sys.path.insert(0,'.')
-from mck_ppt import MckEngine
-eng = MckEngine(total_slides=2)
+from mbb_ppt import MbbEngine
+eng = MbbEngine(total_slides=2)
 eng.cover(title='Smoke test')
 eng.closing(title='Done')
 eng.save('/tmp/smoke.pptx')

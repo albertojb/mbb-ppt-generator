@@ -28,81 +28,55 @@ description: >-
 
 ---
 
-## ⚠️ Failure modes — read before every run
-
-> Telling the model what to do is OK. Telling it where prior runs broke is better. Three failure modes show up consistently in real usage. Re-read this list at the start of every session.
-
-### Failure mode 1 — Verbal gate-pass
-
-**Wrong:**
-> "S4 QA returned 7 errors but they're all engine design behavior, gate passes, moving to delivery."
-
-**Why it fails:** `passed` is a verbal claim from the model, not a value derived by program. No matter how well-reasoned, this is the model writing its own completion certificate.
-
-**Right:**
-1. Run `python references/scripts/gate_check_render.py <pptx_path> <project_dir>`
-2. Read `<project_dir>/gate_render.json`
-3. Only when `"passed": true` is in that file, proceed to delivery
-4. If `"passed": false`, fix every item in `user_code_errors`, re-render, re-run the gate
-
-### Failure mode 2 — Mental S3 review
-
-**Wrong:**
-> "S3 content gate: API formats look right, character counts are in budget, gate passes."
-
-**Why it fails:** The classes of error this gate catches (e.g. `four_column` items missing the leading number, `executive_summary` passing a 2-tuple instead of a 3-tuple, `process_chevron` step labels containing `\n`) cannot be caught by reading the content "in your head." They are only caught by the script.
-
-**Right:**
-1. Run `python references/scripts/gate_check_content.py <content.json> <project_dir>`
-2. Read `<project_dir>/gate_content.json`
-3. Only when `"passed": true`, proceed to S4
-4. If `fail_items` is non-empty, fix `content.json`, re-run the gate
-
-### Failure mode 3 — `engine_bug` as a soft-language escape hatch
-
-**Wrong:**
-> "`peer_font_inconsistency` is engine internal design behavior, not a user code problem, so I'll let it pass."
-
-**Why it fails:** The category is real, but a verbal exemption hands the whitelist to the model. The model has an incentive to grant exemptions. Whitelists belong in code.
-
-**Right:** `gate_check_render.py` has a hardcoded `ENGINE_BUG_WHITELIST` enumeration. Each entry has a textual evidence comment. To grant a new exemption, edit the enum (the user does this, not the model), then re-run. **No verbal exemptions, ever.**
-
----
-
 ## HARD RULES (non-negotiable)
 
-1. Every substantive deck must follow the **five-stage workflow** (§ 5). No "one-shot generation" that skips S2/S3.
+0. **Operator-friendly invocation.** When a non-technical operator says *"use the MBB skill on this file/prompt"*, run end-to-end without asking them for shell commands, Python snippets, or engine code inspection. The right loop is: read the input → infer brief → write `content.json` → run `mbb-ppt render content.json` (which executes both gates internally) → deliver. **Never write inline `python -c "…"` or `sed`/`grep` against `mbb_ppt/engine.py`.** Use [`references/api-cheatsheet.md`](references/api-cheatsheet.md) for layout selection and [`references/layouts/*.md`](references/layouts/) for per-layout details.
+1. Every substantive deck follows the **five-stage workflow** (§ 5). No "one-shot generation" that skips S2/S3.
 2. Use **TodoWrite** to track the five stages. Mark each stage `completed` immediately, not in batch.
-3. **Load context on demand** — read only the files listed for the current stage in `references/INDEX.md`. Do not bulk-load the entire skill on every run.
-4. **Gates are machine-readable.** S3 and S4 require running the gate script and reading the JSON output. Verbal pass-statements are forbidden.
+3. **Load context on demand** — read only the files listed for the current stage in [`references/INDEX.md`](references/INDEX.md). Do not bulk-load the entire skill on every run.
+4. **Gates are machine-readable.** S3 and S4 outputs are JSON files with a `passed` boolean derived by program logic. Verbal pass-statements are forbidden — see § *Failure modes* below.
 5. **Self-Refinement is mandatory** — when a pattern-level fix is applied during a run, append an `Experience NNN` entry to the matching file under `experiences/`.
-6. **Engine path is fixed.** All scripts use:
+6. **Engine import is plain.** The skill is pip-installed as part of setup (`pip install -e <skill-root>`), so render scripts use:
 
    ```python
-   sys.path.insert(0, os.path.expanduser('~/.workbuddy/skills/mck-ppt-design'))
+   from mbb_ppt import MbbEngine as ExecEngine
    ```
+
+   No `sys.path.insert(...)` boilerplate. No hardcoded install paths anywhere. If the import fails, the skill is not installed — instruct the user to run `pip install -e <skill-root>` and stop.
 
 7. **Hard limits** from `references/layout-matrix.yaml` are authoritative. Never exceed them in `content.json` — the S3 gate enforces this.
 
 ---
 
-## Why this skill is structured this way
+## Failure modes — read before every run
 
-> Two ideas borrowed from Kaku Li's harness work. Both apply to AI skills generally, not just to PPT.
+> Three failure modes show up consistently in real usage. Re-read this list at the start of every session.
 
-### Iron law 1 — Output quality is multiplicative
+### Failure mode 1 — Verbal gate-pass
 
-```
-AI output quality  =  AI capability  ×  context quality
-```
+**Wrong:** *"S4 QA returned 7 errors but they're all engine design behavior, gate passes, moving to delivery."*
 
-It is multiplication, not addition. As context quality approaches zero, output quality approaches zero regardless of model capability. Most skill failures are not capability failures; they are context-quality failures. Context quality is the lever you control.
+**Why it fails:** `passed` is a verbal claim from the model, not a value derived by program.
 
-### Iron law 2 — Mechanism beats prompt
+**Right:** Run `mbb-ppt render <content.json>` (which runs both gates) — or `mbb-ppt gate-render <deck.pptx>` for the render gate alone — and read the JSON output. Only when `"passed": true` is in `gate_render.json`, deliver. If `false`, fix every item in `user_code_errors`, re-render, re-gate.
 
-A prompt that asks the model to "be careful" is a soft constraint. A script that reads `gate_render.json` and refuses to advance unless `passed: true` is a hard constraint. **Prefer mechanism wherever you can encode the rule.** Anti-patterns belong at the top of this document as concrete examples, not as generic exhortations to "follow the rules."
+### Failure mode 2 — Mental S3 review
 
-The corollary: when a model says "task complete" and there is no gate file proving it, the task is *not* complete.
+**Wrong:** *"S3 content gate: API formats look right, character counts are in budget, gate passes."*
+
+**Why it fails:** The errors this gate catches (3-tuple vs 2-tuple, `\n` in step labels, missing `source`) are not visible by reading content in your head — only the script catches them.
+
+**Right:** Run `mbb-ppt gate-content <content.json>` and read `gate_content.json`. Advance only when `"passed": true`.
+
+### Failure mode 3 — `engine_bug` as a soft-language escape hatch
+
+**Wrong:** *"`peer_font_inconsistency` is engine-internal design behavior, not a user code problem, so I'll let it pass."*
+
+**Why it fails:** A verbal exemption hands the whitelist to the model. The model has an incentive to grant exemptions. Whitelists belong in code.
+
+**Right:** `gate_check_render.py` has a hardcoded `ENGINE_BUG_WHITELIST` enumeration. To grant a new exemption, the **operator** edits the enum, then re-runs. No verbal exemptions, ever.
+
+> Background on *why* the skill is structured around mechanisms (gates, whitelists in code, on-demand context) is in [`MAINTAINERS.md`](MAINTAINERS.md). It is not required reading for operating the skill.
 
 ---
 
@@ -364,21 +338,25 @@ Use the replacement noted above instead.
 
 ## 7. ExecEngine — quick start
 
-Implementation note: the engine module is named `mck_ppt` and the class `MckEngine` for backward compatibility with Likaku's upstream code. This skill imports it under the alias `ExecEngine` and refers to it by that name in documentation. **The module name is an implementation detail; the engine's role is generic.**
+Implementation note: the engine module is named `mbb_ppt` and the class `MbbEngine`. The skill imports it under the alias `ExecEngine` and refers to it by that name throughout the documentation. The class alias is just a readability convention — there is no compatibility shim or hidden indirection.
 
 ### Setup
 
+The skill is expected to be pip-installed from its own directory:
+
 ```bash
-pip install python-pptx lxml pyyaml
+git clone https://github.com/albertojb/mbb-ppt-generator.git ~/.claude/skills/mbb-ppt-generator
+cd ~/.claude/skills/mbb-ppt-generator
+pip install -e .
 ```
+
+After install, `mbb_ppt` is importable from any Python script and the `mbb-ppt` CLI is on PATH.
 
 ### Import pattern
 
 ```python
-import sys, os
-sys.path.insert(0, os.path.expanduser('~/.workbuddy/skills/mck-ppt-design'))
-from mck_ppt import MckEngine as ExecEngine
-from mck_ppt.constants import *
+from mbb_ppt import MbbEngine as ExecEngine
+from mbb_ppt.constants import *
 from pptx.util import Inches
 ```
 
@@ -407,7 +385,7 @@ eng.save('ppt-project-q1-strategy/deck.pptx')
 1. One method = one slide.
 2. `eng.save()` calls `full_cleanup()` automatically; do not duplicate.
 3. Page numbers are driven by `total_slides`.
-4. Use constants from `mck_ppt.constants`.
+4. Use constants from `mbb_ppt.constants`.
 5. Prefer engine methods over raw shape construction.
 
 ### Method catalog
@@ -434,9 +412,9 @@ eng.save('ppt-project-q1-strategy/deck.pptx')
 
 ### Colors
 
-Primary: `NAVY #051C2C`, `WHITE`, `BLACK`, `DARK_GRAY #333`, `MED_GRAY #666`, `LINE_GRAY #CCC`, `BG_GRAY #F2F2F2`, `HEADING_ACCENT #051C2C`, `SECTION_BG #F7F7F7`.
+Primary: `PRIMARY #1B4332` (forest green; aliased as `NAVY` for engine compatibility — same value), `WHITE`, `BLACK`, `DARK_GRAY #333`, `MED_GRAY #666`, `LINE_GRAY #CCC`, `BG_GRAY #F2F2F2`, `HEADING_ACCENT` (= PRIMARY), `SECTION_BG #F7F7F7`. White page background.
 
-Accent: `ACCENT_BLUE #006BA6`, `ACCENT_GREEN #007A53`, `ACCENT_ORANGE #D46A00`, `ACCENT_RED #C62828`. Use only when ≥3 parallel items need differentiation.
+Accent (sober earth tones): `ACCENT_BLUE #3B5670` (slate), `ACCENT_GREEN #6B8E4E` (olive), `ACCENT_ORANGE #A0522D` (rust), `ACCENT_RED #8B2635` (burgundy). Use only when ≥3 parallel items need differentiation.
 
 Warm (optional, only when explicitly requested): `WARM_NAVY #1A2E44`, `WARM_GOLD #B8860B`, `WARM_STONE #8B7355`.
 
@@ -597,7 +575,7 @@ Default posture is **local-only**. Outbound integrations (cloud cover-image, cha
 
 ## 18. Maintenance
 
-This v2.1 specification is the entry point. Detailed knowledge lives in `references/`, `experiences/`, and the upstream `mck_ppt/` Python package. When updating:
+This v2.1 specification is the entry point. Detailed knowledge lives in `references/`, `experiences/`, and the upstream `mbb_ppt/` Python package. When updating:
 
 - Treat `experiences/` as append-only — never delete entries; mark superseded ones with `Superseded by NNN`.
 - When adding a layout limit, update `references/layout-matrix.yaml` AND `gate_check_content.py` together.

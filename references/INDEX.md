@@ -9,7 +9,7 @@
 | Stage | Required reading | Optional reading |
 |---|---|---|
 | **S1 — Brief** | `references/team/brand-guide.md` | — |
-| **S2 — Structure** | `references/framework/engine-api.md`, `references/layout-matrix.yaml` | per-layout files in `references/layouts/` when a specific layout's contract matters |
+| **S2 — Structure** | `references/api-cheatsheet.md`, `references/layout-matrix.yaml` | `references/framework/engine-api.md`, `references/framework/planning-guide.md` for complex narratives, per-layout files in `references/layouts/` when a specific layout's contract matters |
 | **S3 — Content** | `references/framework/guard-rails.md`, every file in `experiences/` | `references/framework/planning-guide.md` for complex narrative structures |
 | **S4 — Render + QA** | only the `references/layouts/*.md` files for layouts actually used | `references/team/presentation-convention.md` for margin/source rules |
 | **S5 — Deliver** | none | — |
@@ -21,6 +21,7 @@ The model **must read** the required files at the start of each stage. Do not ca
 ```
 references/
 ├── INDEX.md                       # this file
+├── api-cheatsheet.md              # one-page method index — load at S2 first
 ├── layout-matrix.yaml             # capacity matrix — single source of truth
 │
 ├── team/                          # most stable layer (rarely changes)

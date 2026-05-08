@@ -16,11 +16,11 @@ narrative is a fictional Q1 2026 strategy review; replace the content with
 your own findings before delivering.
 
 Usage:
-    from mck_ppt.deck_builder import DeckBuilder
-    from mck_ppt.storylines import ai_enterprise
+    from mbb_ppt.deck_builder import DeckBuilder
+    from mbb_ppt.storylines import ai_enterprise
     DeckBuilder.build(ai_enterprise.STORYLINE, 'output/strategy_review.pptx')
 """
-from mck_ppt.constants import (
+from mbb_ppt.constants import (
     NAVY, ACCENT_BLUE, ACCENT_GREEN, ACCENT_ORANGE, ACCENT_RED,
     LIGHT_BLUE, LIGHT_GREEN, LIGHT_ORANGE, LIGHT_RED,
     DARK_GRAY, MED_GRAY, BG_GRAY, WHITE,

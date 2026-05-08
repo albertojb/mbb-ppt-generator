@@ -1,11 +1,17 @@
 # Copyright 2024-2026 Kaku Li (https://github.com/likaku)
 # Licensed under the Apache License, Version 2.0 — see LICENSE and NOTICE.
-# Originally part of "Mck-ppt-design-skill" (McKinsey PPT Design Framework).
+# Originally from "Mck-ppt-design-skill"; bundled in mbb-ppt-generator
 # NOTICE: This file must be retained in all copies or substantial portions.
 #
 # Adapted 2026 by albertojb for "MBB PPT Generator":
 #   - Heading font changed from Georgia (transitional serif) to DM Sans (modern
 #     neutral sans-serif), with a Calibri fallback for systems without DM Sans.
+#   - Primary color changed from McKinsey-style navy (#051C2C) to a sober
+#     forest green (#1B4332). The constant `NAVY` is retained as the canonical
+#     primary-color name (its value is forest green); `PRIMARY` is provided
+#     as a synonym for code that prefers a brand-neutral identifier.
+#   - Accent palette retuned to muted earth tones (slate, olive, rust,
+#     burgundy) for a sober non-consulting aesthetic.
 #   - Added HEADING_ACCENT, SECTION_BG, and warm-palette colors.
 #   - Added content-area boundary (Rule 15), page-number lock (Rule 18),
 #     and guard-rail constants (Rules 11, 13, 14, 16, 17).
@@ -18,8 +24,13 @@ from pptx.dml.color import RGBColor
 # ═══════════════════════════════════════════
 # COLOR PALETTE — primary
 # ═══════════════════════════════════════════
+# `NAVY` is the canonical primary-color name (kept for engine compatibility).
+# Its actual value is forest green (#1B4332): deep, sober, suitable for
+# executive decks on white backgrounds. `PRIMARY` is a brand-neutral synonym.
 
-NAVY       = RGBColor(0x05, 0x1C, 0x2C)
+PRIMARY    = RGBColor(0x1B, 0x43, 0x32)   # forest green — primary brand color
+NAVY       = PRIMARY                       # alias retained for engine compatibility
+
 BLACK      = RGBColor(0x00, 0x00, 0x00)
 WHITE      = RGBColor(0xFF, 0xFF, 0xFF)
 
@@ -31,16 +42,18 @@ BG_GRAY    = RGBColor(0xF2, 0xF2, 0xF2)
 # ═══════════════════════════════════════════
 # COLOR PALETTE — accent (≥3 parallel items)
 # ═══════════════════════════════════════════
+# Muted earth tones — slate, olive, rust, burgundy. Use only when ≥3 parallel
+# items need differentiation. Never replace `PRIMARY`/`NAVY` as the anchor.
 
-ACCENT_BLUE   = RGBColor(0x00, 0x6B, 0xA6)
-ACCENT_GREEN  = RGBColor(0x00, 0x7A, 0x53)
-ACCENT_ORANGE = RGBColor(0xD4, 0x6A, 0x00)
-ACCENT_RED    = RGBColor(0xC6, 0x28, 0x28)
+ACCENT_BLUE   = RGBColor(0x3B, 0x56, 0x70)   # slate blue
+ACCENT_GREEN  = RGBColor(0x6B, 0x8E, 0x4E)   # olive — distinct from forest primary
+ACCENT_ORANGE = RGBColor(0xA0, 0x52, 0x2D)   # rust / terracotta
+ACCENT_RED    = RGBColor(0x8B, 0x26, 0x35)   # burgundy
 
-LIGHT_BLUE    = RGBColor(0xE3, 0xF2, 0xFD)
-LIGHT_GREEN   = RGBColor(0xE8, 0xF5, 0xE9)
-LIGHT_ORANGE  = RGBColor(0xFF, 0xF3, 0xE0)
-LIGHT_RED     = RGBColor(0xFF, 0xEB, 0xEE)
+LIGHT_BLUE    = RGBColor(0xE8, 0xED, 0xF2)
+LIGHT_GREEN   = RGBColor(0xEF, 0xF2, 0xE8)
+LIGHT_ORANGE  = RGBColor(0xF4, 0xE8, 0xDC)
+LIGHT_RED     = RGBColor(0xF2, 0xE2, 0xE5)
 
 ACCENT_PAIRS = [
     (ACCENT_BLUE,   LIGHT_BLUE),
@@ -50,12 +63,12 @@ ACCENT_PAIRS = [
 ]
 
 # ═══════════════════════════════════════════
-# COLOR PALETTE — additions (v2.0)
+# COLOR PALETTE — additions
 # ═══════════════════════════════════════════
 
-# HEADING_ACCENT is an alias of NAVY, named for cover titles and large
+# HEADING_ACCENT is an alias of PRIMARY, named for cover titles and large
 # display text where the semantic role is "heading emphasis".
-HEADING_ACCENT = RGBColor(0x05, 0x1C, 0x2C)
+HEADING_ACCENT = PRIMARY
 
 # Lighter neutral than BG_GRAY for section dividers that need to feel
 # airier without losing tonal anchoring.
@@ -91,7 +104,7 @@ BOTTOM_BAR_Y    = Inches(6.2)    # Default bottom summary bar
 BOTTOM_BAR_H    = Inches(0.65)   # Bottom bar height
 
 # ═══════════════════════════════════════════
-# CONTENT AREA BOUNDARY (Rule 15, v2.0)
+# CONTENT AREA BOUNDARY (Rule 15)
 # ═══════════════════════════════════════════
 # Hard bounding box for all shapes, text boxes, and charts on a content
 # slide. The render gate validates placement against these limits.
@@ -106,7 +119,7 @@ CONTENT_RIGHT  = Inches(9.5)
 CONTENT_BOTTOM = Inches(6.9)
 
 # ═══════════════════════════════════════════
-# PAGE-NUMBER PLACEMENT LOCK (Rule 18, v2.0)
+# PAGE-NUMBER PLACEMENT LOCK (Rule 18)
 # ═══════════════════════════════════════════
 # Page numbers must be placed at this exact position on every slide.
 # Never compute dynamically.
@@ -155,7 +168,7 @@ FONT_BODY     = BODY_FONT
 FONT_EA       = "Arial"
 
 # ═══════════════════════════════════════════
-# GUARD-RAIL CONSTANTS (v2.0 — Rules 11, 13, 14, 16, 17)
+# GUARD-RAIL CONSTANTS (Rules 11, 13, 14, 16, 17)
 # ═══════════════════════════════════════════
 
 # Rule 11: minimum text-box height multiplier (line-height factor).

@@ -117,7 +117,7 @@ eng.image_four_points(title, image_label, points, source='')
 ### Example
 
 ```python
-from mck_ppt.constants import ACCENT_BLUE, ACCENT_GREEN, ACCENT_ORANGE, ACCENT_RED
+from mbb_ppt.constants import ACCENT_BLUE, ACCENT_GREEN, ACCENT_ORANGE, ACCENT_RED
 
 eng.image_four_points(
     title='Four properties of a healthy operating model',
@@ -206,7 +206,7 @@ eng.case_study_image(title, sections, image_label, kpis=None, source='')
 ### Example
 
 ```python
-from mck_ppt.constants import ACCENT_BLUE, ACCENT_ORANGE, ACCENT_GREEN
+from mbb_ppt.constants import ACCENT_BLUE, ACCENT_ORANGE, ACCENT_GREEN
 
 eng.case_study_image(
     title='Case study — Acme reduced churn 40% in 18 months',
@@ -295,7 +295,7 @@ eng.goals_illustration(title, goals, image_label, source='')
 ### Example
 
 ```python
-from mck_ppt.constants import ACCENT_BLUE, ACCENT_GREEN, ACCENT_ORANGE, ACCENT_RED, NAVY
+from mbb_ppt.constants import ACCENT_BLUE, ACCENT_GREEN, ACCENT_ORANGE, ACCENT_RED, NAVY
 
 eng.goals_illustration(
     title='FY26 OKRs — five goals across growth, margin, and capability',
@@ -338,7 +338,7 @@ eng.two_col_image_grid(title, items, source='')
 ### Example
 
 ```python
-from mck_ppt.constants import ACCENT_BLUE, ACCENT_GREEN, ACCENT_ORANGE, ACCENT_RED
+from mbb_ppt.constants import ACCENT_BLUE, ACCENT_GREEN, ACCENT_ORANGE, ACCENT_RED
 
 eng.two_col_image_grid(
     title='Four regional growth stories',
@@ -369,4 +369,4 @@ eng.two_col_image_grid(
 - **Method index:** [`../framework/engine-api.md`](../framework/engine-api.md).
 - **Capacity matrix:** [`../layout-matrix.yaml`](../layout-matrix.yaml).
 - **Visual-relief slide rule (Rule 7 — at least one image slide in 8+ decks):** [`../framework/guard-rails.md`](../framework/guard-rails.md).
-- **`add_image_placeholder()` implementation:** `mck_ppt/core.py`.
+- **`add_image_placeholder()` implementation:** `mbb_ppt/core.py`.

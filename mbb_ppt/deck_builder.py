@@ -1,16 +1,16 @@
 # Copyright 2024-2026 Kaku Li (https://github.com/likaku)
 # Licensed under the Apache License, Version 2.0 — see LICENSE and NOTICE.
-# Part of "Mck-ppt-design-skill" (McKinsey PPT Design Framework).
+# Originally from "Mck-ppt-design-skill"; bundled in mbb-ppt-generator
 # NOTICE: This file must be retained in all copies or substantial portions.
 #
 """DeckBuilder — Storyline-driven deck generator with built-in QA.
 
-Accepts a storyline (list of slide specs) and orchestrates MckEngine
+Accepts a storyline (list of slide specs) and orchestrates MbbEngine
 to produce a complete, professionally structured PPTX deck.
 Includes automatic QA validation after generation.
 
 Usage:
-    from mck_ppt.deck_builder import DeckBuilder
+    from mbb_ppt.deck_builder import DeckBuilder
 
     storyline = [
         {'type': 'cover', 'data': {'title': '...', 'subtitle': '...'}},
@@ -22,12 +22,12 @@ Usage:
 """
 import os
 from pptx import Presentation
-from .engine import MckEngine
+from .engine import MbbEngine
 from .core import full_cleanup
 
 
 class DeckBuilder:
-    """Orchestrates MckEngine to build a deck from a storyline spec."""
+    """Orchestrates MbbEngine to build a deck from a storyline spec."""
 
     # Slide boundaries (inches) — anything outside is a bug
     SLIDE_W = 13.333
@@ -44,7 +44,7 @@ class DeckBuilder:
         output_path : str
             Path to save the output PPTX.
         **engine_kwargs
-            Extra kwargs passed to MckEngine (e.g. total_slides).
+            Extra kwargs passed to MbbEngine (e.g. total_slides).
 
         Returns
         -------
@@ -52,7 +52,7 @@ class DeckBuilder:
             The output_path.
         """
         total = engine_kwargs.pop('total_slides', len(storyline))
-        eng = MckEngine(total_slides=total)
+        eng = MbbEngine(total_slides=total)
 
         errors = []
         for i, slide_spec in enumerate(storyline):

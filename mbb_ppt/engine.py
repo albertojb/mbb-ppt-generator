@@ -1,12 +1,12 @@
 # Copyright 2024-2026 Kaku Li (https://github.com/likaku)
 # Licensed under the Apache License, Version 2.0 — see LICENSE and NOTICE.
-# Part of "Mck-ppt-design-skill" (McKinsey PPT Design Framework).
+# Originally from "Mck-ppt-design-skill"; bundled in mbb-ppt-generator
 # NOTICE: This file must be retained in all copies or substantial portions.
 #
-"""MckEngine — The presentation engine that wraps python-pptx with high-level layout methods.
+"""MbbEngine — The presentation engine that wraps python-pptx with high-level layout methods.
 
 Usage:
-    eng = MckEngine(total_slides=30)
+    eng = MbbEngine(total_slides=30)
     eng.cover(title='Title', subtitle='Sub')
     eng.toc(items=[('1','Topic','Desc'), ...])
     eng.save('output/deck.pptx')
@@ -32,7 +32,7 @@ from .core import (
 )
 
 
-class MckEngine:
+class MbbEngine:
     """Presentation engine with high-level layout methods."""
 
     def __init__(self, total_slides=30):
@@ -65,18 +65,14 @@ class MckEngine:
         Parameters
         ----------
         cover_image : str or None
-            - None  : do not insert an image (default; keeps the text-only layout)
-            - 'auto': call the optional cloud image-generation API (off by default)
-            - path  : use the specified local image file
+            - None : do not insert an image (default; text-only layout)
+            - path : path to a local image file (full-bleed background)
         """
         s = self._ns()
 
         # ── Determine whether a cover image is used ─────────
         img_path = None
-        if cover_image == 'auto':
-            from .cover_image import generate_cover_image
-            img_path = generate_cover_image(title)
-        elif cover_image and os.path.isfile(cover_image):
+        if cover_image and os.path.isfile(cover_image):
             img_path = cover_image
 
         # ── Full-bleed image background (added first so content renders above) ──
@@ -312,7 +308,7 @@ class MckEngine:
     def table_insight(self, title, headers, rows, insights,
                       col_widths=None, insight_title='Insight:',
                       source='', bottom_bar=None):
-        """Table + right insight panel — McKinsey editorial layout.
+        """Table + right insight panel — MBB-style editorial layout.
 
         Left ~60%: data table with header row + horizontal-line separated rows.
                    Each row is list[str] matching headers.
@@ -2976,13 +2972,13 @@ class MckEngine:
         return s
 
     # ═══════════════════════════════════════════
-    # MULTI-BAR-PANEL CHART (#71 — McKinsey editorial bar chart panels)
+    # MULTI-BAR-PANEL CHART (#71 — MBB-style editorial bar chart panels)
     # ═══════════════════════════════════════════
 
     def multi_bar_panel(self, title, panels, connectors=None, footnotes=None, source=''):
         """#71 Multi-Bar-Panel Chart — 2-3 side-by-side bar chart panels with
         CAGR trend arrows and value labels on each bar.
-        McKinsey / BCG editorial chart style.
+        MBB-style editorial chart layout.
 
         Parameters
         ----------

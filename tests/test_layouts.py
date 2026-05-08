@@ -6,9 +6,9 @@ from pathlib import Path
 
 def test_structure_layouts(tmp_project_dir: Path):
     """cover, toc, section_divider, closing, appendix_title."""
-    from mck_ppt import MckEngine
+    from mbb_ppt import MbbEngine
 
-    eng = MckEngine(total_slides=5)
+    eng = MbbEngine(total_slides=5)
     eng.cover(title="Structure test")
     eng.toc(items=[
         ("1", "Section one", "First topic preview"),
@@ -26,10 +26,10 @@ def test_structure_layouts(tmp_project_dir: Path):
 
 def test_data_layouts(tmp_project_dir: Path):
     """big_number, two_stat, three_stat, data_table, metric_cards, table_insight."""
-    from mck_ppt import MckEngine
-    from mck_ppt.constants import NAVY, ACCENT_BLUE, ACCENT_GREEN
+    from mbb_ppt import MbbEngine
+    from mbb_ppt.constants import NAVY, ACCENT_BLUE, ACCENT_GREEN
 
-    eng = MckEngine(total_slides=7)
+    eng = MbbEngine(total_slides=7)
     eng.cover(title="Data layouts test")
 
     eng.big_number(
@@ -99,10 +99,10 @@ def test_data_layouts(tmp_project_dir: Path):
 
 def test_chart_layouts(tmp_project_dir: Path):
     """donut, grouped_bar, horizontal_bar."""
-    from mck_ppt import MckEngine
-    from mck_ppt.constants import NAVY, ACCENT_BLUE, ACCENT_GREEN, MED_GRAY
+    from mbb_ppt import MbbEngine
+    from mbb_ppt.constants import NAVY, ACCENT_BLUE, ACCENT_GREEN, MED_GRAY
 
-    eng = MckEngine(total_slides=4)
+    eng = MbbEngine(total_slides=4)
     eng.cover(title="Chart layouts test")
 
     eng.donut(
@@ -141,8 +141,8 @@ def test_chart_layouts(tmp_project_dir: Path):
 
 def test_storyline_builds(tmp_project_dir: Path):
     """The bundled 12-slide storyline builds end-to-end via DeckBuilder."""
-    from mck_ppt.deck_builder import DeckBuilder
-    from mck_ppt.storylines import ai_enterprise
+    from mbb_ppt.deck_builder import DeckBuilder
+    from mbb_ppt.storylines import ai_enterprise
 
     out = tmp_project_dir / "storyline.pptx"
     DeckBuilder.build(ai_enterprise.STORYLINE, str(out))
@@ -156,12 +156,12 @@ def test_storyline_builds(tmp_project_dir: Path):
 
 def test_retired_layouts_still_callable(tmp_project_dir: Path):
     """venn, cycle, funnel, pie, gauge — retired but back-compat callable."""
-    from mck_ppt import MckEngine
-    from mck_ppt.constants import NAVY, ACCENT_BLUE, ACCENT_GREEN
+    from mbb_ppt import MbbEngine
+    from mbb_ppt.constants import NAVY, ACCENT_BLUE, ACCENT_GREEN
 
     # Just verify the methods exist on the class — don't render them
     # (they're deprecated and not promoted in new decks).
-    eng = MckEngine(total_slides=1)
+    eng = MbbEngine(total_slides=1)
     assert hasattr(eng, "venn")
     assert hasattr(eng, "cycle")
     assert hasattr(eng, "funnel")

@@ -130,9 +130,9 @@ def test_content_gate_catches_donut_overcount(project_root: Path,
 def test_render_gate_passes_clean_deck(project_root: Path,
                                         tmp_project_dir: Path):
     """A clean rendered deck passes the S4 render gate."""
-    from mck_ppt import MckEngine
+    from mbb_ppt import MbbEngine
 
-    eng = MckEngine(total_slides=2)
+    eng = MbbEngine(total_slides=2)
     eng.cover(title="Render gate test")
     eng.closing(title="Done")
 

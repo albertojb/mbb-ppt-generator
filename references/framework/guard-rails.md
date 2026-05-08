@@ -58,7 +58,7 @@ The engine uses dynamic computation in tables and lists; manual layout code must
 **Code pattern:**
 
 ```python
-from mck_ppt.core import add_color_legend
+from mbb_ppt.core import add_color_legend
 add_color_legend(slide,
     items=[('Premium', NAVY), ('Partner', ACCENT_BLUE)],
     x=Inches(7.5), y=Inches(6.5))
@@ -280,4 +280,4 @@ Never compute page-number position dynamically. Lock it.
 - **Capacity limits per layout** (max items, char_budget): [`../layout-matrix.yaml`](../layout-matrix.yaml).
 - **Anti-patterns and historic defects:** [`../../experiences/`](../../experiences/) — read at S3 before writing content.
 - **Gate scripts:** [`../scripts/gate_check_content.py`](../scripts/gate_check_content.py) (S3), [`../scripts/gate_check_render.py`](../scripts/gate_check_render.py) (S4).
-- **Engine source (authoritative):** `../../mck_ppt/engine.py`, `../../mck_ppt/core.py`.
+- **Engine source (authoritative):** `../../mbb_ppt/engine.py`, `../../mbb_ppt/core.py`.

@@ -1,10 +1,10 @@
 # Copyright 2024-2026 Kaku Li (https://github.com/likaku)
 # Licensed under the Apache License, Version 2.0 — see LICENSE and NOTICE.
-# Part of "Mck-ppt-design-skill" (McKinsey PPT Design Framework).
+# Originally from "Mck-ppt-design-skill"; bundled in mbb-ppt-generator
 # NOTICE: This file must be retained in all copies or substantial portions.
 #
 """
-Post-generation Review + Auto-fix Pipeline for mck_ppt.
+Post-generation Review + Auto-fix Pipeline for mbb_ppt.
 
 Four-stage flow:
   1. Page Brief — structure content into page_objective / one_message / mece_buckets
@@ -15,13 +15,13 @@ Four-stage flow:
   4. Gate — 0 ERROR = pass; otherwise iterate (max N rounds)
 
 Usage:
-    from mck_ppt.review import SlideReviewer
+    from mbb_ppt.review import SlideReviewer
     reviewer = SlideReviewer("output/deck.pptx")
     report = reviewer.run()          # read-only audit
     report.print_summary()
 
     # Auto-fix (mutates the file in-place, up to max_rounds)
-    from mck_ppt.review import AutoFixPipeline
+    from mbb_ppt.review import AutoFixPipeline
     result = AutoFixPipeline("output/deck.pptx").run(max_rounds=3)
     print(result)
 """
@@ -719,7 +719,7 @@ def autofix(filepath: str, max_rounds: int = 3) -> CombinedReport:
 if __name__ == "__main__":
     import sys
     if len(sys.argv) < 2:
-        print("Usage: python -m mck_ppt.review <path.pptx> [--fix]")
+        print("Usage: python -m mbb_ppt.review <path.pptx> [--fix]")
         sys.exit(1)
     path = sys.argv[1]
     if "--fix" in sys.argv:

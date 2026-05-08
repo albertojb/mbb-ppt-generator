@@ -20,7 +20,7 @@ Outputs:
     ppt-project-board-qbr/deck.pptx
     ppt-project-board-qbr/gate_render.json
 
-Apache 2.0. The bundled mck_ppt engine is Copyright Kaku Li (likaku); see NOTICE.
+Apache 2.0. The bundled mbb_ppt engine is Copyright Kaku Li (likaku); see NOTICE.
 """
 
 from __future__ import annotations
@@ -33,8 +33,8 @@ from pathlib import Path
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SKILL_ROOT))
 
-from mck_ppt import MckEngine
-from mck_ppt.constants import (
+from mbb_ppt import MbbEngine
+from mbb_ppt.constants import (
     NAVY, ACCENT_BLUE, ACCENT_GREEN, ACCENT_ORANGE, ACCENT_RED,
     LIGHT_BLUE, LIGHT_GREEN, LIGHT_ORANGE, LIGHT_RED, BG_GRAY,
 )
@@ -53,7 +53,7 @@ def render_deck() -> None:
     """Build the QBR deck directly with the engine. (No content.json round-trip
     — this example shows the imperative path; minimal_example.py shows the
     declarative content.json path.)"""
-    eng = MckEngine(total_slides=10)
+    eng = MbbEngine(total_slides=10)
 
     # ── 1. Cover ──────────────────────────────────────────────────────────
     eng.cover(

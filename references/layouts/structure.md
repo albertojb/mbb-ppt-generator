@@ -24,7 +24,7 @@ eng.cover(title, subtitle='', author='', date='', cover_image=None)
 | `subtitle` | str | no | ≤ 60 chars | Rendered at 22pt `DARK_GRAY`. Positioned dynamically below the title. |
 | `author` | str | no | ≤ 30 chars | 14pt `MED_GRAY`. |
 | `date` | str | no | ≤ 30 chars | 14pt `MED_GRAY`. Format flexibly: `'March 2026'`, `'Q1 2026'`, `'2026-03-15'`. |
-| `cover_image` | str/`None` | no | — | `None` (default, text only); `'auto'` (cloud generation, off by default — Tencent SDK required); a local file path. |
+| `cover_image` | str/`None` | no | — | `None` (default, text only) or a local image file path (full-bleed background). |
 
 ### Wireframe
 
@@ -61,7 +61,6 @@ eng.cover(
 ### Pitfalls
 
 - **Title overflow with `\n`.** The engine auto-computes height from line count; do not hand-pad the title with whitespace. (See [`experiences/layout-pitfalls.md` Experience 002](../../experiences/layout-pitfalls.md).)
-- **Sensitive content in cloud prompts.** If you enable `cover_image='auto'`, the title is sent to a third-party API. Avoid client-identifying language; use abstract subject descriptions. The default is OFF for this reason.
 - **Cover slides do not get a page number.** This is by design (`add_page_number()` is not called for `cover`); do not patch it in.
 
 ### Cross-references
@@ -299,4 +298,4 @@ eng.appendix_title(
 - **Capacity matrix:** [`../layout-matrix.yaml`](../layout-matrix.yaml).
 - **Production rules these layouts must satisfy:** [`../framework/guard-rails.md`](../framework/guard-rails.md).
 - **Slide-2-through-5 priority (which layouts to lead with after cover/TOC):** [`../framework/planning-guide.md`](../framework/planning-guide.md) § 4.
-- **Engine source (authoritative):** `../../mck_ppt/engine.py`.
+- **Engine source (authoritative):** `../../mbb_ppt/engine.py`.

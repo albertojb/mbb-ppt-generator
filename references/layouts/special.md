@@ -53,7 +53,7 @@ eng.icon_grid(title, items, cols=3, source='')
 ### Example
 
 ```python
-from mck_ppt.constants import ACCENT_BLUE, ACCENT_GREEN, ACCENT_ORANGE, ACCENT_RED, NAVY, MED_GRAY
+from mbb_ppt.constants import ACCENT_BLUE, ACCENT_GREEN, ACCENT_ORANGE, ACCENT_RED, NAVY, MED_GRAY
 
 eng.icon_grid(
     title='Six capabilities anchor the operating model',
@@ -230,7 +230,7 @@ eng.meet_the_team(
         ('Maya Chen', 'Operating partner',
          ['Former CFO at Acme', 'Operations background', 'Stanford GSB']),
         ('Sam Diaz',  'Senior associate',
-         ['McKinsey alum', 'Consumer goods focus', 'INSEAD']),
+         ['Top-tier strategy alum', 'Consumer goods focus', 'INSEAD']),
         ('Jin Park',  'Analyst',
          ['Former bulge-bracket banker', 'Modeling specialist', 'Wharton UG']),
     ],
@@ -336,5 +336,5 @@ eng.metric_comparison(
 
 - **Method index:** [`../framework/engine-api.md`](../framework/engine-api.md).
 - **Capacity matrix:** [`../layout-matrix.yaml`](../layout-matrix.yaml).
-- **`draw_harvey_ball()` implementation:** `mck_ppt/core.py`.
+- **`draw_harvey_ball()` implementation:** `mbb_ppt/core.py`.
 - **Past defects in these layouts:** [`../../experiences/`](../../experiences/).

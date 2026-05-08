@@ -1,11 +1,11 @@
 # MBB PPT Generator
 
-> Executive-grade PowerPoint generation with consulting-style discipline. Self-contained skill for AI agents (Claude Code, WorkBuddy, ClawHub) that follows the five-stage workflow: brief → outline → content → render+QA → deliver. Two machine-readable gates make pass/fail a program decision, not a model decision.
+> Executive-grade PowerPoint generation with consulting-style discipline. Self-contained Claude skill (Claude Code, Claude Cowork) that follows a five-stage workflow — brief → outline → content → render+QA → deliver — and uses two machine-readable gates so pass/fail is a program decision, not a model decision.
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Python: 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue)](pyproject.toml)
 [![Tests: 15 passing](https://img.shields.io/badge/Tests-15%20passing-brightgreen)](tests/)
-[![Status: 0.1.0](https://img.shields.io/badge/Status-0.1.0-blue)](CHANGELOG.md)
+[![Status: 0.2.0](https://img.shields.io/badge/Status-0.2.0-blue)](CHANGELOG.md)
 
 ## What this is
 
@@ -17,42 +17,38 @@ A skill spec plus a bundled Python engine plus a harness of gates and references
 
 ## Credits
 
-This skill is a derivative work of [`Mck-ppt-design-skill`](https://github.com/likaku/Mck-ppt-design-skill) by [Kaku Li / likaku](https://github.com/likaku), Apache 2.0. The engine package (`mck_ppt/`), the QA module, the BLOCK_ARC chart implementations, and the file-integrity logic are Kaku Li's work and are bundled here under the original copyright. The five-stage workflow and self-refinement protocol are also adapted from Kaku Li's separate [`harness-skill-upgrader`](https://github.com/likaku/harness-skill-upgrader) skill.
+This skill is a derivative work of [`Mck-ppt-design-skill`](https://github.com/likaku/Mck-ppt-design-skill) by [Kaku Li / likaku](https://github.com/likaku), Apache 2.0. The Python engine package, the QA module, the BLOCK_ARC chart implementations, and the file-integrity logic are Kaku Li's work and are bundled here under the original copyright (the module was renamed from `mck_ppt` to `mbb_ppt` in this fork; class renamed `MckEngine` → `MbbEngine`). The five-stage workflow and self-refinement protocol are also adapted from Kaku Li's separate [`harness-skill-upgrader`](https://github.com/likaku/harness-skill-upgrader) skill.
 
 See [`NOTICE`](NOTICE) for the full attribution chain and a list of modifications introduced by this fork.
 
-## 30-second quickstart
-
-```bash
-git clone https://github.com/<your-org>/mbb-ppt-generator
-cd mbb-ppt-generator
-pip install -e .
-python examples/minimal_example.py
-# → ppt-project-demo/deck.pptx, gate_render.json (passed: true)
-```
-
-Open `ppt-project-demo/deck.pptx` in PowerPoint. That's the full workflow: a brief → content.json → S3 content gate → render → S4 render gate → delivered deck.
-
 ## Install
 
-This skill ships as a single self-contained folder with a `pyproject.toml` for standard Python install. Three install profiles depending on which optional features you want:
+### As a Claude skill (recommended for Claude Cowork / Claude Code users)
 
 ```bash
-# Core install (just python-pptx, lxml, pyyaml — sufficient for 95% of decks)
+git clone https://github.com/albertojb/mbb-ppt-generator.git ~/.claude/skills/mbb-ppt-generator
+cd ~/.claude/skills/mbb-ppt-generator
+pip install -e .
+```
+
+After install, the skill is available in Claude Cowork and Claude Code under the name **MBB PPT Generator**. Non-technical users invoke it by saying:
+
+> *"Use the MBB PPT skill on this brief."*  
+> *"Make me a board deck from `meeting_notes.md` using the MBB skill."*
+
+The skill takes care of the brief → outline → content → render → QA workflow internally; you do not need to run any Python yourself.
+
+### As a Python package (for direct programmatic use)
+
+```bash
+git clone https://github.com/albertojb/mbb-ppt-generator.git
+cd mbb-ppt-generator
 pip install -e .
 
-# Core + dev tooling (pytest)
-pip install -e ".[dev]"
-
-# Core + local image processing (rembg cutout for real cover images)
-pip install -e ".[image]"
-
-# Core + Tencent Hunyuan cloud cover-image API (OFF by default; enable only when
-# your confidentiality context allows transmitting slide titles to a third party)
-pip install -e ".[cloud]"
-
-# Everything
-pip install -e ".[all]"
+# Optional extras
+pip install -e ".[dev]"        # core + pytest
+pip install -e ".[image]"      # core + rembg/Pillow/numpy for image processing
+pip install -e ".[all]"        # everything
 ```
 
 After install, run the test suite to confirm setup:
@@ -61,14 +57,31 @@ After install, run the test suite to confirm setup:
 pytest                # 15 tests, ~5 seconds
 ```
 
-## Quick start
+## 60-second quickstart
+
+```bash
+python examples/minimal_example.py
+# → ppt-project-demo/deck.pptx, gate_render.json (passed: true)
+```
+
+Open `ppt-project-demo/deck.pptx` in PowerPoint or Keynote.
+
+## CLI
+
+After install, a `mbb-ppt` command is on your PATH (or run as `python -m mbb_ppt`):
+
+```bash
+mbb-ppt render content.json --out deck.pptx     # render content.json to .pptx + run both gates
+mbb-ppt gate-content content.json               # S3 content gate only
+mbb-ppt gate-render deck.pptx                   # S4 render gate only
+```
+
+The CLI exits non-zero if any gate fails, so it composes cleanly with shell scripts and CI.
+
+## Programmatic use
 
 ```python
-import sys, os
-sys.path.insert(0, os.path.expanduser('~/.workbuddy/skills/mbb-ppt-generator'))
-from mck_ppt import MckEngine as ExecEngine
-from mck_ppt.constants import NAVY, ACCENT_BLUE
-from pptx.util import Inches
+from mbb_ppt import MbbEngine as ExecEngine
 
 eng = ExecEngine(total_slides=4)
 eng.cover(title='Q1 2026 strategy review', subtitle='Board update',
@@ -91,32 +104,32 @@ eng.save('output/q1_strategy_review.pptx')
 mbb-ppt-generator/
 ├── SKILL.md                         # main skill spec (entry point for AI)
 ├── README.md                        # this file
+├── MAINTAINERS.md                   # harness pedagogy + design rationale
 ├── LICENSE                          # Apache 2.0
 ├── NOTICE                           # attribution chain
 ├── MBB_PPT_QA_CHECKLIST.md          # visual QA checklist (after the gates pass)
 │
-├── mck_ppt/                         # bundled engine (Kaku Li's, Apache 2.0)
+├── mbb_ppt/                         # bundled engine (Apache 2.0)
 │   ├── __init__.py
+│   ├── __main__.py                  # CLI entry (python -m mbb_ppt)
 │   ├── constants.py                 # design system + guard-rail constants
 │   ├── core.py                      # low-level drawing primitives
 │   ├── engine.py                    # ~67 high-level layout methods
 │   ├── qa.py                        # automated visual QA (used by render gate)
 │   ├── deck_builder.py              # storyline-driven orchestration
 │   ├── review.py                    # slide review + auto-fix pipeline
-│   ├── cover_image.py               # optional cloud cover image (off by default)
 │   └── storylines/                  # canned storyline templates
 │
 ├── references/
 │   ├── INDEX.md                     # knowledge router (stage → load map)
+│   ├── api-cheatsheet.md            # one-page method signatures
 │   ├── layout-matrix.yaml           # capacity matrix (single source of truth)
-│   ├── color-palette.md             # quick reference
-│   ├── layout-catalog.md            # 72-layout index (legacy browse view)
-│   ├── team/                        # most-stable layer (rarely changes)
-│   ├── framework/                   # framework layer — to be filled out
-│   ├── layouts/                     # per-layout reference — to be filled out
+│   ├── team/                        # brand + presentation conventions
+│   ├── framework/                   # engine-api, guard-rails, planning-guide
+│   ├── layouts/                     # per-layout reference (12 files)
 │   └── scripts/
-│       ├── gate_check_content.py    # S3 content gate (English)
-│       └── gate_check_render.py     # S4 render gate (English, w/ engine_bug whitelist)
+│       ├── gate_check_content.py    # S3 content gate
+│       └── gate_check_render.py     # S4 render gate
 │
 └── experiences/                     # self-refinement persistence (append-only)
     ├── overflow.md
@@ -173,7 +186,7 @@ Three runnable examples ship with the skill, all passing both gates end-to-end:
 |---|---|---|
 | `examples/minimal_example.py` | Full S1→S5 workflow on a 6-slide strategy review. Writes `content.json`, runs both gates as subprocesses, renders the deck, prints the verdict. **Best for**: learning the harness workflow. | `python examples/minimal_example.py` |
 | `examples/board_qbr_example.py` | 10-slide quarterly business review. Imperative engine calls (no JSON round-trip). Demonstrates dashboard, RAG status, Pareto, Harvey Ball evaluation, and case study layouts. **Best for**: operating-cadence decks. | `python examples/board_qbr_example.py` |
-| `mck_ppt/storylines/ai_enterprise.py` | 12-slide strategy-review storyline using `DeckBuilder.build()`. Covers cover, TOC, executive_summary, big_number, grouped_bar, table_insight, side_by_side, donut, timeline, key_takeaway, action_items, closing. **Best for**: starting from a complete template. | `python -c "from mck_ppt.deck_builder import DeckBuilder; from mck_ppt.storylines import ai_enterprise; DeckBuilder.build(ai_enterprise.STORYLINE, 'output.pptx')"` |
+| `mbb_ppt/storylines/ai_enterprise.py` | 12-slide strategy-review storyline using `DeckBuilder.build()`. Covers cover, TOC, executive_summary, big_number, grouped_bar, table_insight, side_by_side, donut, timeline, key_takeaway, action_items, closing. **Best for**: starting from a complete template. | `python -c "from mbb_ppt.deck_builder import DeckBuilder; from mbb_ppt.storylines import ai_enterprise; DeckBuilder.build(ai_enterprise.STORYLINE, 'output.pptx')"` |
 
 ## Tests
 
@@ -189,13 +202,8 @@ Coverage spans engine import, .pptx zip integrity, the `full_cleanup()` XML sani
 
 ## Status
 
-- ✅ **0.1.0**: feature-complete and tagged. Engine bundled and self-contained; no external skill installation needed.
-- ✅ DM Sans heading typography wired through.
-- ✅ Both gate scripts in English with self-locating `mck_ppt` import.
-- ✅ Experience corpus (overflow, layout-pitfalls, chart-limits) seeded.
-- ✅ All 12 per-layout reference files complete (~4,200 lines covering 67 layouts).
-- ✅ All 15 tests passing.
-- ✅ `pyproject.toml` for standard Python install.
+- **0.2.0** — module rebranded `mck_ppt` → `mbb_ppt`; primary color forest-green; CLI added; cloud cover-image integration removed.
+- **0.1.0** — feature-complete and tagged. Engine bundled and self-contained; no external skill installation needed.
 
 ## License
 

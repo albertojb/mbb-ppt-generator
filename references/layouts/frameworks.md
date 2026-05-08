@@ -53,7 +53,7 @@ eng.matrix_2x2(title, quadrants, axis_labels=None, source='', bottom_bar=None)
 ### Example
 
 ```python
-from mck_ppt.constants import LIGHT_BLUE, LIGHT_GREEN, LIGHT_ORANGE, LIGHT_RED
+from mbb_ppt.constants import LIGHT_BLUE, LIGHT_GREEN, LIGHT_ORANGE, LIGHT_RED
 
 eng.matrix_2x2(
     title='Quick wins and strategic bets diverge in our portfolio',
@@ -127,7 +127,7 @@ Each quadrant gets a colored top strip in `accent_color` and a light-tinted back
 ### Example
 
 ```python
-from mck_ppt.constants import (
+from mbb_ppt.constants import (
     ACCENT_GREEN, LIGHT_GREEN, ACCENT_ORANGE, LIGHT_ORANGE,
     ACCENT_BLUE,  LIGHT_BLUE,  ACCENT_RED,    LIGHT_RED,
 )
@@ -318,7 +318,7 @@ eng.stakeholder_map(title, quadrants, x_label='Influence →',
 ### Example
 
 ```python
-from mck_ppt.constants import LIGHT_RED, LIGHT_BLUE, LIGHT_GREEN, LIGHT_ORANGE
+from mbb_ppt.constants import LIGHT_RED, LIGHT_BLUE, LIGHT_GREEN, LIGHT_ORANGE
 
 eng.stakeholder_map(
     title='Stakeholder map for the FY26 reorg announcement',
@@ -372,7 +372,7 @@ eng.risk_matrix(title, grid_colors, grid_lights, risks,
 ### Example
 
 ```python
-from mck_ppt.constants import ACCENT_GREEN, ACCENT_ORANGE, ACCENT_RED, LIGHT_GREEN, LIGHT_ORANGE, LIGHT_RED
+from mbb_ppt.constants import ACCENT_GREEN, ACCENT_ORANGE, ACCENT_RED, LIGHT_GREEN, LIGHT_ORANGE, LIGHT_RED
 
 # 3x3: row 0 = high probability (top), row 2 = low (bottom)
 #      col 0 = low impact (left), col 2 = high impact (right)

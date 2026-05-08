@@ -290,7 +290,7 @@ eng.rag_status(title, headers, rows, source='')
 ### Example
 
 ```python
-from mck_ppt.constants import ACCENT_GREEN, ACCENT_ORANGE, ACCENT_RED
+from mbb_ppt.constants import ACCENT_GREEN, ACCENT_ORANGE, ACCENT_RED
 
 eng.rag_status(
     title='Portfolio status — 4 of 6 initiatives green',

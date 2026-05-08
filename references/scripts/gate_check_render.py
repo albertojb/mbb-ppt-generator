@@ -53,7 +53,7 @@ ENGINE_BUG_WHITELIST = {
     #   ExecEngine deliberately uses different font sizes within certain
     #   layouts (e.g. table_insight uses 18pt header + 14pt body, by design).
     #   QA flags this as "peer font inconsistency" but it is intentional.
-    #   Evidence: mck_ppt/engine.py table_insight() and process_chevron() —
+    #   Evidence: mbb_ppt/engine.py table_insight() and process_chevron() —
     #   header text boxes set font size = SUB_HEADER_SIZE (18pt), content
     #   text boxes set font size = BODY_SIZE (14pt) explicitly.
     "peer_font_inconsistency",
@@ -70,22 +70,22 @@ ENGINE_BUG_WHITELIST = {
 
 
 def _resolve_skill_root() -> str:
-    """Locate the skill root (the directory that contains mck_ppt/) starting
+    """Locate the skill root (the directory that contains mbb_ppt/) starting
     from this script's location. Walks up at most 3 levels.
 
     The repository layout is:
         <skill_root>/
-          mck_ppt/                     <- bundled engine
+          mbb_ppt/                     <- bundled engine
           references/scripts/gate_check_render.py   <- this file
     """
     here = os.path.dirname(os.path.abspath(__file__))
     for _ in range(4):
-        candidate = os.path.join(here, "mck_ppt")
+        candidate = os.path.join(here, "mbb_ppt")
         if os.path.isdir(candidate):
             return here
         here = os.path.dirname(here)
     # Fall back to legacy install path so old setups still work.
-    return os.path.expanduser("~/.workbuddy/skills/mck-ppt-design")
+    return os.path.expanduser("~/.claude/skills/mbb-ppt-generator")
 
 
 def run_gate(pptx_path: str, project_dir: str) -> Dict[str, Any]:
@@ -95,13 +95,13 @@ def run_gate(pptx_path: str, project_dir: str) -> Dict[str, Any]:
         sys.path.insert(0, skill_root)
 
     try:
-        from mck_ppt.qa import PptQA
+        from mbb_ppt.qa import PptQA
     except ImportError as e:
         return {
             "passed": False,
-            "error": (f"could not import mck_ppt.qa: {e}. "
+            "error": (f"could not import mbb_ppt.qa: {e}. "
                       f"Looked under {skill_root}. "
-                      "Verify that mck_ppt/ is present in the skill root."),
+                      "Verify that mbb_ppt/ is present in the skill root."),
             "checklist": {"user_code_errors": 999, "engine_bug_errors": 0, "warnings": 0},
             "verdict": "FAIL — environment problem",
             "user_code_error_detail": [],

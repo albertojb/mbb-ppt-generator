@@ -55,7 +55,7 @@ eng.grouped_bar(title, categories, series, data, max_val=None,
 ### Example
 
 ```python
-from mck_ppt.constants import NAVY, ACCENT_BLUE
+from mbb_ppt.constants import NAVY, ACCENT_BLUE
 
 eng.grouped_bar(
     title='Premium and partner channels lead growth',
@@ -126,7 +126,7 @@ eng.stacked_bar(title, periods, series, data, summary=None, source='')
 ### Example
 
 ```python
-from mck_ppt.constants import NAVY, ACCENT_BLUE, ACCENT_GREEN
+from mbb_ppt.constants import NAVY, ACCENT_BLUE, ACCENT_GREEN
 
 eng.stacked_bar(
     title='Premium share rose from 30% to 47% in three quarters',
@@ -201,7 +201,7 @@ eng.horizontal_bar(title, items, summary=None, source='')
 ### Example
 
 ```python
-from mck_ppt.constants import NAVY, ACCENT_BLUE, MED_GRAY
+from mbb_ppt.constants import NAVY, ACCENT_BLUE, MED_GRAY
 
 eng.horizontal_bar(
     title='Service quality is the top driver of customer retention',

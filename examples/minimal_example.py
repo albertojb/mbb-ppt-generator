@@ -21,7 +21,7 @@ Outputs:
     ppt-project-demo/deck.pptx        — rendered deck
     ppt-project-demo/gate_render.json — S4 gate result
 
-Apache 2.0. The bundled mck_ppt engine is Copyright Kaku Li (likaku); see NOTICE.
+Apache 2.0. The bundled mbb_ppt engine is Copyright Kaku Li (likaku); see NOTICE.
 """
 
 from __future__ import annotations
@@ -34,8 +34,8 @@ from pathlib import Path
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SKILL_ROOT))
 
-from mck_ppt import MckEngine
-from mck_ppt.constants import NAVY, ACCENT_BLUE, ACCENT_GREEN, ACCENT_ORANGE
+from mbb_ppt import MbbEngine
+from mbb_ppt.constants import NAVY, ACCENT_BLUE, ACCENT_GREEN, ACCENT_ORANGE
 
 
 # ── Project workspace ──────────────────────────────────────────────────────
@@ -160,7 +160,7 @@ def run_gate(script: Path, *args: str, label: str) -> bool:
 
 def render_deck() -> None:
     """S4: drive the engine from CONTENT['slides']."""
-    eng = MckEngine(total_slides=len(SLIDES))
+    eng = MbbEngine(total_slides=len(SLIDES))
     for slide in SLIDES:
         spec = {k: v for k, v in slide.items() if k not in ("idx", "layout")}
         layout = slide["layout"]

@@ -1,6 +1,6 @@
 """Shared pytest fixtures.
 
-Adds the project root to sys.path so `import mck_ppt` works whether or not
+Adds the project root to sys.path so `import mbb_ppt` works whether or not
 the package has been installed. Provides a `tmp_project_dir` fixture for
 gate-script tests that need a working directory.
 """
@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-# Add project root to sys.path so `import mck_ppt` works without installation.
+# Add project root to sys.path so `import mbb_ppt` works without installation.
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mbb-ppt-generator"
-version = "0.1.0"
-description = "Executive-grade PowerPoint generation with consulting-style discipline. Self-contained skill with a five-stage workflow and machine-readable gates. Adapted from Likaku's Mck-ppt-design-skill."
+version = "0.2.0"
+description = "Executive-grade PowerPoint generation with consulting-style discipline. Self-contained skill with a five-stage workflow and machine-readable gates. Adapted from likaku's Mck-ppt-design-skill (Apache 2.0)."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
@@ -25,6 +25,7 @@ keywords = [
     "executive-deck",
     "python-pptx",
     "ai-skill",
+    "claude-skill",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -49,20 +50,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Local image processing (rembg cutout) — needed only when a caller passes
-# a real image to eng.cover() and wants automatic background removal, or
-# uses the cover_image module's local image-processing helpers.
+# Local image processing — needed only when a caller passes a real image to
+# eng.cover() and wants automatic background removal.
 image = [
     "pillow >= 10.0",
     "numpy >= 1.24",
     "rembg >= 2.0",
-]
-
-# Cloud cover-image generation (Tencent Hunyuan API). OFF by default per the
-# skill's security posture; enable only if your confidentiality context allows
-# transmitting slide titles to a third-party generation service.
-cloud = [
-    "tencentcloud-sdk-python >= 3.0",
 ]
 
 # Development tooling — for running the test suite.
@@ -76,10 +69,12 @@ all = [
     "pillow >= 10.0",
     "numpy >= 1.24",
     "rembg >= 2.0",
-    "tencentcloud-sdk-python >= 3.0",
     "pytest >= 7.0",
     "pytest-cov >= 4.0",
 ]
+
+[project.scripts]
+mbb-ppt = "mbb_ppt.__main__:main"
 
 [project.urls]
 Homepage = "https://github.com/albertojb/mbb-ppt-generator"
@@ -92,15 +87,10 @@ Upstream = "https://github.com/likaku/Mck-ppt-design-skill"
 # ── setuptools configuration ────────────────────────────────────────────
 
 [tool.setuptools]
-# Top-level packages bundled in the wheel.
-packages = ["mck_ppt", "mck_ppt.storylines"]
+packages = ["mbb_ppt", "mbb_ppt.storylines"]
 include-package-data = true
 
 [tool.setuptools.package-data]
-# Reference assets the engine doesn't strictly need to import but that ship
-# with the skill so consumers get the full documentation/gate workflow.
-# (These are not imported by mck_ppt itself; consumers reach them via the
-# repo path or by reading from the installed package data directory.)
 "*" = ["py.typed"]
 
 # ── pytest configuration ────────────────────────────────────────────────
@@ -117,10 +107,9 @@ addopts = [
 # ── coverage (optional) ─────────────────────────────────────────────────
 
 [tool.coverage.run]
-source = ["mck_ppt"]
+source = ["mbb_ppt"]
 omit = [
-    "mck_ppt/cover_image.py",     # opt-in cloud feature, not exercised in tests
-    "mck_ppt/storylines/*",       # template content, not core engine
+    "mbb_ppt/storylines/*",       # template content, not core engine
 ]
 
 [tool.coverage.report]

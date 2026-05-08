@@ -58,7 +58,7 @@ eng.dashboard_kpi_chart(title, kpi_cards, chart_data=None,
 ### Example
 
 ```python
-from mck_ppt.constants import NAVY, ACCENT_BLUE, ACCENT_GREEN, ACCENT_ORANGE, BG_GRAY
+from mbb_ppt.constants import NAVY, ACCENT_BLUE, ACCENT_GREEN, ACCENT_ORANGE, BG_GRAY
 
 eng.dashboard_kpi_chart(
     title='Q4 dashboard — three of four KPIs ahead of plan',
@@ -139,7 +139,7 @@ eng.dashboard_table_chart(title, table_data, chart_data=None,
 
 ```python
 from pptx.util import Inches
-from mck_ppt.constants import NAVY, ACCENT_BLUE, ACCENT_GREEN, ACCENT_ORANGE
+from mbb_ppt.constants import NAVY, ACCENT_BLUE, ACCENT_GREEN, ACCENT_ORANGE
 
 eng.dashboard_table_chart(
     title='Regional performance — APAC led, EMEA recovered',

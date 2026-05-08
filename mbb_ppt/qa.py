@@ -1,10 +1,10 @@
 # Copyright 2024-2026 Kaku Li (https://github.com/likaku)
 # Licensed under the Apache License, Version 2.0 — see LICENSE and NOTICE.
-# Part of "Mck-ppt-design-skill" (McKinsey PPT Design Framework).
+# Originally from "Mck-ppt-design-skill"; bundled in mbb-ppt-generator
 # NOTICE: This file must be retained in all copies or substantial portions.
 #
 """
-PPT QA Engine — Automated visual quality analysis for mck_ppt outputs.
+PPT QA Engine — Automated visual quality analysis for mbb_ppt outputs.
 
 Analyzes generated PPTX files for common layout defects:
   1. Body overflow   — shapes extending beyond slide boundaries
@@ -15,7 +15,7 @@ Analyzes generated PPTX files for common layout defects:
   6. Guard rail violations — connector usage, missing cleanup, etc.
 
 Usage:
-    from mck_ppt.qa import PptQA
+    from mbb_ppt.qa import PptQA
     report = PptQA("output.pptx").run()
     report.print_summary()
     report.to_json("qa_report.json")
@@ -902,7 +902,7 @@ def analyze(filepath: str, json_out: str = None, verbose: bool = True) -> QARepo
 if __name__ == "__main__":
     import sys
     if len(sys.argv) < 2:
-        print("Usage: python -m mck_ppt.qa <path.pptx> [--json report.json]")
+        print("Usage: python -m mbb_ppt.qa <path.pptx> [--json report.json]")
         sys.exit(1)
 
     pptx_path = sys.argv[1]
