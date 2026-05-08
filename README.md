@@ -3,51 +3,24 @@
 > Executive-grade PowerPoint generation for Claude Cowork and Claude Code. Tell Claude *"make me a board deck about X"* and it produces a sober, conclusion-led .pptx with sans-serif typography and machine-validated layouts. No bash, no Python knowledge required.
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Status: 0.4.0](https://img.shields.io/badge/Status-0.4.0-blue)](CHANGELOG.md)
+[![Status: 0.4.1](https://img.shields.io/badge/Status-0.4.1-blue)](CHANGELOG.md)
 [![Tests: 22 passing](https://img.shields.io/badge/Tests-22%20passing-brightgreen)](tests/)
 
-## Install — 2 seconds, no terminal needed
+## Install in Claude Cowork
 
-### In Claude Cowork (Mac / Windows / Linux)
+In a Cowork session, type:
 
-Open a Cowork session and paste this single sentence:
+> **Install the skill from https://github.com/albertojb/mbb-ppt-generator**
 
-> **Download `https://raw.githubusercontent.com/albertojb/mbb-ppt-generator/main/install.py` and run it with `python install.py`. Then I'll restart Cowork.**
+That's it. Then quit Cowork (Cmd+Q on Mac, File → Exit on Windows, `pkill -f Claude` on Linux) and reopen. The **MBB PPT Generator** skill will appear in your right-sidebar Skills list. To use it in any session afterward:
 
-Claude will:
+> *"Use the MBB PPT skill to make a 6-slide pitch about [topic]."*
 
-1. Fetch `install.py` (one file, ~6 KB).
-2. Run it. The script auto-detects your Cowork skills directory on Mac/Windows/Linux, clones the repo (shallow, ~2 s), copies the skill files in, registers in `manifest.json`, and installs `python-pptx` / `lxml` / `pyyaml`.
-3. Tell you to quit and relaunch Cowork.
+To **update** when a new version ships, type the same install line again. The install is idempotent and runs in ~2 seconds.
 
-After restart, **MBB PPT Generator** appears in the right-sidebar Skills list. In any session afterward:
+> **Note for Claude (the agent reading this):** if a user has just asked you to install this skill, the canonical install action is documented in [`CLAUDE.md`](CLAUDE.md) at the repo root. Read that file and follow it verbatim. Do not improvise, manually clone, or pip-install dependencies one at a time — those steps are wrapped in `install.py` and the script handles them all in ~2 seconds. The `claude plugin marketplace add` path does **not** register the skill in Cowork's GUI sidebar; do not use it for Cowork installs.
 
-> *"Use the MBB PPT skill to make a 6-slide pitch about [topic]."*  
-> *"Build a board deck from `meeting_notes.md` using the MBB skill."*
-
-### Updates
-
-Cowork doesn't auto-update third-party skills. To pull a new version, paste the install sentence above again — `install.py` is idempotent and will replace the old files. The whole thing is still ~2 seconds.
-
-### Alternative: Claude Code CLI (terminal users)
-
-If you live in the terminal, you can also use the plugin marketplace path:
-
-```bash
-claude plugin marketplace add albertojb/mbb-ppt-generator
-claude plugin install mbb-ppt-generator
-```
-
-Note: this path works for Claude Code only — it does **not** register the skill in Cowork's GUI Skills sidebar. For Cowork, use the `install.py` route above.
-
-### As a Python package (developers only)
-
-```bash
-git clone https://github.com/albertojb/mbb-ppt-generator.git
-cd mbb-ppt-generator
-pip install -e ".[dev]"
-pytest
-```
+---
 
 ## What you get
 

@@ -37,8 +37,11 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
-REPO_URL = "https://github.com/albertojb/mbb-ppt-generator.git"
-SKILL_NAME = "mbb-ppt-generator"
+REPO_OWNER = "albertojb"
+REPO_NAME = "mbb-ppt-generator"
+REPO_BRANCH = "main"
+TARBALL_URL = f"https://codeload.github.com/{REPO_OWNER}/{REPO_NAME}/tar.gz/refs/heads/{REPO_BRANCH}"
+SKILL_NAME = REPO_NAME
 SKILL_PAYLOAD_REL = Path("plugins") / SKILL_NAME / "skills" / SKILL_NAME
 
 DESCRIPTION = (
@@ -108,36 +111,66 @@ def find_cowork_skills_dir() -> tuple[Path, Path]:
 # ── Step 2: Locate the skill payload (clone if needed) ───────────────────
 
 def find_or_clone_payload() -> tuple[Path, Path | None]:
-    """Return (payload_path, temp_clone_dir).
+    """Return (payload_path, temp_dir).
 
     payload_path: absolute path to the directory containing SKILL.md.
-    temp_clone_dir: the temp dir we created (to clean up later), or None
-        if we found the payload locally.
+    temp_dir: the temp dir we created (to clean up later), or None if we
+        found the payload locally alongside install.py.
+
+    Tries (in order): local clone → GitHub tarball via urllib (stdlib —
+    no git required) → git clone fallback. The tarball path means the
+    user does not need git installed.
     """
     here = Path(__file__).resolve().parent
     local = here / SKILL_PAYLOAD_REL
     if (local / "SKILL.md").is_file():
         return local, None
 
-    # Otherwise, clone the repo into a temp dir.
-    if shutil.which("git") is None:
-        sys.exit(
-            "ERROR: skill payload not found alongside install.py and `git` is "
-            "not on PATH so we can't clone the repo. Either run this from a "
-            "clone of mbb-ppt-generator, or install Git first."
-        )
+    # Try the tarball path first — no git dependency, faster.
     tmp = Path(tempfile.mkdtemp(prefix="mbb-ppt-install-"))
-    print(f"[1/4] Cloning {REPO_URL} (shallow) …")
-    rc = subprocess.run(
-        ["git", "clone", "--depth", "1", "--quiet", REPO_URL, str(tmp / "repo")],
-        check=False,
-    ).returncode
-    if rc != 0:
-        sys.exit(f"ERROR: git clone failed (exit {rc}).")
-    payload = tmp / "repo" / SKILL_PAYLOAD_REL
-    if not (payload / "SKILL.md").is_file():
-        sys.exit(f"ERROR: cloned repo missing payload at {payload}.")
-    return payload, tmp
+    try:
+        print(f"[1/4] Downloading repo tarball from GitHub…")
+        import tarfile
+        tarball = tmp / "repo.tar.gz"
+        urllib.request.urlretrieve(TARBALL_URL, tarball)
+        with tarfile.open(tarball, "r:gz") as tf:
+            tf.extractall(tmp)
+        # Top-level dir inside the tarball is `<repo>-<branch>/`.
+        repo_dirs = [p for p in tmp.iterdir() if p.is_dir() and p.name.startswith(REPO_NAME)]
+        if repo_dirs:
+            payload = repo_dirs[0] / SKILL_PAYLOAD_REL
+            if (payload / "SKILL.md").is_file():
+                tarball.unlink(missing_ok=True)
+                return payload, tmp
+    except Exception as e:
+        print(f"  (tarball download failed: {e}; trying git clone fallback…)")
+        # Fall through to git path below.
+
+    # Git fallback (only if tarball failed).
+    if shutil.which("git") is not None:
+        print(f"[1/4] Cloning https://github.com/{REPO_OWNER}/{REPO_NAME}.git …")
+        clone_dir = tmp / "repo"
+        rc = subprocess.run(
+            ["git", "clone", "--depth", "1", "--quiet",
+             f"https://github.com/{REPO_OWNER}/{REPO_NAME}.git", str(clone_dir)],
+            check=False,
+        ).returncode
+        if rc == 0:
+            payload = clone_dir / SKILL_PAYLOAD_REL
+            if (payload / "SKILL.md").is_file():
+                return payload, tmp
+            sys.exit(f"ERROR: cloned repo missing payload at {payload}.")
+        print(f"  (git clone also failed, exit {rc})")
+
+    shutil.rmtree(tmp, ignore_errors=True)
+    sys.exit(
+        "ERROR: could not download the skill payload. Check your network "
+        "connection. If this persists, clone the repo manually and run "
+        f"install.py from the clone:\n"
+        f"    git clone https://github.com/{REPO_OWNER}/{REPO_NAME}.git\n"
+        f"    cd {REPO_NAME}\n"
+        f"    python install.py"
+    )
 
 
 # ── Step 3: Copy skill files ─────────────────────────────────────────────
