@@ -49,3 +49,5 @@ desktop.ini
 
 # Local-only session logs
 mbb skill vs mck skill
+issues
+*.session-log
