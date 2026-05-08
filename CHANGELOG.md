@@ -6,6 +6,37 @@ This project is an Apache 2.0-licensed adaptation of [`Mck-ppt-design-skill`](ht
 
 ---
 
+## [0.4.0] — 2026-05-08 (packaged as a Claude plugin marketplace)
+
+The user's feedback on v0.3.0: "install should be as easy as asking Cowork to install the skill from the github url … users will be former consultants using cowork on Windows and Mac, they have no idea what bash even is." Bash scripts were the wrong path. v0.4.0 fixes this with proper plugin packaging.
+
+### Changed
+
+- **Repo restructured as a Claude plugin marketplace.** Layout now matches Anthropic's plugin format:
+  - `.claude-plugin/marketplace.json` at repo root (lists 1 plugin).
+  - `plugins/mbb-ppt-generator/.claude-plugin/plugin.json` (plugin manifest).
+  - `plugins/mbb-ppt-generator/skills/mbb-ppt-generator/SKILL.md` (the skill — moved from repo root).
+  - All supporting files (`mbb_ppt/`, `references/`, `experiences/`, `MAINTAINERS.md`) moved alongside SKILL.md.
+- **Install flow is now URL-based, no terminal needed.** In Cowork (Windows/Mac/Linux), the user just asks Claude:
+  > "Add the marketplace at github.com/albertojb/mbb-ppt-generator and install the mbb-ppt-generator plugin."
+
+  Claude in Cowork runs `claude plugin marketplace add albertojb/mbb-ppt-generator` and `claude plugin install mbb-ppt-generator` automatically. No bash, no `cd`, works the same on every OS.
+- **Engine-import bootstrap rewritten** as a robust glob pattern in SKILL.md HARD RULE 6. Discovers the bundled engine across plugin-cache, Cowork-manifest, Claude-Code-skills, and dev/symlinked layouts. If `from mbb_ppt import` fails, auto-installs `python-pptx`, `lxml`, `pyyaml` and retries.
+
+### Added
+
+- `.claude-plugin/marketplace.json` — passes `claude plugin validate`.
+- `plugins/mbb-ppt-generator/.claude-plugin/plugin.json` — passes `claude plugin validate`.
+- `plugins/mbb-ppt-generator/README.md` — short plugin-level intro.
+
+### Compatibility / fallbacks
+
+- `install_cowork.sh` is retained as a power-user fallback for the manifest-based install pattern.
+- `pip install -e .` from the repo root still works (pyproject.toml's `[tool.setuptools.package-dir]` points at the new package location).
+- All 22 tests still pass. All 3 examples (minimal/board QBR/pitch deck) still render and pass both gates.
+
+---
+
 ## [0.3.0] — 2026-05-08 (Cowork install + speed + overflow gate + default no-cover/closing)
 
 The user installed v0.2.2 in Cowork and hit six issues; this release fixes all six.

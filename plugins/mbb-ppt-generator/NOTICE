@@ -1,0 +1,74 @@
+MBB PPT Generator
+Copyright 2026 albertojb (adapter)
+
+This product is a derivative work of:
+
+    Mck-ppt-design-skill
+    Copyright 2024-2026 Kaku Li (https://github.com/likaku)
+    https://github.com/likaku/Mck-ppt-design-skill
+    Licensed under the Apache License, Version 2.0
+
+The original work by Kaku Li provides the Python engine package
+(originally `mck_ppt/`, renamed to `mbb_ppt/` in this derivative work),
+including the layout methods, file-integrity / anti-corruption logic,
+BLOCK_ARC chart implementations, the QA module, and the gate-script
+architecture pattern. The five-stage workflow and self-refinement
+protocol concepts are also adapted from Kaku Li's separate skill,
+"harness-skill-upgrader" (https://github.com/likaku/harness-skill-upgrader),
+also licensed under the Apache License, Version 2.0.
+
+Modifications introduced by this derivative work include:
+
+  - English-language documentation (CJK guidance removed).
+  - Heading typography changed from Georgia (transitional serif) to
+    DM Sans (modern neutral sans-serif), with Calibri fallback.
+  - Body typography unified on Arial.
+  - Module renamed from `mck_ppt` to `mbb_ppt`; class renamed from
+    `MckEngine` to `MbbEngine`. Public-facing alias is `ExecEngine`.
+    Apache 2.0 file-header copyrights from Kaku Li are preserved
+    verbatim in every Python source file.
+  - Primary color palette changed from McKinsey-style navy to a
+    sober forest-green system; accent palette retuned to muted
+    earth tones suitable for non-consulting audiences.
+  - Production guard rails 11-18 added to the original 1-10 set.
+  - Layout capacity matrix (`references/layout-matrix.yaml`) extended
+    with explicit char_budget and tuple_arity for the S3 content gate.
+  - Gate scripts translated to English and made self-locating
+    relative to the skill root (no hardcoded install path).
+  - Tencent Hunyuan cover-image integration (`cover_image.py`) and
+    its associated Chinese prompt strings have been removed entirely.
+  - CLI entry point added (`python -m mbb_ppt`) for one-shot render +
+    gate execution from non-technical operator workflows.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+========================================================================
+
+NOTICE: This file is required by Section 4(d) of the Apache License 2.0.
+Any redistribution of this software — in source or binary form, modified
+or unmodified — MUST include this NOTICE file in its entirety, AND must
+preserve the upstream copyright notice from Kaku Li shown above.
+
+========================================================================
+
+Third-party components:
+
+  - python-pptx (MIT License) — https://github.com/scanny/python-pptx
+  - lxml (BSD License) — https://lxml.de/
+  - PyYAML (MIT License) — https://pyyaml.org/
+
+All trademarks referenced herein are the property of their respective
+owners and are used solely for identification purposes. The naming
+convention "MBB-style" describes a category of executive consulting
+presentation design and is not affiliated with or endorsed by McKinsey,
+BCG, Bain, or any consulting firm.

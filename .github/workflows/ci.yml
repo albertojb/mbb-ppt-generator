@@ -69,7 +69,9 @@ jobs:
           #   - SKILL.md cites Rasiel's "The McKinsey Way" book (legitimate reading list).
           #   - constants.py historical comment documents the color-rebrand decision.
           #   - STATE.md documents v0.2.0 rebrand decisions.
-          ALLOWED_FILES='MBB_PPT_QA_CHECKLIST.md CHANGELOG.md MAINTAINERS.md README.md NOTICE STATE.md SKILL.md BACKLOG.md mbb_ppt/constants.py'
+          # Paths reflect the v0.4.0 plugin layout (skill files moved under
+          # plugins/mbb-ppt-generator/skills/mbb-ppt-generator/).
+          ALLOWED_FILES='MBB_PPT_QA_CHECKLIST.md CHANGELOG.md README.md NOTICE STATE.md BACKLOG.md plugins/mbb-ppt-generator/skills/mbb-ppt-generator/MAINTAINERS.md plugins/mbb-ppt-generator/skills/mbb-ppt-generator/SKILL.md plugins/mbb-ppt-generator/skills/mbb-ppt-generator/mbb_ppt/constants.py plugins/mbb-ppt-generator/NOTICE'
           FAIL=0
           for f in $BAD_FILES; do
             allowed=0
@@ -105,7 +107,8 @@ jobs:
           # copyright header. Files that originated in this fork
           # (__main__.py — the CLI wrapper, original to mbb-ppt-generator)
           # are excluded.
-          DERIVED_FILES="mbb_ppt/__init__.py mbb_ppt/constants.py mbb_ppt/core.py mbb_ppt/deck_builder.py mbb_ppt/engine.py mbb_ppt/qa.py mbb_ppt/review.py mbb_ppt/storylines/__init__.py mbb_ppt/storylines/ai_enterprise.py"
+          PKG="plugins/mbb-ppt-generator/skills/mbb-ppt-generator/mbb_ppt"
+          DERIVED_FILES="$PKG/__init__.py $PKG/constants.py $PKG/core.py $PKG/deck_builder.py $PKG/engine.py $PKG/qa.py $PKG/review.py $PKG/storylines/__init__.py $PKG/storylines/ai_enterprise.py"
           for f in $DERIVED_FILES; do
             head -3 "$f" | grep -q "Kaku Li" || (echo "Missing Kaku Li copyright in $f" && exit 1)
           done

@@ -1,6 +1,6 @@
 # MBB PPT Generator — Project State
 
-> **Pause point: 2026-05-08 (v0.3.0 — Cowork installer + speed + overflow gate + default no-cover/closing).** When albertojb says "resume the MBB PPT skill" (or anything similar), read this file first. Resume instructions are in § 6 below.
+> **Pause point: 2026-05-08 (v0.4.0 — packaged as Claude plugin marketplace).** When albertojb says "resume the MBB PPT skill" (or anything similar), read this file first. Resume instructions are in § 6 below.
 
 ---
 
@@ -23,7 +23,22 @@ Albertojb is building **MBB PPT Generator**, an Apache 2.0-licensed adaptation o
 
 ## 2. Current status — what's done
 
-### v0.3.0 — Cowork install + speed + overflow gate + default no-cover/closing (latest)
+### v0.4.0 — Packaged as a Claude plugin marketplace (latest)
+
+| Change | Status |
+|---|---|
+| `.claude-plugin/marketplace.json` at repo root | ✅ |
+| `plugins/mbb-ppt-generator/.claude-plugin/plugin.json` | ✅ |
+| Skill files moved under `plugins/mbb-ppt-generator/skills/mbb-ppt-generator/` | ✅ |
+| `claude plugin validate` passes for both manifests | ✅ |
+| Install via `claude plugin marketplace add albertojb/mbb-ppt-generator` works | ✅ (verified locally) |
+| URL-based install in Cowork — user asks Claude, no bash | ✅ |
+| Robust engine-import bootstrap in SKILL.md HARD RULE 6 | ✅ |
+| pyproject.toml `[tool.setuptools.package-dir]` updated | ✅ |
+| Tests, examples, CI workflow paths updated | ✅ |
+| 22/22 tests pass; 3 examples render | ✅ |
+
+### v0.3.0 — Cowork install + speed + overflow gate + default no-cover/closing
 
 | Change | Status |
 |---|---|

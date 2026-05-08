@@ -31,7 +31,8 @@ from pathlib import Path
 
 # ── Wire the bundled engine onto sys.path ──────────────────────────────────
 SKILL_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(SKILL_ROOT))
+SKILL_DIR = SKILL_ROOT / "plugins" / "mbb-ppt-generator" / "skills" / "mbb-ppt-generator"
+sys.path.insert(0, str(SKILL_DIR))
 
 from mbb_ppt import MbbEngine
 from mbb_ppt.constants import (
@@ -46,7 +47,7 @@ PROJECT_DIR.mkdir(exist_ok=True)
 DECK_PATH    = PROJECT_DIR / "deck.pptx"
 GATE_RENDER  = PROJECT_DIR / "gate_render.json"
 
-GATE_RENDER_SCRIPT = SKILL_ROOT / "references" / "scripts" / "gate_check_render.py"
+GATE_RENDER_SCRIPT = SKILL_DIR / "references" / "scripts" / "gate_check_render.py"
 
 
 def render_deck() -> None:

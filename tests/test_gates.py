@@ -9,7 +9,7 @@ from pathlib import Path
 
 def _run_content_gate(project_root: Path, content_path: Path,
                       project_dir: Path) -> dict:
-    script = project_root / "references" / "scripts" / "gate_check_content.py"
+    script = project_root / "plugins" / "mbb-ppt-generator" / "skills" / "mbb-ppt-generator" / "references" / "scripts" / "gate_check_content.py"
     result = subprocess.run(
         [sys.executable, str(script), str(content_path), str(project_dir)],
         capture_output=True, text=True,
@@ -20,7 +20,7 @@ def _run_content_gate(project_root: Path, content_path: Path,
 
 def _run_render_gate(project_root: Path, pptx_path: Path,
                      project_dir: Path) -> dict:
-    script = project_root / "references" / "scripts" / "gate_check_render.py"
+    script = project_root / "plugins" / "mbb-ppt-generator" / "skills" / "mbb-ppt-generator" / "references" / "scripts" / "gate_check_render.py"
     result = subprocess.run(
         [sys.executable, str(script), str(pptx_path), str(project_dir)],
         capture_output=True, text=True,

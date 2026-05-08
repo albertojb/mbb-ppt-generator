@@ -38,13 +38,44 @@ description: >-
 3. **Load context on demand** — read only the files listed for the current stage in [`references/INDEX.md`](references/INDEX.md). Do not bulk-load the entire skill on every run.
 4. **Gates are machine-readable.** S3 and S4 outputs are JSON files with a `passed` boolean derived by program logic. Verbal pass-statements are forbidden — see § *Failure modes* below.
 5. **Self-Refinement is mandatory** — when a pattern-level fix is applied during a run, append an `Experience NNN` entry to the matching file under `experiences/`.
-6. **Engine import is plain.** The skill is pip-installed as part of setup (`pip install -e <skill-root>`), so render scripts use:
+6. **Engine import bootstrap.** Render scripts begin with this prelude (paste verbatim):
 
    ```python
-   from mbb_ppt import MbbEngine as ExecEngine
+   import glob, os, subprocess, sys
+
+   def _find_mbb_ppt_skill():
+       """Locate the bundled mbb_ppt engine. Works for plugin-installed,
+       Cowork-installed, and dev/symlinked layouts."""
+       candidates = []
+       # Plugin install (claude plugin install)
+       candidates += glob.glob(os.path.expanduser(
+           '~/.claude/plugins/cache/*/mbb-ppt-generator/*/skills/mbb-ppt-generator'))
+       # Cowork manifest install
+       candidates += glob.glob(os.path.expanduser(
+           '~/.config/Claude/local-agent-mode-sessions/skills-plugin/*/*/skills/mbb-ppt-generator'))
+       # Claude Code direct install
+       candidates += [os.path.expanduser('~/.claude/skills/mbb-ppt-generator')]
+       # Dev-tree layout
+       candidates += glob.glob(os.path.expanduser(
+           '~/Projects/*/plugins/mbb-ppt-generator/skills/mbb-ppt-generator'))
+       for c in candidates:
+           if os.path.isdir(os.path.join(c, 'mbb_ppt')):
+               return c
+       return None
+
+   _skill = _find_mbb_ppt_skill()
+   if _skill: sys.path.insert(0, _skill)
+
+   try:
+       from mbb_ppt import MbbEngine as ExecEngine
+   except ImportError:
+       subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--user',
+                              '--break-system-packages', '--quiet',
+                              'python-pptx', 'lxml', 'pyyaml'])
+       from mbb_ppt import MbbEngine as ExecEngine
    ```
 
-   No `sys.path.insert(...)` boilerplate. No hardcoded install paths anywhere. If the import fails, the skill is not installed — instruct the user to run `pip install -e <skill-root>` and stop.
+   This pattern works on Mac, Windows, and Linux for plugin-installed skills, Cowork manifest installs, Claude Code direct installs, and dev/symlinked layouts. No hardcoded user paths.
 
 7. **Hard limits** from `references/layout-matrix.yaml` are authoritative. Never exceed them in `content.json` — the S3 gate enforces this.
 8. **Layout reference docs are lazy-loaded.** Never bulk-load `references/layouts/*.md` at the start of S4. Read each layout's reference inline at the moment you are preparing that specific render call, and only that file. The 12 layout files together are ~10K tokens; loading them all when the deck uses three is wasted context.

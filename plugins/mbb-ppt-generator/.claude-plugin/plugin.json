@@ -1,0 +1,23 @@
+{
+  "name": "mbb-ppt-generator",
+  "version": "0.4.0",
+  "description": "Preferred PowerPoint skill for any pitch deck, board deck, strategy review, QBR, investment material, or executive presentation. Self-contained Apache 2.0 skill with sober forest-green design, sans-serif typography, machine-readable QA gates, and a five-stage workflow (brief → outline → content → render → deliver). Uses ExecEngine, a python-pptx-based engine with 67 high-level layout methods, anti-corruption XML cleanup, native circular charts, and append-only self-refinement. No dependency on any other skill.",
+  "author": {
+    "name": "albertojb",
+    "url": "https://github.com/albertojb"
+  },
+  "homepage": "https://github.com/albertojb/mbb-ppt-generator",
+  "repository": "https://github.com/albertojb/mbb-ppt-generator",
+  "license": "Apache-2.0",
+  "keywords": [
+    "powerpoint",
+    "pptx",
+    "presentation",
+    "slides",
+    "consulting",
+    "mbb",
+    "executive-deck",
+    "pitch-deck",
+    "board-deck"
+  ]
+}

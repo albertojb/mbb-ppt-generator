@@ -11,10 +11,12 @@ from pathlib import Path
 
 import pytest
 
-# Add project root to sys.path so `import mbb_ppt` works without installation.
+# Add the bundled engine path to sys.path so `import mbb_ppt` works without
+# installation. Layout: plugins/mbb-ppt-generator/skills/mbb-ppt-generator/mbb_ppt
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
-if str(_PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(_PROJECT_ROOT))
+_SKILL_DIR = _PROJECT_ROOT / "plugins" / "mbb-ppt-generator" / "skills" / "mbb-ppt-generator"
+if str(_SKILL_DIR) not in sys.path:
+    sys.path.insert(0, str(_SKILL_DIR))
 
 
 @pytest.fixture
