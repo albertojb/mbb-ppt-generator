@@ -1618,6 +1618,111 @@ layouts:
             metric:      {type: str, max_chars: 60}
       source: {kind: scalar, type: str, max_chars: 80}
 
+  # ═══════════════════════════════════════════════════════════════
+  # New layouts (v0.5.4) — round out post-mortem § 4 catalog
+  # ═══════════════════════════════════════════════════════════════
+  pyramid_staircase:
+    pattern: 76
+    family: frameworks
+    status: active
+    signature: "(title, steps, source='')"
+    summary: "#76 Pyramid staircase — 4-5 ascending steps, each wider and taller than the last. Use for maturity progression."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 60}
+      steps:
+        kind: list
+        required: true
+        max: 5
+        min: 3
+        item:
+          kind: tuple
+          arity: 2
+          slots:
+            - {name: label, type: str, max_chars: 18}
+            - {name: desc,  type: str, max_chars: 80}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  cycle_4stage:
+    pattern: 77
+    family: process
+    status: active
+    signature: "(title, stages, center_label='', source='')"
+    summary: "#77 Cycle (4-stage loop) — 2×2 grid with clockwise arrows. Replaces legacy retired cycle()."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 60}
+      stages:
+        kind: list
+        required: true
+        exact: 4
+        item:
+          kind: tuple
+          arity: 2
+          notes: "Order is clockwise from top-left."
+          slots:
+            - {name: stage_title, type: str, max_chars: 18}
+            - {name: desc,        type: str, max_chars: 100}
+      center_label: {kind: scalar, type: str, max_chars: 30, notes: "Optional center text such as 'PDCA' or 'Continuous improvement'."}
+      source:       {kind: scalar, type: str, max_chars: 80}
+
+  index_callout:
+    pattern: 78
+    family: narrative
+    status: active
+    signature: "(title, items, callout, source='')"
+    summary: "#78 Index callout — left numbered list (4-7) + right detail panel for one anchor item."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 60}
+      items:
+        kind: list
+        required: true
+        max: 7
+        min: 4
+        item:
+          kind: tuple
+          arity: 2
+          slots:
+            - {name: item_title, type: str, max_chars: 22}
+            - {name: short_desc, type: str, max_chars: 60}
+      callout:
+        kind: dict
+        required: true
+        notes: "Right-panel detail for the highlighted item."
+        dict_keys:
+          index:   {type: int, required: true, notes: "0-based index into items."}
+          heading: {type: str, max_chars: 30}
+          detail:  {type: str, max_chars: 400}
+          metric:  {type: str, max_chars: 50}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  extension_rows:
+    pattern: 79
+    family: comparison
+    status: active
+    signature: "(title, rows, source='')"
+    summary: "#79 Extension rows — horizontal rows with left accent bar + name + description. Use for modular catalogs."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 60}
+      rows:
+        kind: list
+        required: true
+        max: 4
+        min: 2
+        item:
+          kind: tuple
+          arity: 2
+          slots:
+            - {name: row_title, type: str, max_chars: 25}
+            - {name: desc,      type: str, max_chars: 90}
+      source: {kind: scalar, type: str, max_chars: 80}
+
   case_study:
     pattern: 34
     family: team

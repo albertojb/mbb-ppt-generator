@@ -727,6 +727,132 @@ def test_v053_layouts_pass_content_gate(project_root: Path, tmp_project_dir: Pat
         f"Schema-driven gate should accept v0.5.3 layouts; fails: {result['fail_items']}"
 
 
+def test_v054_new_layouts_render_clean(project_root: Path, tmp_project_dir: Path):
+    """v0.5.4 layouts (pyramid_staircase, cycle_4stage, index_callout, extension_rows)
+    render without overflow or user-code errors."""
+    from mbb_ppt import MbbEngine
+
+    eng = MbbEngine(total_slides=5)
+    eng.cover(title="v0.5.4 layout regression")
+    eng.pyramid_staircase(
+        title="Maturity progression spans four ascending stages",
+        steps=[
+            ("Ad hoc",    "One-off projects, tribal knowledge."),
+            ("Defined",   "Repeatable processes documented."),
+            ("Managed",   "Metrics drive decisions."),
+            ("Optimized", "Continuous improvement embedded."),
+        ],
+        source="Source: test",
+    )
+    eng.cycle_4stage(
+        title="Continuous improvement cycle drives outcomes",
+        stages=[
+            ("Plan",  "Define hypotheses and metrics."),
+            ("Do",    "Execute the experiment."),
+            ("Check", "Measure results vs hypothesis."),
+            ("Act",   "Codify learning into the next loop."),
+        ],
+        center_label="PDCA",
+        source="Source: test",
+    )
+    eng.index_callout(
+        title="Five optional modules; module 3 is the proposed anchor",
+        items=[
+            ("Discovery", "Initial diagnostic and baseline."),
+            ("Design",    "Solution blueprint and scoping."),
+            ("Build",     "Core delivery, named team, fixed price."),
+            ("Run",       "Steady-state operations."),
+            ("Scale",     "Expansion to new markets."),
+        ],
+        callout={
+            "index": 2,
+            "heading": "Build (anchor module)",
+            "detail": ("Build is the largest single workstream and the deepest "
+                        "dependency for scale. Pricing is fixed; team is named."),
+            "metric": "4-month delivery, 6 FTEs",
+        },
+        source="Source: test",
+    )
+    eng.extension_rows(
+        title="Three optional scope extensions to the base offer",
+        rows=[
+            ("Analytics", "Advanced reporting tier with custom dashboards."),
+            ("Training",  "Quarterly enablement for client team."),
+            ("Support",   "24x5 priority response with named SRE."),
+        ],
+        source="Source: test",
+    )
+    out = tmp_project_dir / "deck.pptx"
+    eng.save(str(out))
+    result = _run_render_gate(project_root, out, tmp_project_dir)
+    bad = [
+        item for item in result.get("fail_items", [])
+        if "overflow" in str(item.get("check", "")).lower()
+        or item.get("check") == "user_code_errors"
+    ]
+    assert not bad, f"v0.5.4 layouts should render clean; got: {bad}"
+
+
+def test_v054_layouts_pass_content_gate(project_root: Path, tmp_project_dir: Path):
+    """Schema-driven content gate accepts canonical inputs for v0.5.4 layouts."""
+    content = {
+        "slides": [
+            {"idx": 1, "layout": "cover", "title": "v0.5.4 content gate"},
+            {
+                "idx": 2, "layout": "pyramid_staircase",
+                "title": "Maturity progression spans four ascending stages",
+                "steps": [
+                    ("Ad hoc",    "One-off projects."),
+                    ("Defined",   "Documented processes."),
+                    ("Managed",   "Metrics-driven."),
+                    ("Optimized", "Continuous improvement."),
+                ],
+                "source": "Source: test",
+            },
+            {
+                "idx": 3, "layout": "cycle_4stage",
+                "title": "Continuous improvement cycle drives outcomes",
+                "stages": [
+                    ("Plan",  "Hypotheses."),
+                    ("Do",    "Execute."),
+                    ("Check", "Measure."),
+                    ("Act",   "Codify."),
+                ],
+                "center_label": "PDCA",
+                "source": "Source: test",
+            },
+            {
+                "idx": 4, "layout": "index_callout",
+                "title": "Five modules; module 3 is the proposed anchor",
+                "items": [
+                    ("Discovery", "Diagnostic."),
+                    ("Design",    "Blueprint."),
+                    ("Build",     "Core delivery."),
+                    ("Run",       "Operations."),
+                    ("Scale",     "Expansion."),
+                ],
+                "callout": {"index": 2, "heading": "Build", "detail": "Anchor module.", "metric": "4 months"},
+                "source": "Source: test",
+            },
+            {
+                "idx": 5, "layout": "extension_rows",
+                "title": "Three optional scope extensions to the base offer",
+                "rows": [
+                    ("Analytics", "Reporting tier."),
+                    ("Training",  "Quarterly enablement."),
+                    ("Support",   "24x5 response."),
+                ],
+                "source": "Source: test",
+            },
+        ],
+    }
+    content_path = tmp_project_dir / "content.json"
+    content_path.write_text(json.dumps(content))
+    result = _run_content_gate(project_root, content_path, tmp_project_dir)
+    assert result["passed"] is True, \
+        f"Schema-driven gate should accept v0.5.4 layouts; fails: {result['fail_items']}"
+
+
 def test_render_gate_passes_clean_deck(project_root: Path,
                                         tmp_project_dir: Path):
     """A clean rendered deck passes the S4 render gate."""

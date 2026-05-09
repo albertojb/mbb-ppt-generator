@@ -3556,6 +3556,243 @@ class MbbEngine:
         return s
 
     # ═══════════════════════════════════════════
+    # NEW LAYOUTS (v0.5.4) — round out post-mortem § 4 catalog
+    # ═══════════════════════════════════════════
+
+    def pyramid_staircase(self, title, steps, source=''):
+        """#76 Pyramid staircase — 4-5 ascending steps.
+
+        Each step is wider than the previous and sits higher (vertical
+        position rises left-to-right). Use for maturity progression,
+        capability building, increasing scope.
+
+        steps: list of (label, desc); 4 or 5 entries recommended.
+        """
+        s = self._ns()
+        add_action_title(s, title)
+        n = max(len(steps), 1)
+        gap = Inches(0.15)
+        # Step widths grow linearly from min_w to max_w.
+        min_w = Inches(1.6)
+        max_w = Inches(2.6)
+        step_widths = [
+            min_w + (max_w - min_w) * (i / max(n - 1, 1))
+            for i in range(n)
+        ]
+        total_w = sum(step_widths) + gap * (n - 1)
+        start_x = (SW - total_w) / 2
+        # Vertical: left-most step is shortest at the bottom; rightmost is
+        # tallest. We grow the height linearly and bottom-align.
+        base_y   = CONTENT_TOP + Inches(4.6)   # bottom of every step
+        min_h    = Inches(0.7)
+        max_h    = Inches(3.2)
+        # Palette escalates gray → light blue → navy.
+        palette = [BG_GRAY, LIGHT_BLUE, ACCENT_BLUE, NAVY, NAVY]
+        cur_x = start_x
+        for i, (label, desc) in enumerate(steps):
+            w = step_widths[i]
+            h = min_h + (max_h - min_h) * (i / max(n - 1, 1))
+            y = base_y - h
+            color = palette[min(i, len(palette) - 1)]
+            text_fg = WHITE if color in (NAVY, ACCENT_BLUE) else NAVY
+            add_rect(s, cur_x, y, w, h, color)
+            # Label centered near the top of the step
+            add_text(s, cur_x + Inches(0.1), y + Inches(0.15),
+                     w - Inches(0.2), Inches(0.45),
+                     label, font_size=SUB_HEADER_SIZE, font_color=text_fg,
+                     bold=True, alignment=PP_ALIGN.CENTER)
+            # Description below the label, fits remaining height
+            add_text(s, cur_x + Inches(0.15), y + Inches(0.65),
+                     w - Inches(0.3), h - Inches(0.75),
+                     desc, font_size=SMALL_SIZE,
+                     font_color=DARK_GRAY if color == BG_GRAY else text_fg,
+                     alignment=PP_ALIGN.CENTER, line_spacing=Pt(4))
+            cur_x += w + gap
+        # Subtle baseline rule
+        add_hline(s, start_x, base_y + Inches(0.05), total_w, LINE_GRAY, Pt(0.5))
+        self._footer(s, source)
+        return s
+
+    def cycle_4stage(self, title, stages, center_label='', source=''):
+        """#77 Cycle (4-stage loop) — 2×2 grid with clockwise arrows.
+
+        Use for continuous improvement, problem-management cycles, learning
+        loops. Engine has a legacy ``cycle`` method (retired); this is the
+        modern 4-stage replacement.
+
+        stages: list of (stage_title, desc); exactly 4 entries (clockwise
+        from top-left → top-right → bottom-right → bottom-left).
+        center_label: optional center text such as 'Continuous improvement'.
+        """
+        s = self._ns()
+        add_action_title(s, title)
+        if len(stages) != 4:
+            stages = (list(stages) + [('', '')] * 4)[:4]
+        cell_w = Inches(4.4)
+        cell_h = Inches(2.0)
+        gap_x = Inches(1.0)  # horizontal gap leaves room for vertical arrows
+        gap_y = Inches(0.5)
+        total_w = cell_w * 2 + gap_x
+        total_h = cell_h * 2 + gap_y
+        start_x = (SW - total_w) / 2
+        start_y = CONTENT_TOP + Inches(0.4)
+        # Cell positions clockwise from top-left.
+        positions = [
+            (start_x,                start_y),
+            (start_x + cell_w + gap_x, start_y),
+            (start_x + cell_w + gap_x, start_y + cell_h + gap_y),
+            (start_x,                start_y + cell_h + gap_y),
+        ]
+        accents = [NAVY, ACCENT_BLUE, NAVY, ACCENT_BLUE]
+        for i, ((cx, cy), (stitle, desc)) in enumerate(zip(positions, stages)):
+            add_rect(s, cx, cy, cell_w, cell_h, BG_GRAY)
+            add_rect(s, cx, cy, Inches(0.08), cell_h, accents[i])
+            add_text(s, cx + Inches(0.2), cy + Inches(0.15),
+                     cell_w - Inches(0.3), Inches(0.4),
+                     stitle, font_size=SUB_HEADER_SIZE, font_color=NAVY, bold=True)
+            add_text(s, cx + Inches(0.2), cy + Inches(0.65),
+                     cell_w - Inches(0.3), cell_h - Inches(0.75),
+                     desc, font_size=BODY_SIZE, font_color=DARK_GRAY,
+                     line_spacing=Pt(6))
+        # Clockwise arrows: → top, ↓ right, ← bottom, ↑ left.
+        arrow_color = MED_GRAY
+        # Top arrow (between cells 0 and 1)
+        add_text(s, start_x + cell_w, start_y + cell_h / 2 - Inches(0.2),
+                 gap_x, Inches(0.4),
+                 '→', font_size=Pt(28), font_color=arrow_color, alignment=PP_ALIGN.CENTER)
+        # Right arrow (between cells 1 and 2)
+        add_text(s, start_x + cell_w + gap_x + cell_w - Inches(0.6),
+                 start_y + cell_h - Inches(0.05),
+                 Inches(1.2), gap_y,
+                 '↓', font_size=Pt(28), font_color=arrow_color, alignment=PP_ALIGN.CENTER)
+        # Bottom arrow (between cells 2 and 3)
+        add_text(s, start_x + cell_w,
+                 start_y + cell_h + gap_y + cell_h / 2 - Inches(0.2),
+                 gap_x, Inches(0.4),
+                 '←', font_size=Pt(28), font_color=arrow_color, alignment=PP_ALIGN.CENTER)
+        # Left arrow (between cells 3 and 0)
+        add_text(s, start_x - Inches(0.6),
+                 start_y + cell_h - Inches(0.05),
+                 Inches(1.2), gap_y,
+                 '↑', font_size=Pt(28), font_color=arrow_color, alignment=PP_ALIGN.CENTER)
+        if center_label:
+            cx_center = start_x + cell_w + gap_x / 2 - Inches(1.2)
+            cy_center = start_y + cell_h + gap_y / 2 - Inches(0.25)
+            add_text(s, cx_center, cy_center, Inches(2.4), Inches(0.5),
+                     center_label, font_size=SMALL_SIZE, font_color=MED_GRAY,
+                     bold=True, alignment=PP_ALIGN.CENTER)
+        self._footer(s, source)
+        return s
+
+    def index_callout(self, title, items, callout, source=''):
+        """#78 Index callout — left numbered list + right detail panel.
+
+        Use for "here are 5-7 optional items, and here's the anchor we're
+        emphasizing." The highlighted item appears (with its full detail) in
+        the right panel; the same item is rendered with a navy background in
+        the left list.
+
+        items:    list of (item_title, short_desc); 4-7 entries.
+        callout:  dict with keys
+            index    (int)            — 0-based index into items to emphasize.
+            heading  (str, optional)  — heading on the right panel; defaults to items[index][0].
+            detail   (str)            — full detail / argumentation for the highlighted item.
+            metric   (str, optional)  — single metric or fact in the bottom band.
+        """
+        s = self._ns()
+        add_action_title(s, title)
+        n = len(items)
+        idx = max(0, min(int(callout.get('index', 0)), n - 1)) if n else 0
+        list_x = LM
+        list_w = Inches(5.4)
+        list_y = CONTENT_TOP + Inches(0.2)
+        list_h = Inches(4.8)
+        row_h = list_h / max(n, 1)
+        for i, (ititle, sdesc) in enumerate(items):
+            ry = list_y + i * row_h
+            highlight = (i == idx)
+            bg = NAVY if highlight else WHITE
+            add_rect(s, list_x, ry, list_w, row_h - Inches(0.05), bg)
+            num_color = WHITE if highlight else NAVY
+            text_color_title = WHITE if highlight else NAVY
+            text_color_desc  = RGBColor(0xCC, 0xCC, 0xCC) if highlight else DARK_GRAY
+            add_oval(s, list_x + Inches(0.15), ry + row_h / 2 - Inches(0.225),
+                     str(i + 1),
+                     bg=(WHITE if highlight else NAVY))
+            # Override oval text color via overlay: easiest is to print the
+            # number again on top in the contrasting color. add_oval already
+            # writes the text, so we trust the default contrast.
+            add_text(s, list_x + Inches(0.7), ry + Inches(0.05),
+                     list_w - Inches(0.8), Inches(0.4),
+                     ititle, font_size=EMPHASIS_SIZE, font_color=text_color_title, bold=True)
+            add_text(s, list_x + Inches(0.7), ry + Inches(0.45),
+                     list_w - Inches(0.8), row_h - Inches(0.55),
+                     sdesc, font_size=SMALL_SIZE, font_color=text_color_desc,
+                     line_spacing=Pt(4))
+        # Right detail panel
+        panel_x = list_x + list_w + Inches(0.3)
+        panel_w = SW - panel_x - Inches(0.6)
+        panel_y = list_y
+        panel_h = list_h
+        add_rect(s, panel_x, panel_y, panel_w, panel_h, BG_GRAY)
+        # Top accent strip
+        add_rect(s, panel_x, panel_y, panel_w, Inches(0.08), NAVY)
+        heading = callout.get('heading') or (items[idx][0] if n else '')
+        add_text(s, panel_x + Inches(0.3), panel_y + Inches(0.25),
+                 panel_w - Inches(0.6), Inches(0.5),
+                 heading, font_size=SUB_HEADER_SIZE, font_color=NAVY, bold=True)
+        # Detail body
+        detail_h = panel_h - Inches(1.5)
+        add_text(s, panel_x + Inches(0.3), panel_y + Inches(0.85),
+                 panel_w - Inches(0.6), detail_h,
+                 callout.get('detail', ''), font_size=BODY_SIZE,
+                 font_color=DARK_GRAY, line_spacing=Pt(7))
+        # Optional metric strip at the bottom of the panel
+        if callout.get('metric'):
+            metric_y = panel_y + panel_h - Inches(0.55)
+            add_rect(s, panel_x, metric_y, panel_w, Inches(0.55), NAVY)
+            add_text(s, panel_x + Inches(0.3), metric_y + Inches(0.1),
+                     panel_w - Inches(0.6), Inches(0.4),
+                     callout['metric'], font_size=BODY_SIZE,
+                     font_color=WHITE, bold=True, anchor=MSO_ANCHOR.MIDDLE)
+        self._footer(s, source)
+        return s
+
+    def extension_rows(self, title, rows, source=''):
+        """#79 Extension rows — horizontal rows with left vertical accent bar.
+
+        Use for modular catalogs, scope extensions, optional add-ons.
+
+        rows: list of (row_title, desc); 3-4 entries.
+        """
+        s = self._ns()
+        add_action_title(s, title)
+        n = max(len(rows), 1)
+        avail_h = Inches(4.6)
+        gap = Inches(0.2)
+        row_h = (avail_h - gap * (n - 1)) / n
+        # Clamp row height to a readable range.
+        row_h = max(Inches(0.8), min(row_h, Inches(1.5)))
+        top = CONTENT_TOP + Inches(0.3)
+        for i, (rtitle, desc) in enumerate(rows):
+            ry = top + i * (row_h + gap)
+            # Left accent bar
+            accent_color = [NAVY, ACCENT_BLUE, ACCENT_GREEN, ACCENT_ORANGE][i % 4]
+            add_rect(s, LM, ry, Inches(0.12), row_h, accent_color)
+            # Row body (light fill for readability)
+            add_rect(s, LM + Inches(0.12), ry, CW - Inches(0.12), row_h, BG_GRAY)
+            # Title on the left third
+            add_text(s, LM + Inches(0.4), ry, Inches(3.6), row_h,
+                     rtitle, font_size=SUB_HEADER_SIZE, font_color=NAVY,
+                     bold=True, anchor=MSO_ANCHOR.MIDDLE)
+            # Description on the right two-thirds
+            add_text(s, LM + Inches(4.2), ry, CW - Inches(4.4), row_h,
+                     desc, font_size=BODY_SIZE, font_color=DARK_GRAY,
+                     anchor=MSO_ANCHOR.MIDDLE, line_spacing=Pt(6))
+        self._footer(s, source)
+        return s
+
+    # ═══════════════════════════════════════════
     # SAVE
     # ═══════════════════════════════════════════
 

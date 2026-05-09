@@ -6,6 +6,30 @@ This project is an Apache 2.0-licensed adaptation of [`Mck-ppt-design-skill`](ht
 
 ---
 
+## [0.5.4] — 2026-05-09 (round out the v0.5.x layout catalog)
+
+Closes the remaining four post-mortem § 4 layouts. Combined with v0.5.3, the engine now ships all eight new layouts the post-mortem requested.
+
+### Added engine layouts
+
+- **`pyramid_staircase(title, steps, source='')`** — 4-5 ascending steps, each wider and taller than the last, palette escalating gray → light blue → navy. Use for maturity progression, capability building, increasing scope.
+- **`cycle_4stage(title, stages, center_label='', source='')`** — 2×2 grid with clockwise arrows (right / down / left / up). Replaces the legacy retired `cycle()` for continuous-improvement and learning-loop content.
+- **`index_callout(title, items, callout, source='')`** — left numbered list (4-7 items) + right detail panel that fully expands a single anchor item. Use for "here are the optional items, and here's the one we're emphasizing."
+- **`extension_rows(title, rows, source='')`** — horizontal rows with left vertical accent bar (palette rotates), title on the left, description on the right. Use for modular catalogs and scope extensions.
+
+### Schema + gate
+
+- All four new layouts entered in `api-schemas.yaml` (full per-param shape, char budgets, geometry notes such as "circle fits 14 chars" or "clockwise from top-left").
+- `pyramid_staircase` and `cycle_4stage` added to `gate_check_content.py:VISUAL_LAYOUTS` so they count toward the visual-density floor.
+
+### Tests
+
+- 37/37 passing (was 35/35). Two new regression tests:
+  - `test_v054_new_layouts_render_clean` — all four render without overflow or user-code errors.
+  - `test_v054_layouts_pass_content_gate` — schema-driven structural validation accepts canonical inputs.
+
+---
+
 ## [0.5.3] — 2026-05-09 (four new layouts to break the executive_summary monoculture)
 
 The post-mortem flagged executive_summary at 9× in 30 slides. v0.5.0 added the cap; v0.5.3 adds the layouts the model can fall back to. Four of the eight layouts from post-mortem § 4 ship now; the remaining four (pyramid_staircase, cycle 4-stage, index_callout, extension_rows) are still on the v0.5.x roadmap.

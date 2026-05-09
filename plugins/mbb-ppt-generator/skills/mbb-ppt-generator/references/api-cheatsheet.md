@@ -4,7 +4,7 @@
 > Do not hand-edit this file — edit the schema and re-run the generator.
 > Convention: `eng = ExecEngine(total_slides=N)` then call methods one per slide. `eng.save(outpath)` finalizes.
 
-_Schema version: 1. 67 active layouts, 5 retired._
+_Schema version: 1. 71 active layouts, 5 retired._
 
 ## Structure
 
@@ -27,6 +27,7 @@ _Schema version: 1. 67 active layouts, 5 retired._
 | `two_column_text` | `(title, columns, source='')` | #27 Two-column text — lettered columns with bullet lists. Max 1 per deck. | columns=list[dict]≤2*, source=str(80) |
 | `four_column` | `(title, items, source='')` | #28 Four-column overview — 4 numbered vertical cards. | items=list[tuple3]≤4*, source=str(80) |
 | `numbered_tiles` | `(title, tiles, source='')` | #73 Numbered tiles (escalating fill) — 3 (or 4) tiered tiles, fill escalates left-to-right. | tiles=list[tuple3]≤4*, source=str(80) |
+| `index_callout` | `(title, items, callout, source='')` | #78 Index callout — left numbered list (4-7) + right detail panel for one anchor item. | items=list[tuple2]≤7*, callout=dict*, source=str(80) |
 
 ## Data
 
@@ -52,6 +53,7 @@ _Schema version: 1. 67 active layouts, 5 retired._
 | `rag_status` | `(title, headers, rows, source='')` | #22 RAG status — table with red/amber/green status dots. | headers=list[str]*, rows=list[list]≤8*, source=str(80) |
 | `harvey_ball_table` | `(title, criteria, options, scores, legend_text=None, summary=None, source='', first_col_w=None, opt_col_w=None)` | #56 Harvey Ball table — matrix with circular fill indicators. | criteria=list[str]≤7*, options=list[str]≤5*, scores=list[list]*, legend_text=list[str], … |
 | `checklist` | `(title, columns, col_widths, rows, status_map=None, source='', bottom_bar=None)` | #61 Checklist / status table. | columns=list[str]*, col_widths=list[float]*, rows=list[list]≤7*, status_map=dict, … |
+| `extension_rows` | `(title, rows, source='')` | #79 Extension rows — horizontal rows with left accent bar + name + description. Use for modular catalogs. | rows=list[tuple2]≤4*, source=str(80) |
 
 ## Process
 
@@ -66,6 +68,7 @@ _Schema version: 1. 67 active layouts, 5 retired._
 | `value_chain` | `(title, stages, source='', bottom_bar=None)` | #67 Value chain — horizontal flow with arrows. | stages=list[tuple3]≤5*, bottom_bar=tuple2, source=str(80) |
 | `ask` | `(title, decisions, footer_text='Decisions sought', source='')` | #72 Ask / decision points — closing slide with 3-5 numbered decisions (decision/owner/deadline/status). | decisions=list[dict]≤5*, footer_text=str(60), source=str(80) |
 | `journey_map` | `(title, stages, source='')` | #75 Journey map — chevron header (4-5 stages) + stakeholder + metric cards per stage. | stages=list[dict]≤5*, source=str(80) |
+| `cycle_4stage` | `(title, stages, center_label='', source='')` | #77 Cycle (4-stage loop) — 2×2 grid with clockwise arrows. Replaces legacy retired cycle(). | stages=list[tuple2]≤4*, center_label=str(30), source=str(80) |
 
 ## Frameworks
 
@@ -79,6 +82,7 @@ _Schema version: 1. 67 active layouts, 5 retired._
 | `icon_grid` | `(title, items, cols=3, source='')` | #63 Icon grid — grid of icon cards. | items=list[tuple3]≤9*, cols=int, source=str(80) |
 | `swot` | `(title, quadrants, source='')` | #65 SWOT analysis — 2×2 colored grid. | quadrants=dict*, source=str(80) |
 | `concept_three` | `(title, concepts, source='')` | #74 Concept three — three large circles with arrows + descriptions below. | concepts=list[tuple2]≤3*, source=str(80) |
+| `pyramid_staircase` | `(title, steps, source='')` | #76 Pyramid staircase — 4-5 ascending steps, each wider and taller than the last. Use for maturity progression. | steps=list[tuple2]≤5*, source=str(80) |
 
 ## Charts
 

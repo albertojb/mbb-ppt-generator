@@ -401,6 +401,8 @@ VISUAL_LAYOUTS = {
     "process_chevron", "timeline", "value_chain", "cycle",  # cycle retired
     # v0.5.3 new layouts that read as visual / framework
     "concept_three", "journey_map",
+    # v0.5.4 new layouts
+    "pyramid_staircase", "cycle_4stage",
 }
 
 # Boilerplate slides excluded from the content-slide count for density purposes.
