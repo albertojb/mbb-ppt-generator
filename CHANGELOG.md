@@ -6,6 +6,29 @@ This project is an Apache 2.0-licensed adaptation of [`Mck-ppt-design-skill`](ht
 
 ---
 
+## [0.5.0] — 2026-05-09 (kill the obvious bugs — layout-quality push begins)
+
+The post-mortem on a 30-slide commercial-renewal deck (`mbb-ppt-skill-postmortem.md`) identified three S3-gate bugs that gated valid input, plus one root cause behind layout monotony — `executive_summary` was used 9× in 30 slides because it has no penalty signal. v0.5.0 closes the bugs and adds two global gates that force layout variety. Install behavior is unchanged.
+
+### Fixed
+
+- **`value_chain` S3 gate (Bug A).** `gate_check_content.py` enforced the 3-char oval-budget rule on `stages[i][0]` (the user's stage_title). The engine renders `str(i + 1)` in the oval (engine.py:1673); the title never enters the oval. Valid inputs like `("Diagnose", desc, color)` now pass.
+- **`numbered_list_panel` S3 gate (Bug B).** Same pattern. `items[i][0]` is the item title, not the oval label. Valid inputs like `("Operating model", desc)` now pass.
+- **`harvey_ball_table` width overflow (Bug C).** Hardcoded `c1w + 4 × colw = 12.8"` overflowed the 11.733" content area on every render with 4 options. Column widths now scale to fit; new optional `first_col_w` / `opt_col_w` parameters override defaults.
+
+### Added
+
+- **`executive_summary` cap (S3 gate, global).** ≤ 15% of content slides may be `executive_summary`; over-use fails the gate with a content-shape-indexed list of alternatives (four_column / vertical_steps / numbered_list_panel / big_number_callout / side_by_side / horizontal_bar / table_insight).
+- **Visual-density floor scales linearly.** Was a fixed `≥ 2`; now `max(2, N // 4)` for N content slides. A 30-slide deck requires ≥ 7 chart/diagram/image layouts; a 6-slide deck still requires ≥ 2.
+
+### Tests
+
+- Three regression tests for Bugs A / B / C (long stage titles pass, long item titles pass, 4-option harvey_ball_table renders without body_overflow).
+- Three tests for the new globals: 5/30 fails the cap, 4/30 passes, the 30-slide / 6-visual deck fails the scaled density floor while 30 / 7 passes.
+- 28/28 pytest passing.
+
+---
+
 ## [0.4.1] — 2026-05-08 (cross-platform install.py — actual fix for Cowork)
 
 The user reported that v0.4.0's plugin-marketplace path took 15+ minutes and the skill did NOT appear in Cowork after restart. Diagnosis:

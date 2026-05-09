@@ -339,6 +339,211 @@ def test_content_gate_catches_long_oval_label_in_executive_summary(project_root:
     assert "label_too_long" in cats
 
 
+def test_content_gate_value_chain_passes_with_long_stage_title(project_root: Path,
+                                                                tmp_project_dir: Path):
+    """value_chain stages[i][0] is the stage title, not the oval label.
+
+    Regression for v0.5.0 Bug A: the gate previously enforced the 3-char oval
+    rule on the user's stage_title, but the engine renders ``str(i + 1)`` in
+    the oval. Long stage titles must pass.
+    """
+    content = {
+        "slides": [
+            {
+                "idx": 1,
+                "layout": "value_chain",
+                "title": "Five-stage delivery model spans diagnose to scale",
+                "stages": [
+                    ["Diagnose",   "Baseline current state",       "#0F4C3A"],
+                    ["Design",     "Target operating model",       "#0F4C3A"],
+                    ["Build",      "Capabilities and tooling",     "#0F4C3A"],
+                    ["Run",        "Steady-state operations",      "#0F4C3A"],
+                    ["Scale",      "Replicate across markets",     "#0F4C3A"],
+                ],
+                "source": "Source: test",
+            },
+        ],
+    }
+    content_path = tmp_project_dir / "content.json"
+    content_path.write_text(json.dumps(content))
+    result = _run_content_gate(project_root, content_path, tmp_project_dir)
+    cats = {item["check"] for item in result["fail_items"]}
+    assert "label_too_long" not in cats, \
+        "value_chain stage_title is not the oval label; should not trigger oval-budget"
+
+
+def test_content_gate_numbered_list_panel_passes_with_long_item_title(project_root: Path,
+                                                                       tmp_project_dir: Path):
+    """numbered_list_panel items[i][0] is the item title, not the oval label.
+
+    Regression for v0.5.0 Bug B.
+    """
+    content = {
+        "slides": [
+            {
+                "idx": 1,
+                "layout": "numbered_list_panel",
+                "title": "Four pillars structure the operating-model rebuild",
+                "items": [
+                    ["Operating model",     "Redesign decision rights and forums."],
+                    ["Talent and roles",    "Resize team to align with the new model."],
+                    ["Systems and data",    "Consolidate two ERPs into one source of truth."],
+                    ["Performance metrics", "Replace activity KPIs with outcome KPIs."],
+                ],
+                "source": "Source: test",
+            },
+        ],
+    }
+    content_path = tmp_project_dir / "content.json"
+    content_path.write_text(json.dumps(content))
+    result = _run_content_gate(project_root, content_path, tmp_project_dir)
+    cats = {item["check"] for item in result["fail_items"]}
+    assert "label_too_long" not in cats, \
+        "numbered_list_panel item_title is not the oval label; should not trigger oval-budget"
+
+
+def _make_slide(idx: int, layout: str) -> dict:
+    """Minimal valid slide for the structural checks; used by global-cap tests."""
+    return {
+        "idx": idx,
+        "layout": layout,
+        "title": "A perfectly conclusion-led action title for testing purposes",
+        "items": [["1", "T", "D"], ["2", "T", "D"], ["3", "T", "D"]],
+        "headers": ["A", "B"], "rows": [["x", "y"]],
+        "insights": ["Insight."],
+        "source": "Source: test",
+    }
+
+
+def test_executive_summary_cap_fails_at_5_of_30(project_root: Path,
+                                                 tmp_project_dir: Path):
+    """30 content slides + 5 executive_summary → fails (>15%)."""
+    slides = [_make_slide(i + 1, "executive_summary") for i in range(5)]
+    # 25 visual slides — each grouped_bar with valid data — to keep density gate happy
+    for i in range(5, 30):
+        slides.append({
+            "idx": i + 1,
+            "layout": "grouped_bar",
+            "title": "Action title here, long enough to pass the title check",
+            "categories": ["Q1", "Q2"],
+            "series": [["A", "#0F4C3A"]],
+            "data": [[10], [20]],
+            "source": "Source: test",
+        })
+    content = {"slides": slides}
+    content_path = tmp_project_dir / "content.json"
+    content_path.write_text(json.dumps(content))
+    result = _run_content_gate(project_root, content_path, tmp_project_dir)
+    cats = {item["check"] for item in result["fail_items"]}
+    assert "executive_summary_cap" in cats, \
+        "5 / 30 executive_summary should fail the 15% cap"
+
+
+def test_executive_summary_cap_passes_at_4_of_30(project_root: Path,
+                                                  tmp_project_dir: Path):
+    """30 content slides + 4 executive_summary → passes (13.3%)."""
+    slides = [_make_slide(i + 1, "executive_summary") for i in range(4)]
+    for i in range(4, 30):
+        slides.append({
+            "idx": i + 1,
+            "layout": "grouped_bar",
+            "title": "Action title here, long enough to pass the title check",
+            "categories": ["Q1", "Q2"],
+            "series": [["A", "#0F4C3A"]],
+            "data": [[10], [20]],
+            "source": "Source: test",
+        })
+    content = {"slides": slides}
+    content_path = tmp_project_dir / "content.json"
+    content_path.write_text(json.dumps(content))
+    result = _run_content_gate(project_root, content_path, tmp_project_dir)
+    cats = {item["check"] for item in result["fail_items"]}
+    assert "executive_summary_cap" not in cats, \
+        f"4 / 30 executive_summary (13.3%) should pass the 15% cap; fails: {result['fail_items']}"
+
+
+def test_visual_density_floor_scales_with_deck_size(project_root: Path,
+                                                     tmp_project_dir: Path):
+    """30 content slides require max(2, 30 // 4) = 7 visual layouts."""
+    # 30 content slides, 6 visual → must fail (7 required)
+    slides = []
+    for i in range(6):
+        slides.append({
+            "idx": i + 1,
+            "layout": "grouped_bar",
+            "title": "Action title here, long enough to pass the title check",
+            "categories": ["Q1"], "series": [["A", "#0F4C3A"]], "data": [[10]],
+            "source": "Source: test",
+        })
+    for i in range(6, 30):
+        slides.append({
+            "idx": i + 1,
+            "layout": "table_insight",
+            "title": "Action title here, long enough to pass the title check",
+            "headers": ["A", "B"], "rows": [["x", "y"]],
+            "insights": ["Insight."],
+            "source": "Source: test",
+        })
+    content = {"slides": slides}
+    content_path = tmp_project_dir / "content.json"
+    content_path.write_text(json.dumps(content))
+    result = _run_content_gate(project_root, content_path, tmp_project_dir)
+    cats = {item["check"] for item in result["fail_items"]}
+    assert "visual_density" in cats, \
+        "30 content slides with only 6 visual layouts should fail the scaled floor"
+
+    # Same deck, 7 visual → passes
+    slides[6] = {
+        "idx": 7,
+        "layout": "grouped_bar",
+        "title": "Action title here, long enough to pass the title check",
+        "categories": ["Q1"], "series": [["A", "#0F4C3A"]], "data": [[10]],
+        "source": "Source: test",
+    }
+    content_path.write_text(json.dumps({"slides": slides}))
+    result = _run_content_gate(project_root, content_path, tmp_project_dir)
+    cats = {item["check"] for item in result["fail_items"]}
+    assert "visual_density" not in cats, \
+        f"30 content slides with 7 visual layouts should pass; fails: {result['fail_items']}"
+
+
+def test_render_gate_passes_4_option_harvey_ball_table(project_root: Path,
+                                                        tmp_project_dir: Path):
+    """4-option harvey_ball_table fits within content width.
+
+    Regression for v0.5.0 Bug C: hardcoded ``c1w + 4*colw = 12.8"`` overflowed
+    the 11.733" content width on every render. Now scales to fit.
+    """
+    from mbb_ppt import MbbEngine
+
+    eng = MbbEngine(total_slides=2)
+    eng.cover(title="Harvey ball width regression")
+    eng.harvey_ball_table(
+        title="Four-option vendor evaluation prefers option B",
+        criteria=["Cost", "Reliability", "Scalability", "Time-to-market"],
+        options=["Option A", "Option B", "Option C", "Option D"],
+        scores=[
+            [3, 4, 2, 1],
+            [2, 4, 3, 2],
+            [3, 3, 4, 2],
+            [4, 3, 2, 3],
+        ],
+        legend_text=["○ Low", "◔ Some", "◑ Medium", "◕ High", "● Full"],
+        source="Source: test",
+    )
+
+    out = tmp_project_dir / "deck.pptx"
+    eng.save(str(out))
+
+    result = _run_render_gate(project_root, out, tmp_project_dir)
+    overflow_items = [
+        item for item in result.get("fail_items", [])
+        if "overflow" in str(item.get("check", "")).lower()
+    ]
+    assert not overflow_items, \
+        f"4-option harvey_ball_table should not overflow; got: {overflow_items}"
+
+
 def test_render_gate_passes_clean_deck(project_root: Path,
                                         tmp_project_dir: Path):
     """A clean rendered deck passes the S4 render gate."""

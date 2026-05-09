@@ -2402,14 +2402,26 @@ class MbbEngine:
         return s
 
     def harvey_ball_table(self, title, criteria, options, scores,
-                          legend_text=None, summary=None, source=''):
+                          legend_text=None, summary=None, source='',
+                          first_col_w=None, opt_col_w=None):
         """#56 Harvey Ball Table — matrix with Harvey Ball indicators.
         criteria: list[str] row labels. options: list[str] column headers.
         scores: list[list[int]] — scores[row][col], 0-4.
+        first_col_w / opt_col_w: optional column widths (Inches). Defaults
+        scale to fit CW so 4+ options never overflow the content area.
         """
         s = self._ns()
         add_action_title(s, title)
-        c1w = Inches(2.8); colw = Inches(2.5); rh = Inches(0.6)
+        n_opts = max(len(options), 1)
+        if first_col_w is None:
+            c1w = Inches(2.8)
+        else:
+            c1w = first_col_w
+        if opt_col_w is None:
+            colw = min(Inches(2.5), (CW - c1w) / n_opts)
+        else:
+            colw = opt_col_w
+        rh = Inches(0.6)
         tl = LM; ty = Inches(1.3)
         add_text(s, tl, ty, c1w, rh, 'Dimension',
                  font_size=Pt(13), font_color=NAVY, bold=True, anchor=MSO_ANCHOR.MIDDLE)

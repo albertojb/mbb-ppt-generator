@@ -31,8 +31,9 @@ Checks:
     4. Source attribution — every content slide has non-empty `source`
     5. Action title — > 10 characters and ≤ 120 characters
     6. two_column_text — at most one slide per deck (global)
-    7. Visual density — decks with ≥ 6 content slides need ≥ 2 chart/diagram/image
-       layouts; pure text-column decks fail (global)
+    7. executive_summary cap — ≤ 15% of content slides (global)
+    8. Visual density — decks with ≥ 6 content slides need
+       max(2, N // 4) chart/diagram/image layouts (global)
 """
 
 from __future__ import annotations
@@ -151,16 +152,22 @@ def check_vertical_steps(slide: Dict, idx: int) -> List[Dict]:
 
 
 def check_value_chain(slide: Dict, idx: int) -> List[Dict]:
-    """value_chain: stages with a label that goes in the small panel header."""
-    issues = []
-    stages = slide.get("stages", [])
-    issues += _check_oval_label(slide, idx, "value_chain", "stages")
-    return issues
+    """value_chain stages = (stage_title, desc, accent_color).
+
+    The oval label is rendered by the engine as ``str(i + 1)`` (engine.py
+    value_chain ~line 1673); user content never enters the oval, so the
+    3-char oval-budget rule does not apply to ``stages[i][0]``.
+    """
+    return []
 
 
 def check_numbered_list_panel(slide: Dict, idx: int) -> List[Dict]:
-    """numbered_list_panel: items[0] is the oval-bound number."""
-    return _check_oval_label(slide, idx, "numbered_list_panel", "items")
+    """numbered_list_panel items = (item_title, desc).
+
+    Engine renders ``str(i + 1)`` in the oval (engine.py ~line 2945); the
+    user's ``items[i][0]`` is the title, not the oval label.
+    """
+    return []
 
 
 def check_toc(slide: Dict, idx: int) -> List[Dict]:
@@ -319,6 +326,53 @@ def check_two_column_text_global(slides: List[Dict]) -> List[Dict]:
     return []
 
 
+# ── executive_summary frequency cap ───────────────────────────────────────
+# executive_summary is the most permissive layout (3-tuple items, free-form
+# desc), so the model funnels everything into it — the post-mortem v1 deck
+# used it 9× in 30 slides. Capping at 15% of content slides forces variety.
+EXEC_SUMMARY_CAP_PCT = 0.15
+
+
+def check_executive_summary_cap_global(slides: List[Dict]) -> List[Dict]:
+    """Cap ``executive_summary`` at 15% of content slides.
+
+    Acceptance (per v0.5.0 spec):
+        30 content slides + 5 executive_summary → fail (5/30 = 16.7% > 15%)
+        30 content slides + 4 executive_summary → pass (4/30 = 13.3%)
+    Small decks: at least one executive_summary is always allowed.
+    """
+    content_slides = [
+        s for s in slides if s.get("layout") not in BOILERPLATE_LAYOUTS
+    ]
+    n_content = len(content_slides)
+    if n_content == 0:
+        return []
+    es_count = sum(1 for s in content_slides if s.get("layout") == "executive_summary")
+    max_allowed = max(1, int(EXEC_SUMMARY_CAP_PCT * n_content))
+    if es_count <= max_allowed:
+        return []
+    return [{
+        "slide_idx": "(global)",
+        "layout": "executive_summary",
+        "check": "executive_summary_cap",
+        "message": (
+            f"executive_summary used {es_count}× in {n_content} content slides "
+            f"({es_count / n_content:.0%}); cap is {EXEC_SUMMARY_CAP_PCT:.0%} "
+            f"(max {max_allowed} for this deck). executive_summary is the most "
+            "permissive layout, so over-using it produces visually monotonous decks. "
+            "Replace by content shape: "
+            "(a) 3–4 numbered actions with rationale → four_column or vertical_steps; "
+            "(b) one headline number + supporting detail → big_number_callout or "
+            "content_right_image; "
+            "(c) numbered items with a side panel → numbered_list_panel; "
+            "(d) two contrasting positions → side_by_side or two_col_image_grid; "
+            "(e) ranked findings → horizontal_bar or table_insight; "
+            "(f) closing decisions / asks → executive_summary is fine for the final "
+            "ask slide. See references/framework/planning-guide.md."
+        ),
+    }]
+
+
 # ── Visual-density gate ──────────────────────────────────────────────────
 # Layouts that produce a chart, diagram, image, or dashboard. A deck without
 # at least two of these in 6+ content slides reads as a wall of text columns
@@ -346,41 +400,52 @@ VISUAL_LAYOUTS = {
 BOILERPLATE_LAYOUTS = {"cover", "toc", "section_divider", "closing", "appendix_title"}
 
 VISUAL_DENSITY_THRESHOLD_SLIDES = 6   # ≥ 6 content slides triggers the rule
-VISUAL_DENSITY_MIN_VISUAL = 2         # ≥ 2 visual slides required
+
+
+def _visual_density_min(n_content: int) -> int:
+    """Linear floor: max(2, N // 4) visual slides for N content slides.
+
+    Examples:
+        6 slides → 2     12 slides → 3     20 slides → 5     30 slides → 7
+    """
+    return max(2, n_content // 4)
 
 
 def check_visual_density_global(slides: List[Dict]) -> List[Dict]:
-    """Reject decks ≥ 6 content slides that contain < 2 visual layouts.
+    """Reject decks whose visual-layout count falls below the linear floor.
 
     Rationale: the most common output failure of MBB-style skills is a deck
     that is well-written but visually monotonous — every slide is a text
-    column or a card grid. A hard floor of 2 chart/diagram/image layouts in
-    a 6+ slide deck is the simplest mechanism that rules out that failure.
+    column or a card grid. The floor scales with deck length so a 30-slide
+    deck needs visibly more variety than a 6-slide deck.
     """
     content_slides = [
         s for s in slides
         if s.get("layout") not in BOILERPLATE_LAYOUTS
     ]
-    if len(content_slides) < VISUAL_DENSITY_THRESHOLD_SLIDES:
+    n_content = len(content_slides)
+    if n_content < VISUAL_DENSITY_THRESHOLD_SLIDES:
         return []
+    min_visual = _visual_density_min(n_content)
     visual_count = sum(
         1 for s in content_slides if s.get("layout") in VISUAL_LAYOUTS
     )
-    if visual_count >= VISUAL_DENSITY_MIN_VISUAL:
+    if visual_count >= min_visual:
         return []
     return [{
         "slide_idx": "(global)",
         "layout": "(deck-level)",
         "check": "visual_density",
         "message": (
-            f"Visual-density floor: deck has {len(content_slides)} content slides "
+            f"Visual-density floor: deck has {n_content} content slides "
             f"but only {visual_count} visual (chart/diagram/image) layout(s); "
-            f"≥ {VISUAL_DENSITY_MIN_VISUAL} required. "
-            "Pick at least one chart (grouped_bar / line_chart / donut / pareto / "
-            "horizontal_bar / waterfall) and at least one framework or image layout "
-            "(matrix_2x2 / swot / risk_matrix / harvey_ball_table / case_study_image / "
-            "process_chevron / timeline / dashboard_kpi_chart). See "
-            "references/framework/planning-guide.md § 'Layout selection by task'."
+            f"≥ {min_visual} required (floor scales as max(2, N // 4)). "
+            "Pick from charts (grouped_bar / line_chart / donut / pareto / "
+            "horizontal_bar / waterfall), frameworks (matrix_2x2 / swot / "
+            "risk_matrix / harvey_ball_table), images (case_study_image / "
+            "three_images), or process visuals (process_chevron / timeline / "
+            "value_chain). See references/framework/planning-guide.md § "
+            "'Layout selection by task'."
         ),
     }]
 
@@ -440,6 +505,7 @@ def run_gate(content_json_path: str, project_dir: str) -> Dict[str, Any]:
             passed_items.append({"slide_idx": idx, "layout": layout, "status": "ok"})
 
     all_issues.extend(check_two_column_text_global(slides))
+    all_issues.extend(check_executive_summary_cap_global(slides))
     all_issues.extend(check_visual_density_global(slides))
 
     passed = len(all_issues) == 0
