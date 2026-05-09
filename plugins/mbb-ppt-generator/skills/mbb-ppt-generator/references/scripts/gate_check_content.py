@@ -399,6 +399,8 @@ VISUAL_LAYOUTS = {
     "dashboard_kpi_chart", "dashboard_table_chart",
     # Process / flow visuals (visually distinct from text columns)
     "process_chevron", "timeline", "value_chain", "cycle",  # cycle retired
+    # v0.5.3 new layouts that read as visual / framework
+    "concept_three", "journey_map",
 }
 
 # Boilerplate slides excluded from the content-slide count for density purposes.

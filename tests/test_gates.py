@@ -618,6 +618,115 @@ def test_cover_centered_still_callable(tmp_project_dir):
     assert out.exists() and out.stat().st_size > 5_000
 
 
+def test_v053_new_layouts_render_clean(project_root: Path, tmp_project_dir: Path):
+    """v0.5.3 layouts (ask, numbered_tiles, concept_three, journey_map) render
+    without overflow or user-code errors."""
+    from mbb_ppt import MbbEngine
+
+    eng = MbbEngine(total_slides=5)
+    eng.cover(title="v0.5.3 layout regression")
+    eng.ask(
+        title="Three decisions to advance the proposal this quarter",
+        decisions=[
+            {"decision": "Accept proposed scope and pricing",  "owner": "CEO", "deadline": "May 15", "status": "pending"},
+            {"decision": "Approve hire plan for two FTEs",     "owner": "COO", "deadline": "May 20", "status": "in_progress"},
+            {"decision": "Sign extension letter",              "owner": "GC",  "deadline": "June 1", "status": "agreed"},
+        ],
+        source="Source: test",
+    )
+    eng.numbered_tiles(
+        title="Three offer tiers signal escalating commitment over time",
+        tiles=[
+            ("1", "Pilot",     "Limited 90-day pilot with fixed scope and team."),
+            ("2", "Renewal",   "Standard 12-month renewal with growth clauses."),
+            ("3", "Strategic", "Multi-year strategic partnership with dedicated team."),
+        ],
+        source="Source: test",
+    )
+    eng.concept_three(
+        title="Three operating principles drive the recommended model",
+        concepts=[
+            ("Intent",  "Clear strategic intent shared across teams."),
+            ("Cadence", "Quarterly reviews tied to outcome KPIs."),
+            ("Value",   "Outcome-based pricing aligns incentives."),
+        ],
+        source="Source: test",
+    )
+    eng.journey_map(
+        title="The customer journey spans four stages with distinct stakeholders",
+        stages=[
+            {"label": "Aware",  "stakeholder": "Marketing leads", "metric": "Top of funnel CTR"},
+            {"label": "Trial",  "stakeholder": "Product team",    "metric": "Time to first value"},
+            {"label": "Adopt",  "stakeholder": "CS lead",         "metric": "Active seats / week"},
+            {"label": "Expand", "stakeholder": "Account exec",    "metric": "Net revenue retention"},
+        ],
+        source="Source: test",
+    )
+    out = tmp_project_dir / "deck.pptx"
+    eng.save(str(out))
+    result = _run_render_gate(project_root, out, tmp_project_dir)
+    bad = [
+        item for item in result.get("fail_items", [])
+        if "overflow" in str(item.get("check", "")).lower()
+        or item.get("check") == "user_code_errors"
+    ]
+    assert not bad, f"v0.5.3 layouts should render clean; got: {bad}"
+
+
+def test_v053_layouts_pass_content_gate(project_root: Path, tmp_project_dir: Path):
+    """Schema-driven content gate accepts canonical inputs for the new layouts."""
+    content = {
+        "slides": [
+            {"idx": 1, "layout": "cover", "title": "v0.5.3 content gate"},
+            {
+                "idx": 2, "layout": "ask",
+                "title": "Three decisions to advance the proposal this quarter",
+                "decisions": [
+                    {"decision": "Accept scope", "owner": "CEO", "deadline": "May 15", "status": "pending"},
+                    {"decision": "Approve hires", "owner": "COO", "deadline": "May 20", "status": "in_progress"},
+                ],
+                "source": "Source: test",
+            },
+            {
+                "idx": 3, "layout": "numbered_tiles",
+                "title": "Three offer tiers signal escalating commitment over time",
+                "tiles": [
+                    ("1", "Pilot", "Limited 90-day pilot."),
+                    ("2", "Renewal", "Standard 12-month renewal."),
+                    ("3", "Strategic", "Multi-year strategic partnership."),
+                ],
+                "source": "Source: test",
+            },
+            {
+                "idx": 4, "layout": "concept_three",
+                "title": "Three operating principles drive the recommended model",
+                "concepts": [
+                    ("Intent",  "Clear strategic intent."),
+                    ("Cadence", "Quarterly reviews."),
+                    ("Value",   "Outcome-based pricing."),
+                ],
+                "source": "Source: test",
+            },
+            {
+                "idx": 5, "layout": "journey_map",
+                "title": "The customer journey spans four stages",
+                "stages": [
+                    {"label": "Aware",  "stakeholder": "Marketing", "metric": "CTR"},
+                    {"label": "Trial",  "stakeholder": "Product",   "metric": "TTV"},
+                    {"label": "Adopt",  "stakeholder": "CS",        "metric": "Active seats"},
+                    {"label": "Expand", "stakeholder": "AE",        "metric": "NRR"},
+                ],
+                "source": "Source: test",
+            },
+        ],
+    }
+    content_path = tmp_project_dir / "content.json"
+    content_path.write_text(json.dumps(content))
+    result = _run_content_gate(project_root, content_path, tmp_project_dir)
+    assert result["passed"] is True, \
+        f"Schema-driven gate should accept v0.5.3 layouts; fails: {result['fail_items']}"
+
+
 def test_render_gate_passes_clean_deck(project_root: Path,
                                         tmp_project_dir: Path):
     """A clean rendered deck passes the S4 render gate."""

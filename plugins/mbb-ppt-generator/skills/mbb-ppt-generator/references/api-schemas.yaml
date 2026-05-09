@@ -1522,6 +1522,102 @@ layouts:
             image: {role: image_path}
       source: {kind: scalar, type: str, max_chars: 80}
 
+  # ═══════════════════════════════════════════════════════════════
+  # New layouts (v0.5.3) — combat the executive_summary monoculture
+  # ═══════════════════════════════════════════════════════════════
+  ask:
+    pattern: 72
+    family: process
+    status: active
+    signature: "(title, decisions, footer_text='Decisions sought', source='')"
+    summary: "#72 Ask / decision points — closing slide with 3-5 numbered decisions (decision/owner/deadline/status)."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 60}
+      decisions:
+        kind: list
+        required: true
+        max: 5
+        item:
+          kind: dict
+          dict_keys:
+            decision: {type: str, max_chars: 80, required: true}
+            owner:    {type: str, max_chars: 20}
+            deadline: {type: str, max_chars: 20}
+            status:   {type: str, notes: "'pending' | 'in_progress' | 'agreed'."}
+      footer_text: {kind: scalar, type: str, default: "Decisions sought", max_chars: 60}
+      source:      {kind: scalar, type: str, max_chars: 80}
+
+  numbered_tiles:
+    pattern: 73
+    family: narrative
+    status: active
+    signature: "(title, tiles, source='')"
+    summary: "#73 Numbered tiles (escalating fill) — 3 (or 4) tiered tiles, fill escalates left-to-right."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 60}
+      tiles:
+        kind: list
+        required: true
+        max: 4
+        min: 2
+        item:
+          kind: tuple
+          arity: 3
+          slots:
+            - {name: number,     type: str, max_chars: 4, notes: "Renders at 60pt; keep to '1'/'2'/'3' or 2-char codes."}
+            - {name: tile_title, type: str, max_chars: 22}
+            - {name: desc,       type: str, max_chars: 140}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  concept_three:
+    pattern: 74
+    family: frameworks
+    status: active
+    signature: "(title, concepts, source='')"
+    summary: "#74 Concept three — three large circles with arrows + descriptions below."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 60}
+      concepts:
+        kind: list
+        required: true
+        exact: 3
+        item:
+          kind: tuple
+          arity: 2
+          slots:
+            - {name: name, type: str, max_chars: 14, notes: "Renders inside a 2.2\" circle at 18pt; ≤ 14 chars to avoid wrapping."}
+            - {name: desc, type: str, max_chars: 80}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  journey_map:
+    pattern: 75
+    family: process
+    status: active
+    signature: "(title, stages, source='')"
+    summary: "#75 Journey map — chevron header (4-5 stages) + stakeholder + metric cards per stage."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 60}
+      stages:
+        kind: list
+        required: true
+        max: 5
+        min: 3
+        item:
+          kind: dict
+          dict_keys:
+            label:       {type: str, max_chars: 14, required: true, notes: "Chevron header — single short word."}
+            stakeholder: {type: str, max_chars: 60}
+            metric:      {type: str, max_chars: 60}
+      source: {kind: scalar, type: str, max_chars: 80}
+
   case_study:
     pattern: 34
     family: team

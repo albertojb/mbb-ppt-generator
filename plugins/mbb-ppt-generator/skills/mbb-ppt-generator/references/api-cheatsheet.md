@@ -4,7 +4,7 @@
 > Do not hand-edit this file — edit the schema and re-run the generator.
 > Convention: `eng = ExecEngine(total_slides=N)` then call methods one per slide. `eng.save(outpath)` finalizes.
 
-_Schema version: 1. 63 active layouts, 5 retired._
+_Schema version: 1. 67 active layouts, 5 retired._
 
 ## Structure
 
@@ -26,6 +26,7 @@ _Schema version: 1. 63 active layouts, 5 retired._
 | `quote` | `(quote_text, attribution='')` | #26 Quote slide — centered quote with accent lines. | quote_text=str(200)*, attribution=str(60) |
 | `two_column_text` | `(title, columns, source='')` | #27 Two-column text — lettered columns with bullet lists. Max 1 per deck. | columns=list[dict]≤2*, source=str(80) |
 | `four_column` | `(title, items, source='')` | #28 Four-column overview — 4 numbered vertical cards. | items=list[tuple3]≤4*, source=str(80) |
+| `numbered_tiles` | `(title, tiles, source='')` | #73 Numbered tiles (escalating fill) — 3 (or 4) tiered tiles, fill escalates left-to-right. | tiles=list[tuple3]≤4*, source=str(80) |
 
 ## Data
 
@@ -63,6 +64,8 @@ _Schema version: 1. 63 active layouts, 5 retired._
 | `decision_tree` | `(title, root, branches, right_panel=None, source='')` | #60 Decision tree — root → L1 → L2 hierarchy with connector lines. | root=str(30)*, branches=list[dict]≤6*, right_panel=str(200), source=str(80), … |
 | `agenda` | `(title, headers, items, footer_text='', source='')` | #66 Agenda — table-style meeting agenda. | headers=list[str]*, items=list[list]≤8*, footer_text=str(80), source=str(80), … |
 | `value_chain` | `(title, stages, source='', bottom_bar=None)` | #67 Value chain — horizontal flow with arrows. | stages=list[tuple3]≤5*, bottom_bar=tuple2, source=str(80) |
+| `ask` | `(title, decisions, footer_text='Decisions sought', source='')` | #72 Ask / decision points — closing slide with 3-5 numbered decisions (decision/owner/deadline/status). | decisions=list[dict]≤5*, footer_text=str(60), source=str(80) |
+| `journey_map` | `(title, stages, source='')` | #75 Journey map — chevron header (4-5 stages) + stakeholder + metric cards per stage. | stages=list[dict]≤5*, source=str(80) |
 
 ## Frameworks
 
@@ -75,6 +78,7 @@ _Schema version: 1. 63 active layouts, 5 retired._
 | `stakeholder_map` | `(title, quadrants, x_label='Influence →', y_label='Interest ↑', summary=None, source='')` | #59 Stakeholder map — 2×2 with stakeholder lists. | quadrants=dict*, x_label=str(30), y_label=str(30), summary=str(120), … |
 | `icon_grid` | `(title, items, cols=3, source='')` | #63 Icon grid — grid of icon cards. | items=list[tuple3]≤9*, cols=int, source=str(80) |
 | `swot` | `(title, quadrants, source='')` | #65 SWOT analysis — 2×2 colored grid. | quadrants=dict*, source=str(80) |
+| `concept_three` | `(title, concepts, source='')` | #74 Concept three — three large circles with arrows + descriptions below. | concepts=list[tuple2]≤3*, source=str(80) |
 
 ## Charts
 

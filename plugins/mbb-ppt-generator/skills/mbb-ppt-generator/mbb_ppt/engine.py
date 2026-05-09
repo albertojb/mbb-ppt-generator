@@ -3310,6 +3310,252 @@ class MbbEngine:
         return s
 
     # ═══════════════════════════════════════════
+    # NEW LAYOUTS (v0.5.3) — combat the executive_summary monoculture
+    # ═══════════════════════════════════════════
+
+    def ask(self, title, decisions, footer_text='Decisions sought', source=''):
+        """#72 Ask / Decision points — closing-slide layout for renewal decks.
+
+        decisions: list of dicts with keys:
+            decision (str, required) — the decision being requested
+            owner    (str)           — who decides
+            deadline (str)           — when it must be made
+            status   (str)           — 'pending' | 'in_progress' | 'agreed' (renders as colored dot)
+        footer_text: footer line such as 'Decisions sought / for next meeting'.
+
+        Use this on closing slides to ask for explicit decisions, instead of
+        faking a decision list inside an ``executive_summary``.
+        """
+        s = self._ns()
+        add_action_title(s, title)
+        n = len(decisions)
+        row_h = min(Inches(1.0), (Inches(4.6) / max(n, 1)))
+        top = CONTENT_TOP + Inches(0.2)
+        col_decision_w = Inches(6.0)
+        col_owner_w    = Inches(2.0)
+        col_deadline_w = Inches(2.2)
+        col_status_w   = Inches(1.2)
+        x_decision = LM + Inches(0.6)
+        x_owner    = x_decision + col_decision_w + Inches(0.2)
+        x_deadline = x_owner    + col_owner_w    + Inches(0.2)
+        x_status   = x_deadline + col_deadline_w + Inches(0.2)
+
+        # Header strip
+        add_text(s, x_decision, top - Inches(0.4), col_decision_w, Inches(0.3),
+                 'Decision', font_size=SMALL_SIZE, font_color=MED_GRAY, bold=True)
+        add_text(s, x_owner,    top - Inches(0.4), col_owner_w,    Inches(0.3),
+                 'Owner',    font_size=SMALL_SIZE, font_color=MED_GRAY, bold=True)
+        add_text(s, x_deadline, top - Inches(0.4), col_deadline_w, Inches(0.3),
+                 'Deadline', font_size=SMALL_SIZE, font_color=MED_GRAY, bold=True)
+        add_text(s, x_status,   top - Inches(0.4), col_status_w,   Inches(0.3),
+                 'Status',   font_size=SMALL_SIZE, font_color=MED_GRAY, bold=True)
+        add_hline(s, LM, top - Inches(0.05), CW, BLACK, Pt(0.5))
+
+        status_colors = {
+            'pending':     ACCENT_ORANGE,
+            'in_progress': ACCENT_BLUE,
+            'agreed':      ACCENT_GREEN,
+        }
+        for i, d in enumerate(decisions):
+            ry = top + i * row_h
+            # numbered oval
+            add_oval(s, LM, ry + Inches(0.1), str(i + 1), bg=NAVY)
+            # decision text
+            add_text(s, x_decision, ry, col_decision_w, row_h,
+                     d.get('decision', ''), font_size=BODY_SIZE,
+                     font_color=NAVY, bold=True, anchor=MSO_ANCHOR.MIDDLE)
+            add_text(s, x_owner, ry, col_owner_w, row_h,
+                     d.get('owner', ''), font_size=BODY_SIZE,
+                     font_color=DARK_GRAY, anchor=MSO_ANCHOR.MIDDLE)
+            add_text(s, x_deadline, ry, col_deadline_w, row_h,
+                     d.get('deadline', ''), font_size=BODY_SIZE,
+                     font_color=DARK_GRAY, anchor=MSO_ANCHOR.MIDDLE)
+            status = (d.get('status') or 'pending').lower()
+            color = status_colors.get(status, MED_GRAY)
+            add_oval(s, x_status, ry + row_h / 2 - Inches(0.13), '',
+                     size=Inches(0.26), bg=color)
+            add_text(s, x_status + Inches(0.4), ry, col_status_w - Inches(0.4),
+                     row_h, status.replace('_', ' '),
+                     font_size=SMALL_SIZE, font_color=DARK_GRAY,
+                     anchor=MSO_ANCHOR.MIDDLE)
+            if i < n - 1:
+                add_hline(s, LM, ry + row_h, CW, LINE_GRAY, Pt(0.25))
+
+        if footer_text:
+            add_text(s, LM, BOTTOM_BAR_Y, CW, Inches(0.4),
+                     footer_text, font_size=BODY_SIZE,
+                     font_color=NAVY, bold=True)
+        self._footer(s, source)
+        return s
+
+    def numbered_tiles(self, title, tiles, source=''):
+        """#73 Numbered tiles (escalating fill) — tiered offers, phased rollouts.
+
+        tiles: list of (number_str, tile_title, desc); 3 tiles is the canonical
+        layout, 4 also supported. The fill escalates left-to-right
+        (BG_GRAY → LIGHT_BLUE → NAVY) to signal escalating commitment.
+        """
+        s = self._ns()
+        add_action_title(s, title)
+        n = len(tiles)
+        gap = Inches(0.25)
+        tile_w = (CW - gap * (n - 1)) / n
+        tile_y = CONTENT_TOP + Inches(0.2)
+        tile_h = Inches(4.5)
+
+        # Escalating palette: gray → light → navy. Reuse for n=4 by interpolating.
+        if n == 3:
+            bgs   = [BG_GRAY,    LIGHT_BLUE, NAVY]
+            fgs   = [DARK_GRAY,  NAVY,       WHITE]
+            heads = [DARK_GRAY,  NAVY,       WHITE]
+        elif n == 4:
+            bgs   = [BG_GRAY,    LIGHT_BLUE, ACCENT_BLUE, NAVY]
+            fgs   = [DARK_GRAY,  NAVY,       WHITE,       WHITE]
+            heads = [DARK_GRAY,  NAVY,       WHITE,       WHITE]
+        else:
+            bgs   = [LIGHT_BLUE] * n
+            fgs   = [NAVY] * n
+            heads = [NAVY] * n
+
+        for i, (num, ttitle, desc) in enumerate(tiles):
+            tx = LM + (tile_w + gap) * i
+            add_rect(s, tx, tile_y, tile_w, tile_h, bgs[i])
+            # Big number
+            add_text(s, tx + Inches(0.3), tile_y + Inches(0.3),
+                     tile_w - Inches(0.6), Inches(1.3),
+                     str(num), font_size=Pt(60), font_color=heads[i], bold=True)
+            # Tile title
+            add_text(s, tx + Inches(0.3), tile_y + Inches(1.7),
+                     tile_w - Inches(0.6), Inches(0.6),
+                     ttitle, font_size=SUB_HEADER_SIZE, font_color=heads[i], bold=True)
+            # Underline
+            add_hline(s, tx + Inches(0.3), tile_y + Inches(2.4),
+                      tile_w - Inches(0.6), heads[i], Pt(1))
+            # Description
+            add_text(s, tx + Inches(0.3), tile_y + Inches(2.6),
+                     tile_w - Inches(0.6), tile_h - Inches(2.8),
+                     desc, font_size=BODY_SIZE, font_color=fgs[i],
+                     line_spacing=Pt(6))
+        self._footer(s, source)
+        return s
+
+    def concept_three(self, title, concepts, source=''):
+        """#74 Concept three — three large circles + arrows + descriptions.
+
+        concepts: list of (concept_name, desc); exactly 3 entries.
+        Use for 3-dimensional concepts (intent / cadence / value), 3-stage
+        flows, conceptual triplets.
+        """
+        s = self._ns()
+        add_action_title(s, title)
+        if len(concepts) != 3:
+            # Defensive: render whatever we have, but the layout assumes 3.
+            concepts = (list(concepts) + [('', '')] * 3)[:3]
+        circle_d = Inches(2.2)
+        gap_x = Inches(0.7)
+        total_w = circle_d * 3 + gap_x * 2
+        start_x = (SW - total_w) / 2
+        cy = CONTENT_TOP + Inches(0.6)
+        for i, (name, desc) in enumerate(concepts):
+            cx = start_x + i * (circle_d + gap_x)
+            # Circle
+            shape = s.shapes.add_shape(MSO_SHAPE.OVAL, cx, cy, circle_d, circle_d)
+            shape.fill.solid()
+            shape.fill.fore_color.rgb = NAVY
+            shape.line.color.rgb = NAVY
+            shape.text_frame.word_wrap = True
+            tf = shape.text_frame
+            tf.text = ''
+            p = tf.paragraphs[0]
+            p.alignment = PP_ALIGN.CENTER
+            run = p.add_run()
+            run.text = name
+            run.font.size = SUB_HEADER_SIZE
+            run.font.bold = True
+            run.font.color.rgb = WHITE
+            run.font.name = FONT_HEADER
+            tf.vertical_anchor = MSO_ANCHOR.MIDDLE
+            # Arrow to next
+            if i < 2:
+                ax = cx + circle_d + Inches(0.05)
+                ay = cy + circle_d / 2 - Inches(0.2)
+                add_text(s, ax, ay, gap_x - Inches(0.1), Inches(0.4),
+                         '→', font_size=Pt(28), font_color=MED_GRAY,
+                         alignment=PP_ALIGN.CENTER)
+            # Description below the circle
+            add_text(s, cx - Inches(0.3), cy + circle_d + Inches(0.25),
+                     circle_d + Inches(0.6), Inches(2.0),
+                     desc, font_size=BODY_SIZE, font_color=DARK_GRAY,
+                     alignment=PP_ALIGN.CENTER, line_spacing=Pt(6))
+        self._footer(s, source)
+        return s
+
+    def journey_map(self, title, stages, source=''):
+        """#75 Journey map — chevron header + stakeholder + metric cards per stage.
+
+        stages: list of dicts with keys:
+            label       (str, required) — stage name in the chevron header
+            stakeholder (str)           — who is in this stage
+            metric      (str)           — the metric or signal at this stage
+        4-5 stages is the canonical range.
+        """
+        s = self._ns()
+        add_action_title(s, title)
+        n = len(stages)
+        gap = Inches(0.1)
+        stage_w = (CW - gap * (n - 1)) / max(n, 1)
+        # Chevron header strip
+        chev_y = CONTENT_TOP + Inches(0.1)
+        chev_h = Inches(0.7)
+        for i, stage in enumerate(stages):
+            sx = LM + (stage_w + gap) * i
+            shape = s.shapes.add_shape(MSO_SHAPE.PENTAGON if i < n - 1 else MSO_SHAPE.RECTANGLE,
+                                        sx, chev_y, stage_w, chev_h)
+            shape.fill.solid()
+            shape.fill.fore_color.rgb = NAVY if i % 2 == 0 else ACCENT_BLUE
+            shape.line.fill.background()
+            tf = shape.text_frame
+            tf.text = ''
+            p = tf.paragraphs[0]
+            p.alignment = PP_ALIGN.CENTER
+            run = p.add_run()
+            run.text = stage.get('label', '')
+            run.font.size = BODY_SIZE
+            run.font.bold = True
+            run.font.color.rgb = WHITE
+            run.font.name = FONT_HEADER
+            tf.vertical_anchor = MSO_ANCHOR.MIDDLE
+        # Stakeholder cards (gray) and metric cards (navy) below
+        card_top = chev_y + chev_h + Inches(0.3)
+        stake_h  = Inches(1.6)
+        metric_h = Inches(1.4)
+        for i, stage in enumerate(stages):
+            sx = LM + (stage_w + gap) * i
+            # Stakeholder card
+            add_rect(s, sx, card_top, stage_w, stake_h, BG_GRAY)
+            add_text(s, sx + Inches(0.15), card_top + Inches(0.1),
+                     stage_w - Inches(0.3), Inches(0.3),
+                     'Stakeholder', font_size=SMALL_SIZE,
+                     font_color=MED_GRAY, bold=True)
+            add_text(s, sx + Inches(0.15), card_top + Inches(0.4),
+                     stage_w - Inches(0.3), stake_h - Inches(0.5),
+                     stage.get('stakeholder', ''), font_size=BODY_SIZE,
+                     font_color=DARK_GRAY, line_spacing=Pt(6))
+            # Metric card
+            my = card_top + stake_h + Inches(0.15)
+            add_rect(s, sx, my, stage_w, metric_h, NAVY)
+            add_text(s, sx + Inches(0.15), my + Inches(0.1),
+                     stage_w - Inches(0.3), Inches(0.3),
+                     'Metric', font_size=SMALL_SIZE,
+                     font_color=RGBColor(0xCC, 0xCC, 0xCC), bold=True)
+            add_text(s, sx + Inches(0.15), my + Inches(0.4),
+                     stage_w - Inches(0.3), metric_h - Inches(0.5),
+                     stage.get('metric', ''), font_size=BODY_SIZE,
+                     font_color=WHITE, line_spacing=Pt(6))
+        self._footer(s, source)
+        return s
+
+    # ═══════════════════════════════════════════
     # SAVE
     # ═══════════════════════════════════════════
 

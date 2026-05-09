@@ -6,6 +6,36 @@ This project is an Apache 2.0-licensed adaptation of [`Mck-ppt-design-skill`](ht
 
 ---
 
+## [0.5.3] — 2026-05-09 (four new layouts to break the executive_summary monoculture)
+
+The post-mortem flagged executive_summary at 9× in 30 slides. v0.5.0 added the cap; v0.5.3 adds the layouts the model can fall back to. Four of the eight layouts from post-mortem § 4 ship now; the remaining four (pyramid_staircase, cycle 4-stage, index_callout, extension_rows) are still on the v0.5.x roadmap.
+
+### Added engine layouts
+
+- **`ask(title, decisions, footer_text='Decisions sought', source='')`** — closing-slide layout for renewal decks. 3-5 numbered decisions with owner / deadline / status (status renders as a colored dot: pending / in_progress / agreed). Stops the pattern of faking a decision list inside `executive_summary`.
+- **`numbered_tiles(title, tiles, source='')`** — 3 (or 4) tiered tiles with fill escalating left-to-right (gray → light blue → navy or gray → light blue → mid → navy). Use for tiered offers, phased rollouts, escalating commitment.
+- **`concept_three(title, concepts, source='')`** — three large navy circles connected by arrows, with descriptions underneath. Use for 3-dimensional concepts (intent / cadence / value), 3-stage flows.
+- **`journey_map(title, stages, source='')`** — chevron header (4-5 stages) with stakeholder cards (gray) and metric cards (navy) below each stage. Use for customer journeys and persona × metric crosswalks.
+
+### Schema + cheatsheet
+
+- All four new layouts have full entries in `api-schemas.yaml` (signature, family, requires/visual flags, params with tuple slot or dict-key shape, char budgets, and notes for non-obvious geometry like the 14-char circle limit in `concept_three`).
+- Cheatsheet regenerated; now lists 71 layouts (66 active + 5 retired).
+- `concept_three` and `journey_map` added to `gate_check_content.py:VISUAL_LAYOUTS` so they count toward the visual-density floor.
+
+### Tests
+
+- 35/35 passing (was 33/33). Two new regression tests:
+  - `test_v053_new_layouts_render_clean` — all four render without overflow or user-code errors.
+  - `test_v053_layouts_pass_content_gate` — schema-driven structural validation accepts canonical inputs.
+
+### Known follow-ups (deferred to later v0.5.x)
+
+- `pyramid_staircase` (proper ascending steps), `cycle` 4-stage loop, `index_callout`, `extension_rows`.
+- Per-layout reference docs under `references/layouts/*.md` for the four new methods (post-mortem suggested a one-paragraph addition per family file).
+
+---
+
 ## [0.5.2] — 2026-05-09 (cover redesign + chart-subtitle fix)
 
 Layout-quality work continues. v0.5.2 ships the two engine-side fixes the post-mortem flagged: charts re-rendered the action title at 13pt below it (overflowed for any title >38 chars), and the cover only fit ~28 chars at 44pt. Both are gone.
