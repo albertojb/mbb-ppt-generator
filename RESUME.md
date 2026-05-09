@@ -2,11 +2,21 @@
 
 > **Purpose.** Give a fresh Claude session everything it needs to continue work on this skill without re-reading the entire history. Read this file first; everything else (`STATE.md`, `BACKLOG.md`, the post-mortem) is supporting detail.
 >
-> **Last updated.** 2026-05-09 by albertojb (with Claude Sonnet 4.5).
+> **Last updated.** 2026-05-09 by albertojb (with Claude Sonnet 4.5+).
 >
 > **Project root.** `/home/ajb/Projects/MBB-PPT-2/`
 > **Public repo.** https://github.com/albertojb/mbb-ppt-generator
-> **Latest tag.** `v0.4.2` on commit `2a00cf8`. Five docs/install commits since the tag (most recent `85da8e5`).
+> **Latest tag.** `v0.5.4` on commit `b6d4870`. All v0.5.x milestones (0.5.0 → 0.5.4) shipped and pushed. Tests at 37/37 passing.
+
+## v0.5.x summary (closed)
+
+| Tag | Theme | What shipped |
+|---|---|---|
+| `v0.5.0` | Bug fixes + global gates | Bug A/B/C closed (value_chain / numbered_list_panel oval gates, harvey_ball_table widths). Two new global S3 checks: `executive_summary` capped at 15% of content slides, visual-density floor scales as `max(2, N // 4)`. |
+| `v0.5.1` | Single source of truth | New `references/api-schemas.yaml` covers all 67 layouts. New `references/scripts/generate_cheatsheet.py` emits the cheatsheet. New `references/known-pitfalls.md`. Schema-driven structural validation in `gate_check_content.py`. Old `layout-matrix.yaml` deleted. |
+| `v0.5.2` | Engine fixes | `cover()` redesigned (navy left-block + 36pt right pane, fits ~50 chars). `cover_centered()` preserves the legacy 44pt centered layout. Chart-subtitle duplication dropped from `grouped_bar` and `stacked_bar`. |
+| `v0.5.3` | New layouts (1/2) | `ask`, `numbered_tiles`, `concept_three`, `journey_map`. |
+| `v0.5.4` | New layouts (2/2) | `pyramid_staircase`, `cycle_4stage`, `index_callout`, `extension_rows`. All eight post-mortem § 4 layouts now in the engine. |
 
 ---
 
@@ -55,7 +65,27 @@ Full doc: `/home/ajb/claude-cowork-linux/mbb-ppt-skill-postmortem.md` (480 lines
 
 ---
 
-## 4. Recommended sequencing (v0.5 plan)
+## 4. Next milestone: v0.6.0 — process discipline (~1 week)
+
+All of v0.5.x shipped. Next work is v0.6.0 (process discipline). Three tasks from the original plan:
+
+| # | Task | Acceptance |
+|---|---|---|
+| 21 | **S2 storyboarding gate.** Print all slide titles in order; require operator to set `read_aloud_test: true` in `outline.json` after reading them aloud. | New `gate_check_storyboard.py`; S2 fails when the field is false or missing. |
+| 22 | **Auto-fix mode on render gate.** For known patterns (text overflow ≤ 50%, body overflow ≤ 0.3"), shrink font 1pt or trim 5 chars and re-render once. Cap at 1 retry. | `gate_check_render.py --auto-fix` succeeds on a deck with one minor overflow without operator intervention. |
+| 23 | **Stronger section_divider.** Top accent bar + 72pt numeral + 32pt title + 14pt italic subtitle. No content area, no source line. | A 30-slide deck with 3 section dividers reads visibly different from surrounding content. |
+
+Tag as `v0.6.0`. Read post-mortem § 6 for design rationale before starting.
+
+### Bonus follow-ups (deferred, low priority)
+
+- Per-layout reference docs under `references/layouts/*.md` for the eight new v0.5.3/v0.5.4 layouts (one paragraph each).
+- Deeper char-budget audit beyond the three known mismatches resolved in v0.5.1/v0.5.2.
+- Tighter generator output: sort layouts by integer pattern (current sort is string-based to handle `'1b'`/`'23b'`/etc., which gives a stable but not numeric order).
+
+---
+
+## 5. Old v0.5 plan (kept for reference; all shipped)
 
 Adapted from § 3 of the post-mortem. **All of v0.5 is layout-quality work.** Install is parked.
 
@@ -129,7 +159,7 @@ Run these in order to confirm starting state:
 cd /home/ajb/Projects/MBB-PPT-2
 
 # 1. Confirm where we are
-git log --oneline -10
+git log --oneline -8                         # should show v0.5.4 commit b6d4870 at HEAD
 git status                                   # should be clean
 
 # 2. Read this doc + the post-mortem (don't bulk-load other refs yet)
@@ -137,14 +167,15 @@ cat RESUME.md
 cat /home/ajb/claude-cowork-linux/mbb-ppt-skill-postmortem.md
 
 # 3. Tests pass on baseline
-python3 -m pytest tests/                     # expect 22/22 passing
+python3 -m pytest tests/                     # expect 37/37 passing
 
-# 4. Pick ONE task from § 4 above. Start with v0.5.0 #1 (Bug A) — smallest blast radius.
+# 4. Pick ONE task from § 4 above. v0.6.0 #21 (S2 storyboarding gate) is the
+#    smallest blast radius — start there.
 ```
 
 For the next session's opening prompt to a fresh Claude:
 
-> *"Resume MBB PPT work. Read /home/ajb/Projects/MBB-PPT-2/RESUME.md first; that's a single self-contained handoff doc. Do not change install behavior — that work is done and parked. Start with v0.5.0 task #1 (value_chain oval gate, ~5-line fix in `gate_check_content.py`). Quote the priority list back before writing any code so I can confirm the order."*
+> *"Resume MBB PPT work. Read /home/ajb/Projects/MBB-PPT-2/RESUME.md first; that's a single self-contained handoff doc. v0.5.x is fully shipped (37/37 tests; latest tag v0.5.4). Start with v0.6.0 task #21 — the S2 storyboarding gate. Quote the v0.6.0 task list back before writing any code so I can confirm the order."*
 
 ---
 
