@@ -71,7 +71,7 @@ jobs:
           #   - STATE.md documents v0.2.0 rebrand decisions.
           # Paths reflect the v0.4.0 plugin layout (skill files moved under
           # plugins/mbb-ppt-generator/skills/mbb-ppt-generator/).
-          ALLOWED_FILES='MBB_PPT_QA_CHECKLIST.md CHANGELOG.md README.md NOTICE STATE.md BACKLOG.md plugins/mbb-ppt-generator/skills/mbb-ppt-generator/MAINTAINERS.md plugins/mbb-ppt-generator/skills/mbb-ppt-generator/SKILL.md plugins/mbb-ppt-generator/skills/mbb-ppt-generator/mbb_ppt/constants.py plugins/mbb-ppt-generator/NOTICE'
+          ALLOWED_FILES='MBB_PPT_QA_CHECKLIST.md CHANGELOG.md README.md NOTICE STATE.md BACKLOG.md RESUME.md plugins/mbb-ppt-generator/skills/mbb-ppt-generator/MAINTAINERS.md plugins/mbb-ppt-generator/skills/mbb-ppt-generator/SKILL.md plugins/mbb-ppt-generator/skills/mbb-ppt-generator/mbb_ppt/constants.py plugins/mbb-ppt-generator/NOTICE'
           FAIL=0
           for f in $BAD_FILES; do
             allowed=0
