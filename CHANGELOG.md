@@ -6,6 +6,32 @@ This project is an Apache 2.0-licensed adaptation of [`Mck-ppt-design-skill`](ht
 
 ---
 
+## [0.5.1] — 2026-05-09 (api-schemas.yaml as single source of truth)
+
+Per the post-mortem, the matrix + cheatsheet + gate were three sources for the same constraints, drifting in different directions. v0.5.1 collapses them into one schema. A single edit now updates structural validation, the operator-facing cheatsheet, and the documentation.
+
+### Added
+
+- **`references/api-schemas.yaml`** — full per-parameter schema for all 67 layouts (62 active, 5 retired). Each entry carries: `signature`, `family`, `summary`, `requires` flags, `visual` flag, and `params` with shape spec (kind, type, required, max/exact counts, tuple `slots` with role hints, `dict_keys`, `max_chars`, notes). Top-level sections document `color_roles`, `enum_maps` (Harvey Ball 0-4, RAG R/A/G), and `global_constraints`.
+- **`references/scripts/generate_cheatsheet.py`** — emits `references/api-cheatsheet.md` from the schema. Cheatsheet is now a generated artifact; do not hand-edit. Run before each release.
+- **`references/known-pitfalls.md`** — 15 implicit constraints documented in user-readable form: the 3-char oval rule (and which layouts it actually applies to, post-Bug A/B), cover wrap behavior, chart sub-title duplication, `executive_summary` real-vs-advertised char budget, harvey_ball_table width discipline, etc.
+- **Schema-driven structural validation** in `gate_check_content.py` (new `check_schema_structure`). Counts (max/exact), tuple arity, and oval-label budgets now come from the schema. The `LAYOUT_CHECKERS` dispatch is reduced to true layout quirks (process_chevron `\n` in label, timeline last-label length).
+- **Two new smoke tests** — `test_schema_covers_every_active_layout` (catches engine/schema drift) and `test_cheatsheet_regenerates_clean` (catches generator regressions).
+
+### Removed
+
+- **`references/layout-matrix.yaml`** — superseded by `api-schemas.yaml`. SKILL.md and MAINTAINERS.md updated to point to the new file.
+
+### Fixed
+
+- **Engine `__version__` bumped to `0.5.1`** alongside `pyproject.toml` and `plugin.json`. The v0.5.0 commit unintentionally left `__version__` at `'0.4.2'`; closed here.
+
+### Tests
+
+- 30/30 passing (was 28/28). Two new schema-coverage tests added; existing tests unchanged.
+
+---
+
 ## [0.5.0] — 2026-05-09 (kill the obvious bugs — layout-quality push begins)
 
 The post-mortem on a 30-slide commercial-renewal deck (`mbb-ppt-skill-postmortem.md`) identified three S3-gate bugs that gated valid input, plus one root cause behind layout monotony — `executive_summary` was used 9× in 30 slides because it has no penalty signal. v0.5.0 closes the bugs and adds two global gates that force layout variety. Install behavior is unchanged.

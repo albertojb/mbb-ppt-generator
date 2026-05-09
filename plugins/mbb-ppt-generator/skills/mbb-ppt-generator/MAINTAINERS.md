@@ -65,7 +65,7 @@ The corollary: when a model says "task complete" and there is no gate file provi
 
 | Soft (avoid) | Hard (prefer) |
 |---|---|
-| "Be careful with character budgets" in the prompt | `gate_check_content.py` reads `layout-matrix.yaml` and rejects content that exceeds them |
+| "Be careful with character budgets" in the prompt | `gate_check_content.py` reads `references/api-schemas.yaml` and rejects content that exceeds them |
 | "Page numbers go at the bottom right" | `PAGE_NUM_LEFT/TOP/WIDTH/HEIGHT` are constants the engine pins to |
 | "Engine quirks are OK in some cases — use judgment" | `ENGINE_BUG_WHITELIST` enum in `gate_check_render.py`, with required textual evidence per entry |
 | "Read all the references before generating" | `references/INDEX.md` routing table loads only the files for the current stage |
@@ -88,11 +88,11 @@ When you find a new recurring failure mode, the question is: can it be encoded a
 Three files must be updated together:
 
 1. `mbb_ppt/engine.py` — implementation.
-2. `references/layout-matrix.yaml` — capacity row (`char_budget`, `tuple_arity`, `max_items`, etc.).
+2. `references/api-schemas.yaml` — capacity row (`char_budget`, `tuple_arity`, `max_items`, etc.).
 3. `references/api-cheatsheet.md` — one-liner row in the matching family table.
 4. `references/layouts/<family>.md` — full layout reference (parameters, wireframe, example, pitfalls).
 
-The S3 content gate consumes `layout-matrix.yaml` directly, so missing rows there silently disable validation for that layout.
+The S3 content gate consumes `api-schemas.yaml` directly, so missing rows there silently disable validation for that layout.
 
 ### Adding a guard rail
 

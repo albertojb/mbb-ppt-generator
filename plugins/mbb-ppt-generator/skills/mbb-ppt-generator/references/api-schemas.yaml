@@ -1,0 +1,1535 @@
+# api-schemas.yaml — single source of truth for layout schemas
+#
+# Replaces the earlier `layout-matrix.yaml` (which only carried capacity limits
+# and char-budgets) with full per-parameter shape information. Three downstream
+# consumers read this file:
+#
+#   1. references/scripts/gate_check_content.py — structural checks at S3.
+#   2. references/scripts/generate_cheatsheet.py — emits api-cheatsheet.md.
+#   3. SKILL.md (operator-facing) — points readers at this file by name.
+#
+# Schema version. Bump on any breaking change so downstream readers can pin.
+schema_version: 1
+
+default_theme: mbb
+
+themes:
+  mbb:
+    style: "MBB-style executive deck"
+    engine: ExecEngine                  # alias of MbbEngine
+    color_profile: forest_green
+    heading_font: "DM Sans"             # falls back to Calibri
+    body_font: "Arial"
+
+# ────────────────────────────────────────────────────────────────
+# Color conventions. Layout slots referencing `role: color` accept any of:
+#   - one of the named constants from mbb_ppt.constants (PRIMARY, NAVY,
+#     ACCENT_BLUE, ACCENT_GREEN, ACCENT_ORANGE, ACCENT_RED, DARK_GRAY,
+#     MED_GRAY, LINE_GRAY, BG_GRAY)
+#   - a python-pptx RGBColor instance
+#   - a "#RRGGBB" hex string (auto-converted)
+# ────────────────────────────────────────────────────────────────
+color_roles:
+  primary:    "PRIMARY (= NAVY alias) — forest green #1B4332. Use for headlines, accents."
+  accent:     "Any of ACCENT_BLUE / ACCENT_GREEN / ACCENT_ORANGE / ACCENT_RED."
+  neutral:    "DARK_GRAY / MED_GRAY / LINE_GRAY / BG_GRAY for backgrounds and rule lines."
+  bg_light:   "Light pair color (LIGHT_BLUE/LIGHT_GREEN/LIGHT_ORANGE/LIGHT_RED) for fills."
+  hex_string: "Any '#RRGGBB' string — engine converts to RGBColor automatically."
+
+# ────────────────────────────────────────────────────────────────
+# Enum-style value mappings used by specific layouts.
+# ────────────────────────────────────────────────────────────────
+enum_maps:
+  harvey_ball:
+    description: "Fill mapping for harvey_ball_table.scores (int 0-4)."
+    values:
+      0: empty
+      1: quarter
+      2: half
+      3: three_quarters
+      4: full
+  rag_status:
+    description: "Status indicator for rag_status row cells."
+    values:
+      R: red
+      A: amber
+      G: green
+
+# ────────────────────────────────────────────────────────────────
+# Global gate constraints applied across the whole deck (not per-slide).
+# Keep in sync with the global checks in gate_check_content.py.
+# ────────────────────────────────────────────────────────────────
+global_constraints:
+  two_column_text:
+    max_per_deck: 1
+    rationale: "Two columns of unbroken prose is the most monotonous layout."
+  executive_summary:
+    max_pct_of_content_slides: 0.15
+    rationale: "Most permissive layout; over-using produces visually identical decks."
+  visual_density_floor:
+    formula: "max(2, N // 4)"
+    triggers_at_n_content_slides: 6
+    rationale: "Decks need a chart/diagram/image floor that scales with deck length."
+
+# ────────────────────────────────────────────────────────────────
+# Layouts indexed by method name. Per-layout fields:
+#
+#   pattern          — internal #N from the original Mck design catalog.
+#   family           — structure | narrative | data | comparison | process |
+#                       frameworks | charts | images | dashboards | team
+#   status           — active | retired
+#   signature        — Python signature string (post-self).
+#   summary          — one-sentence description for the cheatsheet.
+#   requires         — gate-enforced presence flags. Common values:
+#                        - source        (a non-empty source string)
+#                        - action_title  (>10 chars, ≤120)
+#   visual           — true if this layout counts toward the visual-density floor.
+#   params           — per-parameter shape spec. Keys mirror the Python signature.
+#     <param>:
+#       kind         — scalar | list | dict
+#       type         — str | int | float | path | color | list-of-list | …
+#       required     — true | false (default false → has a default value)
+#       default      — value if not provided (when meaningful)
+#       max_chars    — char budget for scalar text fields
+#       max          — count cap for lists
+#       min          — count floor for lists (rare)
+#       exact        — required exact count (e.g. matrix_2x2 quadrants = 4)
+#       role         — semantic role hint (oval_label, color, image_path, …)
+#       item         — for `kind: list`, shape of each element
+#       dict_keys    — for `kind: dict`, allowed/required keys
+#       notes        — free-form caveats
+# ────────────────────────────────────────────────────────────────
+
+layouts:
+
+  # ═══════════════════════════════════════════════════════════════
+  # Structure
+  # ═══════════════════════════════════════════════════════════════
+  cover:
+    pattern: 1
+    family: structure
+    status: active
+    signature: "(title, subtitle='', author='', date='', cover_image=None)"
+    summary: "#1 Cover slide — title, subtitle, author, date, accent line."
+    requires: []
+    visual: false
+    params:
+      title:        {kind: scalar, type: str, required: true, max_chars: 28, notes: "Title supports '\\n'. Geometry fits ~28 chars per line at 44pt."}
+      subtitle:     {kind: scalar, type: str, max_chars: 60}
+      author:       {kind: scalar, type: str, max_chars: 30}
+      date:         {kind: scalar, type: str, max_chars: 30}
+      cover_image:  {kind: scalar, type: path, role: image_path, notes: "Path to a background image; falls back to a clean fill when omitted."}
+
+  toc:
+    pattern: 6
+    family: structure
+    status: active
+    signature: "(title='Table of Contents', items=None, source='')"
+    summary: "#6 Table of contents — numbered items with descriptions."
+    requires: []
+    visual: false
+    params:
+      title:  {kind: scalar, type: str, default: "Table of Contents", max_chars: 30}
+      items:
+        kind: list
+        max: 6
+        item:
+          kind: tuple
+          arity: 3
+          slots:
+            - {name: num,        type: str, max_chars: 3,  role: oval_label, notes: "Engine renders the user value here; keep ≤ 3 chars (number, letter, code)."}
+            - {name: item_title, type: str, max_chars: 20}
+            - {name: desc,       type: str, max_chars: 40}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  section_divider:
+    pattern: 5
+    family: structure
+    status: active
+    signature: "(section_label, title, subtitle='')"
+    summary: "#5 Section divider — primary left bar, large title."
+    requires: []
+    visual: false
+    params:
+      section_label: {kind: scalar, type: str, required: true, max_chars: 8, notes: "Short tag like 'PART II' or '1 / 4'."}
+      title:         {kind: scalar, type: str, required: true, max_chars: 40}
+      subtitle:      {kind: scalar, type: str, max_chars: 80}
+
+  appendix_title:
+    pattern: 7
+    family: structure
+    status: active
+    signature: "(title, subtitle='')"
+    summary: "#7 Appendix title — centered title with accent lines."
+    requires: []
+    visual: false
+    params:
+      title:    {kind: scalar, type: str, required: true, max_chars: 40}
+      subtitle: {kind: scalar, type: str, max_chars: 60}
+
+  closing:
+    pattern: 36
+    family: structure
+    status: active
+    signature: "(title, message='', source_text='')"
+    summary: "#36 Closing / thank-you slide."
+    requires: []
+    visual: false
+    params:
+      title:       {kind: scalar, type: str, required: true, max_chars: 30}
+      message:     {kind: scalar, type: str, max_chars: 60}
+      source_text: {kind: scalar, type: str, max_chars: 80}
+
+  # ═══════════════════════════════════════════════════════════════
+  # Narrative
+  # ═══════════════════════════════════════════════════════════════
+  executive_summary:
+    pattern: 24
+    family: narrative
+    status: active
+    signature: "(title, headline, items, source='')"
+    summary: "#24 Executive summary — primary headline + numbered items."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title:    {kind: scalar, type: str, required: true, max_chars: 40}
+      headline: {kind: scalar, type: str, required: true, max_chars: 60}
+      items:
+        kind: list
+        required: true
+        max: 4
+        item:
+          kind: tuple
+          arity: 3
+          slots:
+            - {name: num,        type: str, max_chars: 3, role: oval_label, notes: "Renders inside a 0.45\" oval; ≤ 3 chars."}
+            - {name: item_title, type: str, max_chars: 25}
+            - {name: desc,       type: str, max_chars: 55, notes: "Box geometry fits ~55 chars; do not push to the legacy 80."}
+      source:   {kind: scalar, type: str, max_chars: 80}
+
+  key_takeaway:
+    pattern: 25
+    family: narrative
+    status: active
+    signature: "(title, left_text, takeaways, source='', left_title='Analysis', right_title='Key takeaways')"
+    summary: "#25 Key takeaway — left analysis + right gray panel."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title:       {kind: scalar, type: str, required: true, max_chars: 40}
+      left_text:   {kind: list, item: {kind: scalar, type: str, max_chars: 80}, max: 5}
+      takeaways:   {kind: list, item: {kind: scalar, type: str, max_chars: 60}, max: 3, required: true}
+      left_title:  {kind: scalar, type: str, default: "Analysis",      max_chars: 20}
+      right_title: {kind: scalar, type: str, default: "Key takeaways", max_chars: 25}
+      source:      {kind: scalar, type: str, max_chars: 80}
+
+  four_column:
+    pattern: 28
+    family: narrative
+    status: active
+    signature: "(title, items, source='')"
+    summary: "#28 Four-column overview — 4 numbered vertical cards."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      items:
+        kind: list
+        required: true
+        max: 4
+        item:
+          kind: tuple
+          arity: 3
+          slots:
+            - {name: num,       type: str, max_chars: 3,   role: oval_label}
+            - {name: col_title, type: str, max_chars: 20}
+            - {name: desc,      type: str, max_chars: 120}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  two_column_text:
+    pattern: 27
+    family: narrative
+    status: active
+    signature: "(title, columns, source='')"
+    summary: "#27 Two-column text — lettered columns with bullet lists. Max 1 per deck."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      columns:
+        kind: list
+        required: true
+        max: 2
+        item:
+          kind: dict
+          dict_keys:
+            title:   {type: str, max_chars: 25, required: true}
+            bullets: {kind: list, item: {kind: scalar, type: str, max_chars: 60}, max: 5}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  quote:
+    pattern: 26
+    family: narrative
+    status: active
+    signature: "(quote_text, attribution='')"
+    summary: "#26 Quote slide — centered quote with accent lines."
+    requires: []
+    visual: false
+    params:
+      quote_text:  {kind: scalar, type: str, required: true, max_chars: 200}
+      attribution: {kind: scalar, type: str, max_chars: 60}
+
+  # ═══════════════════════════════════════════════════════════════
+  # Data
+  # ═══════════════════════════════════════════════════════════════
+  big_number:
+    pattern: 8
+    family: data
+    status: active
+    signature: "(title, number, unit='', description='', detail_items=None, source='', bottom_bar=None)"
+    summary: "#8 Big number — large stat with context."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title:        {kind: scalar, type: str, required: true, max_chars: 40}
+      number:       {kind: scalar, type: str, required: true, max_chars: 10}
+      unit:         {kind: scalar, type: str, max_chars: 8}
+      description:  {kind: scalar, type: str, max_chars: 60}
+      detail_items: {kind: list, item: {kind: scalar, type: str, max_chars: 40}, max: 4}
+      source:       {kind: scalar, type: str, max_chars: 80}
+      bottom_bar:   {kind: tuple, arity: 2, slots: [{name: label, type: str, max_chars: 20}, {name: text, type: str, max_chars: 80}]}
+
+  two_stat:
+    pattern: 9
+    family: data
+    status: active
+    signature: "(title, stats, detail_items=None, source='')"
+    summary: "#9 Two-stat comparison — two big numbers side by side."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      stats:
+        kind: list
+        required: true
+        exact: 2
+        item:
+          kind: tuple
+          arity: 2
+          slots:
+            - {name: number, type: str, max_chars: 10}
+            - {name: label,  type: str, max_chars: 20}
+      detail_items: {kind: list, item: {kind: scalar, type: str, max_chars: 50}, max: 4}
+      source:       {kind: scalar, type: str, max_chars: 80}
+
+  three_stat:
+    pattern: 10
+    family: data
+    status: active
+    signature: "(title, stats, detail_items=None, source='')"
+    summary: "#10 Three-stat — three big numbers in a row."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      stats:
+        kind: list
+        required: true
+        exact: 3
+        item:
+          kind: tuple
+          arity: 3
+          notes: "Third tuple slot is is_navy:bool — true to render that stat in primary color."
+          slots:
+            - {name: number,  type: str,  max_chars: 10}
+            - {name: label,   type: str,  max_chars: 20}
+            - {name: is_navy, type: bool, notes: "True/False. Highlight one stat in primary."}
+      detail_items: {kind: list, item: {kind: scalar, type: str, max_chars: 50}, max: 4}
+      source:       {kind: scalar, type: str, max_chars: 80}
+
+  data_table:
+    pattern: 11
+    family: data
+    status: active
+    signature: "(title, headers, rows, col_widths=None, source='', bottom_bar=None)"
+    summary: "#11 Data table — header row + data rows with separators."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title:      {kind: scalar, type: str, required: true, max_chars: 40}
+      headers:    {kind: list, required: true, item: {kind: scalar, type: str, max_chars: 15}}
+      rows:       {kind: list, required: true, max: 8, item: {kind: list, item: {kind: scalar, type: str, max_chars: 40}}}
+      col_widths: {kind: list, item: {kind: scalar, type: float}, notes: "Optional Inches per column; defaults split CW evenly."}
+      source:     {kind: scalar, type: str, max_chars: 80}
+      bottom_bar: {kind: tuple, arity: 2}
+
+  metric_cards:
+    pattern: 12
+    family: data
+    status: active
+    signature: "(title, cards, source='')"
+    summary: "#12 Metric cards — 3-4 accent-colored cards."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      cards:
+        kind: list
+        required: true
+        max: 4
+        item:
+          kind: dict
+          dict_keys:
+            title:   {type: str, max_chars: 20, required: true}
+            value:   {type: str, max_chars: 15}
+            desc:    {type: str, max_chars: 80}
+            color:   {role: color}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  metric_comparison:
+    pattern: 62
+    family: data
+    status: active
+    signature: "(title, metrics, source='')"
+    summary: "#62 Metric comparison — before/after row cards with delta badges."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      metrics:
+        kind: list
+        required: true
+        max: 4
+        item:
+          kind: dict
+          dict_keys:
+            label:   {type: str, max_chars: 30, required: true}
+            before:  {type: str, max_chars: 15}
+            after:   {type: str, max_chars: 15}
+            delta:   {type: str, max_chars: 12, notes: "Sign-prefixed e.g. '+12%' or '-3pp'."}
+            positive: {type: bool, notes: "True → green delta badge; False → red."}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  table_insight:
+    pattern: 71
+    family: data
+    status: active
+    signature: "(title, headers, rows, insights, col_widths=None, insight_title='Insight:', source='', bottom_bar=None)"
+    summary: "Table + right insight panel — MBB-style editorial layout."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title:         {kind: scalar, type: str, required: true, max_chars: 40}
+      headers:       {kind: list, required: true, item: {kind: scalar, type: str, max_chars: 15}}
+      rows:          {kind: list, required: true, max: 6, item: {kind: list, item: {kind: scalar, type: str, max_chars: 40}}}
+      insights:      {kind: list, required: true, item: {kind: scalar, type: str, max_chars: 60}}
+      col_widths:    {kind: list, item: {kind: scalar, type: float}}
+      insight_title: {kind: scalar, type: str, default: "Insight:", max_chars: 25}
+      source:        {kind: scalar, type: str, max_chars: 80}
+      bottom_bar:    {kind: tuple, arity: 2}
+
+  scorecard:
+    pattern: "23b"
+    family: data
+    status: active
+    signature: "(title, items, source='', headers=None)"
+    summary: "#23 Scorecard — items with progress bars."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      items:
+        kind: list
+        required: true
+        max: 6
+        item:
+          kind: tuple
+          arity: 3
+          slots:
+            - {name: label, type: str, max_chars: 25}
+            - {name: pct,   type: int, notes: "0-100; rendered as a horizontal progress bar."}
+            - {name: note,  type: str, max_chars: 40}
+      headers: {kind: list, item: {kind: scalar, type: str, max_chars: 20}}
+      source:  {kind: scalar, type: str, max_chars: 80}
+
+  kpi_tracker:
+    pattern: 52
+    family: data
+    status: active
+    signature: "(title, kpis, summary=None, source='')"
+    summary: "#52 KPI tracker — progress bars with status dots."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      kpis:
+        kind: list
+        required: true
+        max: 6
+        item:
+          kind: dict
+          dict_keys:
+            label:   {type: str, max_chars: 30, required: true}
+            value:   {type: str, max_chars: 15}
+            target:  {type: str, max_chars: 15}
+            pct:     {type: int, notes: "0-100; bar fill."}
+            status:  {type: str, notes: "'green' | 'amber' | 'red'."}
+      summary: {kind: tuple, arity: 2}
+      source:  {kind: scalar, type: str, max_chars: 80}
+
+  # ═══════════════════════════════════════════════════════════════
+  # Comparison
+  # ═══════════════════════════════════════════════════════════════
+  side_by_side:
+    pattern: 19
+    family: comparison
+    status: active
+    signature: "(title, options, source='')"
+    summary: "#19 Side-by-side comparison — two columns with primary headers."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      options:
+        kind: list
+        required: true
+        exact: 2
+        item:
+          kind: dict
+          dict_keys:
+            title:   {type: str, max_chars: 20, required: true}
+            bullets: {kind: list, item: {kind: scalar, type: str, max_chars: 50}, max: 6}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  before_after:
+    pattern: 20
+    family: comparison
+    status: active
+    signature: "(title, before_title, before_points, after_title, after_points, source='', corner_label='', bottom_bar=None, left_summary='', right_summary='', right_summary_color=None)"
+    summary: "#20 Before/after — vertical divider with arrow."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title:                {kind: scalar, type: str, required: true, max_chars: 40}
+      before_title:         {kind: scalar, type: str, required: true, max_chars: 20}
+      before_points:        {kind: list, required: true, max: 5, item: {kind: scalar, type: str, max_chars: 50}}
+      after_title:          {kind: scalar, type: str, required: true, max_chars: 20}
+      after_points:         {kind: list, required: true, max: 5, item: {kind: scalar, type: str, max_chars: 50}}
+      corner_label:         {kind: scalar, type: str, max_chars: 12}
+      left_summary:         {kind: scalar, type: str, max_chars: 80}
+      right_summary:        {kind: scalar, type: str, max_chars: 80}
+      right_summary_color:  {kind: scalar, role: color}
+      bottom_bar:           {kind: tuple, arity: 2}
+      source:               {kind: scalar, type: str, max_chars: 80}
+
+  pros_cons:
+    pattern: 21
+    family: comparison
+    status: active
+    signature: "(title, pros_title, pros, cons_title, cons, conclusion=None, source='')"
+    summary: "#21 Pros/cons — two-column layout."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title:      {kind: scalar, type: str, required: true, max_chars: 40}
+      pros_title: {kind: scalar, type: str, required: true, max_chars: 20}
+      pros:       {kind: list, required: true, max: 5, item: {kind: scalar, type: str, max_chars: 50}}
+      cons_title: {kind: scalar, type: str, required: true, max_chars: 20}
+      cons:       {kind: list, required: true, max: 5, item: {kind: scalar, type: str, max_chars: 50}}
+      conclusion: {kind: scalar, type: str, max_chars: 80}
+      source:     {kind: scalar, type: str, max_chars: 80}
+
+  rag_status:
+    pattern: 22
+    family: comparison
+    status: active
+    signature: "(title, headers, rows, source='')"
+    summary: "#22 RAG status — table with red/amber/green status dots."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title:   {kind: scalar, type: str, required: true, max_chars: 40}
+      headers: {kind: list, required: true, item: {kind: scalar, type: str, max_chars: 15}}
+      rows:
+        kind: list
+        required: true
+        max: 8
+        item:
+          kind: list
+          notes: "Last cell of each row should be 'R' / 'A' / 'G' to drive the status dot. See enum_maps.rag_status."
+          item: {kind: scalar, type: str, max_chars: 60}
+      source:  {kind: scalar, type: str, max_chars: 80}
+
+  checklist:
+    pattern: 61
+    family: comparison
+    status: active
+    signature: "(title, columns, col_widths, rows, status_map=None, source='', bottom_bar=None)"
+    summary: "#61 Checklist / status table."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title:      {kind: scalar, type: str, required: true, max_chars: 40}
+      columns:    {kind: list, required: true, item: {kind: scalar, type: str, max_chars: 20}}
+      col_widths: {kind: list, required: true, item: {kind: scalar, type: float}}
+      rows:       {kind: list, required: true, max: 7, item: {kind: list, item: {kind: scalar, type: str, max_chars: 30}}}
+      status_map: {kind: dict, notes: "Optional status-token → color override."}
+      bottom_bar: {kind: tuple, arity: 2}
+      source:     {kind: scalar, type: str, max_chars: 80}
+
+  harvey_ball_table:
+    pattern: 56
+    family: comparison
+    status: active
+    signature: "(title, criteria, options, scores, legend_text=None, summary=None, source='', first_col_w=None, opt_col_w=None)"
+    summary: "#56 Harvey Ball table — matrix with circular fill indicators."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title:        {kind: scalar, type: str, required: true, max_chars: 40}
+      criteria:     {kind: list, required: true, max: 7, item: {kind: scalar, type: str, max_chars: 30}}
+      options:      {kind: list, required: true, max: 5, item: {kind: scalar, type: str, max_chars: 18}}
+      scores:
+        kind: list
+        required: true
+        notes: "scores[row_idx][col_idx] — int 0-4 (see enum_maps.harvey_ball)."
+        item:  {kind: list, item: {kind: scalar, type: int, notes: "0=empty, 1=quarter, 2=half, 3=three_quarters, 4=full."}}
+      legend_text:  {kind: list, item: {kind: scalar, type: str, max_chars: 25}}
+      summary:      {kind: scalar, type: str, max_chars: 120}
+      first_col_w:  {kind: scalar, type: float, notes: "Inches; default 2.8\". Override to widen the criteria column."}
+      opt_col_w:    {kind: scalar, type: float, notes: "Inches; default scales to fit content width."}
+      source:       {kind: scalar, type: str, max_chars: 80}
+
+  # ═══════════════════════════════════════════════════════════════
+  # Process
+  # ═══════════════════════════════════════════════════════════════
+  timeline:
+    pattern: 29
+    family: process
+    status: active
+    signature: "(title, milestones, source='', bottom_bar=None)"
+    summary: "#29 Timeline / roadmap — horizontal line with milestone nodes."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      milestones:
+        kind: list
+        required: true
+        max: 6
+        item:
+          kind: tuple
+          arity: 2
+          slots:
+            - {name: label, type: str, max_chars: 8, notes: "Last milestone label ≤ 6 chars; engine pins it right and longer values overflow."}
+            - {name: desc,  type: str, max_chars: 40}
+      bottom_bar: {kind: tuple, arity: 2}
+      source:     {kind: scalar, type: str, max_chars: 80}
+
+  vertical_steps:
+    pattern: 30
+    family: process
+    status: active
+    signature: "(title, steps, source='', bottom_bar=None)"
+    summary: "#30 Vertical steps — top-down numbered steps."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      steps:
+        kind: list
+        required: true
+        max: 5
+        item:
+          kind: tuple
+          arity: 3
+          slots:
+            - {name: label,      type: str, max_chars: 3, role: oval_label}
+            - {name: step_title, type: str, max_chars: 25}
+            - {name: desc,       type: str, max_chars: 80}
+      bottom_bar: {kind: tuple, arity: 2}
+      source:     {kind: scalar, type: str, max_chars: 80}
+
+  process_chevron:
+    pattern: 16
+    family: process
+    status: active
+    signature: "(title, steps, source='', bottom_bar=None)"
+    summary: "#16 Process chevron — horizontal step flow with arrows (≤ 5 steps)."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      steps:
+        kind: list
+        required: true
+        max: 5
+        item:
+          kind: tuple
+          arity: 3
+          slots:
+            - {name: label,      type: str, max_chars: 3, role: oval_label, notes: "No '\\n'; must be a single short line."}
+            - {name: step_title, type: str, max_chars: 20}
+            - {name: desc,       type: str, max_chars: 50}
+      bottom_bar: {kind: tuple, arity: 2}
+      source:     {kind: scalar, type: str, max_chars: 80}
+
+  value_chain:
+    pattern: 67
+    family: process
+    status: active
+    signature: "(title, stages, source='', bottom_bar=None)"
+    summary: "#67 Value chain — horizontal flow with arrows."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      stages:
+        kind: list
+        required: true
+        max: 5
+        item:
+          kind: tuple
+          arity: 3
+          notes: "First slot is the stage *title*, NOT an oval label. Engine renders str(i+1) inside the oval."
+          slots:
+            - {name: stage_title, type: str, max_chars: 15}
+            - {name: desc,        type: str, max_chars: 60}
+            - {name: accent,      role: color}
+      bottom_bar: {kind: tuple, arity: 2}
+      source:     {kind: scalar, type: str, max_chars: 80}
+
+  decision_tree:
+    pattern: 60
+    family: process
+    status: active
+    signature: "(title, root, branches, right_panel=None, source='')"
+    summary: "#60 Decision tree — root → L1 → L2 hierarchy with connector lines."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title:    {kind: scalar, type: str, required: true, max_chars: 40}
+      root:     {kind: scalar, type: str, required: true, max_chars: 30}
+      branches:
+        kind: list
+        required: true
+        max: 6
+        item:
+          kind: dict
+          dict_keys:
+            label:    {type: str, max_chars: 25, required: true}
+            children: {kind: list, item: {kind: scalar, type: str, max_chars: 25}, max: 4}
+      right_panel: {kind: scalar, type: str, max_chars: 200}
+      source:      {kind: scalar, type: str, max_chars: 80}
+
+  agenda:
+    pattern: 66
+    family: process
+    status: active
+    signature: "(title, headers, items, footer_text='', source='')"
+    summary: "#66 Agenda — table-style meeting agenda."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title:       {kind: scalar, type: str, required: true, max_chars: 40}
+      headers:     {kind: list, required: true, item: {kind: scalar, type: str, max_chars: 15}}
+      items:       {kind: list, required: true, max: 8, item: {kind: list, item: {kind: scalar, type: str, max_chars: 40}}}
+      footer_text: {kind: scalar, type: str, max_chars: 80}
+      source:      {kind: scalar, type: str, max_chars: 80}
+
+  action_items:
+    pattern: 35
+    family: process
+    status: active
+    signature: "(title, actions, source='')"
+    summary: "#35 Action items — cards with timeline + owner."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      actions:
+        kind: list
+        required: true
+        max: 4
+        item:
+          kind: dict
+          dict_keys:
+            title:    {type: str, max_chars: 25, required: true}
+            timeline: {type: str, max_chars: 15}
+            owner:    {type: str, max_chars: 15}
+            desc:     {type: str, max_chars: 80}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  cycle:
+    pattern: 31
+    family: process
+    status: retired
+    signature: "(title, phases, right_panel=None, source='')"
+    summary: "#31 Cycle diagram — RETIRED. Use process_chevron + return-arrow described in summary text."
+    replacement: process_chevron
+    retired_reason: "Better expressed as process_chevron + return arrow."
+
+  # ═══════════════════════════════════════════════════════════════
+  # Frameworks
+  # ═══════════════════════════════════════════════════════════════
+  matrix_2x2:
+    pattern: 13
+    family: frameworks
+    status: active
+    signature: "(title, quadrants, axis_labels=None, source='', bottom_bar=None)"
+    summary: "#13 2×2 matrix — four quadrants."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      quadrants:
+        kind: list
+        required: true
+        exact: 4
+        item:
+          kind: tuple
+          arity: 3
+          slots:
+            - {name: label,    type: str, max_chars: 15}
+            - {name: bg_color, role: color}
+            - {name: desc,     type: str, max_chars: 80}
+      axis_labels: {kind: tuple, arity: 2, slots: [{name: x, type: str, max_chars: 20}, {name: y, type: str, max_chars: 20}]}
+      bottom_bar:  {kind: tuple, arity: 2}
+      source:      {kind: scalar, type: str, max_chars: 80}
+
+  swot:
+    pattern: 65
+    family: frameworks
+    status: active
+    signature: "(title, quadrants, source='')"
+    summary: "#65 SWOT analysis — 2×2 colored grid."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      quadrants:
+        kind: dict
+        required: true
+        notes: "Keys: 'strengths' / 'weaknesses' / 'opportunities' / 'threats'. Each maps to list[str]."
+        dict_keys:
+          strengths:     {kind: list, item: {kind: scalar, type: str, max_chars: 50}, max: 4}
+          weaknesses:    {kind: list, item: {kind: scalar, type: str, max_chars: 50}, max: 4}
+          opportunities: {kind: list, item: {kind: scalar, type: str, max_chars: 50}, max: 4}
+          threats:       {kind: list, item: {kind: scalar, type: str, max_chars: 50}, max: 4}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  temple:
+    pattern: 18
+    family: frameworks
+    status: active
+    signature: "(title, roof_text, pillar_names, foundation_text, pillar_colors=None, source='')"
+    summary: "#18 Temple / house framework — roof + pillars + foundation."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title:           {kind: scalar, type: str, required: true, max_chars: 40}
+      roof_text:       {kind: scalar, type: str, required: true, max_chars: 60}
+      pillar_names:    {kind: list, required: true, max: 5, item: {kind: scalar, type: str, max_chars: 18}}
+      foundation_text: {kind: scalar, type: str, required: true, max_chars: 60}
+      pillar_colors:   {kind: list, item: {kind: scalar, role: color}}
+      source:          {kind: scalar, type: str, max_chars: 80}
+
+  pyramid:
+    pattern: 15
+    family: frameworks
+    status: active
+    signature: "(title, levels, source='', bottom_bar=None, detail_rows=None, detail_headers=None)"
+    summary: "#15 Staircase / pyramid evolution — ascending steps."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      levels:
+        kind: list
+        required: true
+        max: 5
+        item:
+          kind: tuple
+          arity: 2
+          slots:
+            - {name: label, type: str, max_chars: 25}
+            - {name: desc,  type: str, max_chars: 60}
+      detail_headers: {kind: list, item: {kind: scalar, type: str, max_chars: 18}}
+      detail_rows:    {kind: list, item: {kind: list, item: {kind: scalar, type: str, max_chars: 40}}}
+      bottom_bar:     {kind: tuple, arity: 2}
+      source:         {kind: scalar, type: str, max_chars: 80}
+
+  stakeholder_map:
+    pattern: 59
+    family: frameworks
+    status: active
+    signature: "(title, quadrants, x_label='Influence →', y_label='Interest ↑', summary=None, source='')"
+    summary: "#59 Stakeholder map — 2×2 with stakeholder lists."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title:     {kind: scalar, type: str, required: true, max_chars: 40}
+      quadrants:
+        kind: dict
+        required: true
+        notes: "Keys: 'high_high' / 'high_low' / 'low_high' / 'low_low'. Each value is list[str]."
+        dict_keys:
+          high_high: {kind: list, item: {kind: scalar, type: str, max_chars: 30}, max: 4}
+          high_low:  {kind: list, item: {kind: scalar, type: str, max_chars: 30}, max: 4}
+          low_high:  {kind: list, item: {kind: scalar, type: str, max_chars: 30}, max: 4}
+          low_low:   {kind: list, item: {kind: scalar, type: str, max_chars: 30}, max: 4}
+      x_label:   {kind: scalar, type: str, default: "Influence →", max_chars: 30}
+      y_label:   {kind: scalar, type: str, default: "Interest ↑",  max_chars: 30}
+      summary:   {kind: scalar, type: str, max_chars: 120}
+      source:    {kind: scalar, type: str, max_chars: 80}
+
+  risk_matrix:
+    pattern: 54
+    family: frameworks
+    status: active
+    signature: "(title, grid_colors, grid_lights, risks, y_labels=None, x_labels=None, notes=None, source='')"
+    summary: "#54 Risk matrix — 3×3 heatmap with risk labels."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title:       {kind: scalar, type: str, required: true, max_chars: 40}
+      grid_colors: {kind: list, required: true, item: {kind: list, item: {kind: scalar, role: color}}, notes: "3×3 nested list of cell colors."}
+      grid_lights: {kind: list, required: true, item: {kind: list, item: {kind: scalar, role: color}}, notes: "3×3 nested list of light/secondary fills."}
+      risks:
+        kind: list
+        required: true
+        max: 12
+        item:
+          kind: dict
+          dict_keys:
+            label: {type: str, max_chars: 25, required: true}
+            row:   {type: int, notes: "0-2 (low/med/high impact)."}
+            col:   {type: int, notes: "0-2 (low/med/high likelihood)."}
+      y_labels:    {kind: list, item: {kind: scalar, type: str, max_chars: 12}}
+      x_labels:    {kind: list, item: {kind: scalar, type: str, max_chars: 12}}
+      notes:       {kind: scalar, type: str, max_chars: 200}
+      source:      {kind: scalar, type: str, max_chars: 80}
+
+  icon_grid:
+    pattern: 63
+    family: frameworks
+    status: active
+    signature: "(title, items, cols=3, source='')"
+    summary: "#63 Icon grid — grid of icon cards."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      items:
+        kind: list
+        required: true
+        max: 9
+        item:
+          kind: tuple
+          arity: 3
+          slots:
+            - {name: icon,  type: str, max_chars: 4, notes: "Single emoji or 2-char code."}
+            - {name: label, type: str, max_chars: 15}
+            - {name: desc,  type: str, max_chars: 50}
+      cols:   {kind: scalar, type: int, default: 3}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  venn:
+    pattern: 17
+    family: frameworks
+    status: retired
+    signature: "(title, circles, overlap_label='', right_text=None, source='')"
+    summary: "#17 Venn diagram — RETIRED."
+    replacement: side_by_side
+    retired_reason: "Visual ambiguity at small sizes."
+
+  # ═══════════════════════════════════════════════════════════════
+  # Charts
+  # ═══════════════════════════════════════════════════════════════
+  grouped_bar:
+    pattern: 37
+    family: charts
+    status: active
+    signature: "(title, categories, series, data, max_val=None, y_ticks=None, summary=None, source='')"
+    summary: "#37 Grouped bar — ≤ 6 categories × ≤ 3 series."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title:      {kind: scalar, type: str, required: true, max_chars: 30}
+      categories: {kind: list, required: true, max: 6, item: {kind: scalar, type: str, max_chars: 8}}
+      series:
+        kind: list
+        required: true
+        max: 3
+        item:
+          kind: tuple
+          arity: 2
+          slots:
+            - {name: name,  type: str, max_chars: 15}
+            - {name: color, role: color}
+      data:       {kind: list, required: true, notes: "data[cat_idx][series_idx]; rectangular.", item: {kind: list, item: {kind: scalar, type: float}}}
+      max_val:    {kind: scalar, type: float}
+      y_ticks:    {kind: list, item: {kind: scalar, type: float}}
+      summary:    {kind: tuple, arity: 2}
+      source:     {kind: scalar, type: str, max_chars: 80}
+
+  stacked_bar:
+    pattern: 38
+    family: charts
+    status: active
+    signature: "(title, periods, series, data, summary=None, source='')"
+    summary: "#38 Stacked (100%) bar — ≤ 6 categories."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title:   {kind: scalar, type: str, required: true, max_chars: 30}
+      periods: {kind: list, required: true, max: 6, item: {kind: scalar, type: str, max_chars: 8}}
+      series:
+        kind: list
+        required: true
+        max: 5
+        item: {kind: tuple, arity: 2, slots: [{name: name, type: str, max_chars: 15}, {name: color, role: color}]}
+      data:    {kind: list, required: true, item: {kind: list, item: {kind: scalar, type: float}}}
+      summary: {kind: tuple, arity: 2}
+      source:  {kind: scalar, type: str, max_chars: 80}
+
+  horizontal_bar:
+    pattern: 39
+    family: charts
+    status: active
+    signature: "(title, items, summary=None, source='')"
+    summary: "#39 Horizontal bar — ≤ 8 items."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 30}
+      items:
+        kind: list
+        required: true
+        max: 8
+        item:
+          kind: tuple
+          arity: 3
+          slots:
+            - {name: label, type: str, max_chars: 20}
+            - {name: value, type: float}
+            - {name: color, role: color}
+      summary: {kind: tuple, arity: 2}
+      source:  {kind: scalar, type: str, max_chars: 80}
+
+  line_chart:
+    pattern: 50
+    family: charts
+    status: active
+    signature: "(title, x_labels, y_labels, values, legend_label='', summary=None, source='')"
+    summary: "#50 Single-line trend."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title:        {kind: scalar, type: str, required: true, max_chars: 30}
+      x_labels:     {kind: list, required: true, max: 12, item: {kind: scalar, type: str, max_chars: 8}}
+      y_labels:     {kind: list, required: true, item: {kind: scalar, type: str, max_chars: 8}}
+      values:       {kind: list, required: true, item: {kind: scalar, type: float}}
+      legend_label: {kind: scalar, type: str, max_chars: 25}
+      summary:      {kind: tuple, arity: 2}
+      source:       {kind: scalar, type: str, max_chars: 80}
+
+  waterfall:
+    pattern: 49
+    family: charts
+    status: active
+    signature: "(title, items, max_val=None, legend_items=None, summary=None, source='')"
+    summary: "#49 Waterfall bridge from start to end."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 30}
+      items:
+        kind: list
+        required: true
+        max: 8
+        item:
+          kind: tuple
+          arity: 3
+          slots:
+            - {name: label, type: str, max_chars: 18}
+            - {name: value, type: float, notes: "Signed; positive bars rise, negative drop, 0 = total bar."}
+            - {name: kind,  type: str, notes: "'start' | 'positive' | 'negative' | 'total'."}
+      max_val:      {kind: scalar, type: float}
+      legend_items: {kind: list, item: {kind: tuple, arity: 2}}
+      summary:      {kind: tuple, arity: 2}
+      source:       {kind: scalar, type: str, max_chars: 80}
+
+  pareto:
+    pattern: 51
+    family: charts
+    status: active
+    signature: "(title, items, max_val=None, summary=None, source='')"
+    summary: "#51 Pareto — descending bars with cumulative %."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 30}
+      items:
+        kind: list
+        required: true
+        max: 8
+        item:
+          kind: tuple
+          arity: 2
+          slots:
+            - {name: label, type: str, max_chars: 18}
+            - {name: value, type: float}
+      max_val: {kind: scalar, type: float}
+      summary: {kind: tuple, arity: 2}
+      source:  {kind: scalar, type: str, max_chars: 80}
+
+  stacked_area:
+    pattern: 70
+    family: charts
+    status: active
+    signature: "(title, years, series_data, max_val=None, summary=None, source='', currency_symbol='$', summary_label='Trend')"
+    summary: "#70 Stacked area approximation via stacked columns."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title:           {kind: scalar, type: str, required: true, max_chars: 30}
+      years:           {kind: list, required: true, item: {kind: scalar, type: str, max_chars: 6}}
+      series_data:
+        kind: list
+        required: true
+        max: 5
+        item: {kind: dict, dict_keys: {name: {type: str, max_chars: 15, required: true}, color: {role: color}, values: {kind: list, item: {kind: scalar, type: float}}}}
+      max_val:         {kind: scalar, type: float}
+      currency_symbol: {kind: scalar, type: str, default: "$", max_chars: 3}
+      summary_label:   {kind: scalar, type: str, default: "Trend", max_chars: 20}
+      summary:         {kind: tuple, arity: 2}
+      source:          {kind: scalar, type: str, max_chars: 80}
+
+  donut:
+    pattern: 48
+    family: charts
+    status: active
+    signature: "(title, segments, center_label='', center_sub='', legend_x=None, summary=None, source='')"
+    summary: "#48 Donut — ≤ 6 segments. BLOCK_ARC native shape."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 30}
+      segments:
+        kind: list
+        required: true
+        max: 6
+        item:
+          kind: tuple
+          arity: 3
+          slots:
+            - {name: pct,   type: float, notes: "0.0-1.0; segments should sum to ~1.0."}
+            - {name: color, role: color}
+            - {name: label, type: str, max_chars: 15}
+      center_label: {kind: scalar, type: str, max_chars: 8}
+      center_sub:   {kind: scalar, type: str, max_chars: 25}
+      legend_x:     {kind: scalar, type: float, notes: "Inches; override legend left edge."}
+      summary:      {kind: tuple, arity: 2}
+      source:       {kind: scalar, type: str, max_chars: 80}
+
+  bubble:
+    pattern: 53
+    family: charts
+    status: active
+    signature: "(title, bubbles, x_label='', y_label='', legend_items=None, summary=None, source='')"
+    summary: "#53 Bubble / scatter on XY plane."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 30}
+      bubbles:
+        kind: list
+        required: true
+        max: 10
+        item:
+          kind: dict
+          dict_keys:
+            label: {type: str, max_chars: 18, required: true}
+            x:     {type: float}
+            y:     {type: float}
+            size:  {type: float}
+            color: {role: color}
+      x_label:      {kind: scalar, type: str, max_chars: 30}
+      y_label:      {kind: scalar, type: str, max_chars: 30}
+      legend_items: {kind: list, item: {kind: tuple, arity: 2}}
+      summary:      {kind: tuple, arity: 2}
+      source:       {kind: scalar, type: str, max_chars: 80}
+
+  multi_bar_panel:
+    pattern: 71
+    family: charts
+    status: active
+    signature: "(title, panels, connectors=None, footnotes=None, source='')"
+    summary: "#71 Multi-bar panel — 2-3 side-by-side bar charts."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      panels:
+        kind: list
+        required: true
+        max: 3
+        item:
+          kind: dict
+          dict_keys:
+            heading: {type: str, max_chars: 25, required: true}
+            categories: {kind: list, item: {kind: scalar, type: str, max_chars: 8}}
+            values:     {kind: list, item: {kind: scalar, type: float}}
+            color:      {role: color}
+      connectors: {kind: list, item: {kind: scalar, type: str, max_chars: 30}, notes: "Optional inter-panel arrow labels."}
+      footnotes:  {kind: list, item: {kind: scalar, type: str, max_chars: 80}}
+      source:     {kind: scalar, type: str, max_chars: 80}
+
+  pie:
+    pattern: 64
+    family: charts
+    status: retired
+    signature: "(title, segments, legend_x=None, summary=None, source='')"
+    summary: "#64 Pie chart — RETIRED. Use donut (with optional center_label)."
+    replacement: donut
+    retired_reason: "donut is strictly better."
+
+  funnel:
+    pattern: 32
+    family: charts
+    status: retired
+    signature: "(title, stages, source='')"
+    summary: "#32 Funnel — RETIRED. Use horizontal_bar with descending values."
+    replacement: horizontal_bar
+    retired_reason: "Superseded by horizontal_bar."
+
+  gauge:
+    pattern: 55
+    family: charts
+    status: retired
+    signature: "(title, score, benchmarks=None, source='')"
+    summary: "#55 Gauge — RETIRED. Use big_number + KPI bullet."
+    replacement: big_number
+    retired_reason: "Superseded by big_number + KPI bullet."
+
+  # ═══════════════════════════════════════════════════════════════
+  # Images
+  # ═══════════════════════════════════════════════════════════════
+  content_right_image:
+    pattern: 40
+    family: images
+    status: active
+    signature: "(title, subtitle, bullets, takeaway='', image_label='Image', source='')"
+    summary: "#40 Content + right image."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title:       {kind: scalar, type: str, required: true, max_chars: 40}
+      subtitle:    {kind: scalar, type: str, max_chars: 60}
+      bullets:     {kind: list, required: true, max: 5, item: {kind: scalar, type: str, max_chars: 80}}
+      takeaway:    {kind: scalar, type: str, max_chars: 100}
+      image_label: {kind: scalar, type: str, max_chars: 30, notes: "Path or label; if a path, it loads; otherwise renders as a placeholder."}
+      source:      {kind: scalar, type: str, max_chars: 80}
+
+  three_images:
+    pattern: 42
+    family: images
+    status: active
+    signature: "(title, items, source='')"
+    summary: "#42 Three images — image+caption columns."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      items:
+        kind: list
+        required: true
+        exact: 3
+        item:
+          kind: tuple
+          arity: 3
+          slots:
+            - {name: image_label, type: str, max_chars: 20}
+            - {name: caption,     type: str, max_chars: 25}
+            - {name: desc,        type: str, max_chars: 80}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  image_four_points:
+    pattern: 43
+    family: images
+    status: active
+    signature: "(title, image_label, points, source='')"
+    summary: "#43 Image + 4 points (center image + 4 corner cards)."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title:       {kind: scalar, type: str, required: true, max_chars: 40}
+      image_label: {kind: scalar, type: str, required: true, max_chars: 30}
+      points:
+        kind: list
+        required: true
+        exact: 4
+        item:
+          kind: tuple
+          arity: 2
+          slots:
+            - {name: title, type: str, max_chars: 18}
+            - {name: desc,  type: str, max_chars: 60}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  full_width_image:
+    pattern: 44
+    family: images
+    status: active
+    signature: "(title, image_label, overlay_text='', attribution='', source='')"
+    summary: "#44 Full-width image with text overlay."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title:        {kind: scalar, type: str, required: true, max_chars: 40}
+      image_label:  {kind: scalar, type: str, required: true, max_chars: 30}
+      overlay_text: {kind: scalar, type: str, max_chars: 100}
+      attribution:  {kind: scalar, type: str, max_chars: 60}
+      source:       {kind: scalar, type: str, max_chars: 80}
+
+  case_study_image:
+    pattern: 45
+    family: images
+    status: active
+    signature: "(title, sections, image_label, kpis=None, source='')"
+    summary: "#45 Case study with image — text + image + KPIs."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title:       {kind: scalar, type: str, required: true, max_chars: 40}
+      sections:
+        kind: list
+        required: true
+        max: 3
+        item:
+          kind: tuple
+          arity: 2
+          slots:
+            - {name: heading, type: str, max_chars: 18}
+            - {name: text,    type: str, max_chars: 120}
+      image_label: {kind: scalar, type: str, required: true, max_chars: 30}
+      kpis:
+        kind: list
+        max: 4
+        item:
+          kind: tuple
+          arity: 2
+          slots:
+            - {name: number, type: str, max_chars: 10}
+            - {name: label,  type: str, max_chars: 25}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  two_col_image_grid:
+    pattern: 68
+    family: images
+    status: active
+    signature: "(title, items, source='')"
+    summary: "#68 Two-column image + text grid (2×2)."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      items:
+        kind: list
+        required: true
+        max: 4
+        item:
+          kind: tuple
+          arity: 3
+          slots:
+            - {name: image_label, type: str, max_chars: 20}
+            - {name: heading,     type: str, max_chars: 25}
+            - {name: desc,        type: str, max_chars: 80}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  goals_illustration:
+    pattern: 47
+    family: images
+    status: active
+    signature: "(title, goals, image_label, source='')"
+    summary: "#47 Goals with illustration — numbered goals + image."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      goals:
+        kind: list
+        required: true
+        max: 5
+        item:
+          kind: tuple
+          arity: 2
+          slots:
+            - {name: title, type: str, max_chars: 25}
+            - {name: desc,  type: str, max_chars: 80}
+      image_label: {kind: scalar, type: str, required: true, max_chars: 30}
+      source:      {kind: scalar, type: str, max_chars: 80}
+
+  quote_bg_image:
+    pattern: 46
+    family: images
+    status: active
+    signature: "(image_label, quote_text, attribution='', source='')"
+    summary: "#46 Quote with background image — image top + quote bottom."
+    requires: []
+    visual: true
+    params:
+      image_label: {kind: scalar, type: str, required: true, max_chars: 30}
+      quote_text:  {kind: scalar, type: str, required: true, max_chars: 200}
+      attribution: {kind: scalar, type: str, max_chars: 60}
+      source:      {kind: scalar, type: str, max_chars: 80}
+
+  numbered_list_panel:
+    pattern: 69
+    family: images
+    status: active
+    signature: "(title, items, panel=None, source='')"
+    summary: "#69 Numbered list + side accent panel."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      items:
+        kind: list
+        required: true
+        max: 5
+        notes: "Engine renders str(i+1) inside the oval. The first slot is the *title*, not a label."
+        item:
+          kind: tuple
+          arity: 2
+          slots:
+            - {name: item_title, type: str, max_chars: 30}
+            - {name: desc,       type: str, max_chars: 100}
+      panel:
+        kind: dict
+        notes: "Optional right-side accent panel."
+        dict_keys:
+          subtitle:   {type: str, max_chars: 40}
+          big_number: {type: str, max_chars: 10}
+          big_label:  {type: str, max_chars: 30}
+          metrics:
+            kind: list
+            max: 4
+            item:
+              kind: tuple
+              arity: 2
+              slots:
+                - {name: label, type: str, max_chars: 25}
+                - {name: value, type: str, max_chars: 12}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  # ═══════════════════════════════════════════════════════════════
+  # Dashboards
+  # ═══════════════════════════════════════════════════════════════
+  dashboard_kpi_chart:
+    pattern: 57
+    family: dashboards
+    status: active
+    signature: "(title, kpi_cards, chart_data=None, summary=None, source='')"
+    summary: "#57 Dashboard — top KPI cards + bottom mini chart."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      kpi_cards:
+        kind: list
+        required: true
+        max: 4
+        item:
+          kind: dict
+          dict_keys:
+            label:  {type: str, max_chars: 25, required: true}
+            value:  {type: str, max_chars: 12}
+            delta:  {type: str, max_chars: 10}
+            color:  {role: color}
+      chart_data:
+        kind: dict
+        notes: "Optional small bar chart."
+        dict_keys:
+          categories: {kind: list, item: {kind: scalar, type: str, max_chars: 8}}
+          values:     {kind: list, item: {kind: scalar, type: float}}
+      summary: {kind: tuple, arity: 2}
+      source:  {kind: scalar, type: str, max_chars: 80}
+
+  dashboard_table_chart:
+    pattern: 58
+    family: dashboards
+    status: active
+    signature: "(title, table_data, chart_data=None, factoids=None, source='')"
+    summary: "#58 Dashboard — left table + right mini chart + facts."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title:      {kind: scalar, type: str, required: true, max_chars: 40}
+      table_data:
+        kind: dict
+        required: true
+        dict_keys:
+          headers: {kind: list, item: {kind: scalar, type: str, max_chars: 15}}
+          rows:    {kind: list, item: {kind: list, item: {kind: scalar, type: str, max_chars: 30}}, max: 6}
+      chart_data:
+        kind: dict
+        dict_keys:
+          categories: {kind: list, item: {kind: scalar, type: str, max_chars: 8}}
+          values:     {kind: list, item: {kind: scalar, type: float}}
+      factoids:   {kind: list, item: {kind: scalar, type: str, max_chars: 60}, max: 3}
+      source:     {kind: scalar, type: str, max_chars: 80}
+
+  # ═══════════════════════════════════════════════════════════════
+  # Team
+  # ═══════════════════════════════════════════════════════════════
+  meet_the_team:
+    pattern: 33
+    family: team
+    status: active
+    signature: "(title, members, source='')"
+    summary: "#33 Meet the team — profile cards in a row."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      members:
+        kind: list
+        required: true
+        max: 4
+        item:
+          kind: dict
+          dict_keys:
+            name:  {type: str, max_chars: 20, required: true}
+            role:  {type: str, max_chars: 25}
+            bio:   {type: str, max_chars: 100}
+            image: {role: image_path}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  case_study:
+    pattern: 34
+    family: team
+    status: active
+    signature: "(title, sections, result_box=None, source='')"
+    summary: "#34 Case study — S/A/R or custom sections."
+    requires: [source, action_title]
+    visual: true   # case_study includes image placeholder by default
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 40}
+      sections:
+        kind: list
+        required: true
+        max: 3
+        item:
+          kind: tuple
+          arity: 2
+          slots:
+            - {name: heading, type: str, max_chars: 15}
+            - {name: text,    type: str, max_chars: 120}
+      result_box:
+        kind: dict
+        dict_keys:
+          headline: {type: str, max_chars: 40}
+          metrics:  {kind: list, item: {kind: tuple, arity: 2}, max: 4}
+      source: {kind: scalar, type: str, max_chars: 80}

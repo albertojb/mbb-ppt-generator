@@ -15,7 +15,7 @@ def test_package_imports():
     )
     from mbb_ppt.qa import PptQA
 
-    assert __version__ == "0.4.2"
+    assert __version__ == "0.5.1"
     assert HEADING_FONT == "DM Sans"
     assert BODY_FONT == "Arial"
     assert ACTION_TITLE_MAX_CHARS == 120
@@ -65,6 +65,64 @@ def test_pptx_is_valid_zip(tmp_project_dir: Path):
             "No slide parts found inside .pptx"
         assert any(n.startswith("ppt/theme/theme") for n in names), \
             "No theme parts found inside .pptx"
+
+
+def test_schema_covers_every_active_layout(project_root: Path):
+    """references/api-schemas.yaml must list every public engine method.
+
+    Regression for v0.5.1 — drift between the engine and the schema
+    silently breaks the S3 gate's structural validation and the generated
+    cheatsheet. Catch it at test time.
+    """
+    import inspect
+    import yaml as _yaml
+    from mbb_ppt import MbbEngine
+
+    schema_path = (project_root /
+                   "plugins/mbb-ppt-generator/skills/mbb-ppt-generator/"
+                   "references/api-schemas.yaml")
+    schema = _yaml.safe_load(schema_path.read_text())
+    schema_layouts = set((schema.get("layouts") or {}).keys())
+
+    engine_methods = {
+        n for n, _ in inspect.getmembers(MbbEngine, predicate=inspect.isfunction)
+        if not n.startswith("_") and n != "save"
+    }
+
+    missing = engine_methods - schema_layouts
+    extra = schema_layouts - engine_methods
+    assert not missing, f"Engine methods missing from api-schemas.yaml: {sorted(missing)}"
+    assert not extra,   f"Schema entries with no engine method: {sorted(extra)}"
+
+    # Every active layout should declare a family. (Retired ones may omit it.)
+    families_missing = [
+        name for name, lay in (schema.get("layouts") or {}).items()
+        if lay.get("status", "active") == "active" and not lay.get("family")
+    ]
+    assert not families_missing, \
+        f"Active schema entries without `family`: {families_missing}"
+
+
+def test_cheatsheet_regenerates_clean(project_root: Path, tmp_path: Path):
+    """`generate_cheatsheet.py` must produce a non-empty file from the current schema.
+
+    Catches regressions where the generator can't parse the schema (bad sort
+    keys, missing required fields, etc.).
+    """
+    import subprocess, sys
+    script = (project_root /
+              "plugins/mbb-ppt-generator/skills/mbb-ppt-generator/"
+              "references/scripts/generate_cheatsheet.py")
+    out = tmp_path / "cheatsheet.md"
+    res = subprocess.run([sys.executable, str(script), str(out)],
+                         capture_output=True, text=True)
+    assert res.returncode == 0, f"generator failed: {res.stderr}"
+    text = out.read_text()
+    assert "ExecEngine — API Cheatsheet" in text
+    # Sanity-check that several known active layouts appear.
+    for layout in ("cover", "executive_summary", "harvey_ball_table",
+                   "value_chain", "numbered_list_panel"):
+        assert f"`{layout}`" in text, f"Cheatsheet missing entry for {layout}"
 
 
 def test_full_cleanup_strips_pstyle(tmp_project_dir: Path):

@@ -41,7 +41,12 @@ import sys
 import os
 import json
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
+
+try:
+    import yaml  # type: ignore
+except ImportError:  # pragma: no cover — yaml is a hard dep of the engine
+    yaml = None  # type: ignore
 
 
 # ── Skip layouts that don't need source / action title ────────────────────
@@ -93,123 +98,155 @@ def _check_oval_label(slide: Dict, idx: int, layout: str,
     return issues
 
 
+# ── Schema loader (api-schemas.yaml is the single source of truth) ───────
+SCHEMA_PATH = Path(__file__).resolve().parent.parent / "api-schemas.yaml"
+_SCHEMA_CACHE: Optional[Dict[str, Any]] = None
+
+
+def _schema() -> Dict[str, Any]:
+    """Load api-schemas.yaml once and cache. Empty dict if unavailable."""
+    global _SCHEMA_CACHE
+    if _SCHEMA_CACHE is not None:
+        return _SCHEMA_CACHE
+    if yaml is None or not SCHEMA_PATH.exists():
+        _SCHEMA_CACHE = {}
+        return _SCHEMA_CACHE
+    try:
+        _SCHEMA_CACHE = yaml.safe_load(SCHEMA_PATH.read_text()) or {}
+    except Exception:
+        _SCHEMA_CACHE = {}
+    return _SCHEMA_CACHE
+
+
+def _layout_spec(layout: str) -> Optional[Dict[str, Any]]:
+    return (_schema().get("layouts") or {}).get(layout)
+
+
+def check_schema_structure(slide: Dict, idx: int) -> List[Dict]:
+    """Schema-driven structural validation (counts, tuple arity, oval labels).
+
+    Walks the layout's params spec and validates:
+      - required scalars/lists are present
+      - lists obey ``max`` / ``exact`` count limits
+      - list items obey their declared tuple arity or list shape
+      - tuple slots flagged ``role: oval_label`` obey ``max_chars`` (the
+        ``label_too_long`` check)
+
+    Char-budget enforcement on non-oval slots is intentionally soft (no
+    issue raised) — those are budgets, not hard limits, and many decks
+    already brush them.
+    """
+    layout = slide.get("layout", "")
+    spec = _layout_spec(layout)
+    if not spec or spec.get("status") == "retired":
+        return []
+
+    params = spec.get("params") or {}
+    issues: List[Dict] = []
+    for pname, pspec in params.items():
+        if pname == "title" or not isinstance(pspec, dict):
+            continue
+        value = slide.get(pname)
+        kind = pspec.get("kind", "scalar")
+        required = pspec.get("required", False)
+
+        if value is None or value == "":
+            if required:
+                issues.append({
+                    "slide_idx": idx, "layout": layout, "check": "required_missing",
+                    "message": f"{layout}.{pname} is required.",
+                })
+            continue
+
+        if kind == "list":
+            if not isinstance(value, (list, tuple)):
+                issues.append({
+                    "slide_idx": idx, "layout": layout, "check": "api_format",
+                    "message": f"{layout}.{pname} must be a list; got {type(value).__name__}.",
+                })
+                continue
+            n = len(value)
+            exact = pspec.get("exact")
+            cap = pspec.get("max")
+            if exact is not None and n != exact:
+                issues.append({
+                    "slide_idx": idx, "layout": layout, "check": "count",
+                    "message": f"{layout}.{pname} requires exactly {exact}; got {n}.",
+                })
+            elif cap is not None and n > cap:
+                issues.append({
+                    "slide_idx": idx, "layout": layout, "check": "count",
+                    "message": f"{layout}.{pname} max {cap}; got {n}.",
+                })
+            issues += _check_list_items(slide, idx, layout, pname,
+                                        value, pspec.get("item") or {})
+
+    return issues
+
+
+def _check_list_items(slide: Dict, idx: int, layout: str, pname: str,
+                      items: List[Any], item_spec: Dict[str, Any]) -> List[Dict]:
+    """Validate each element of a list parameter against its item spec."""
+    issues: List[Dict] = []
+    item_kind = item_spec.get("kind")
+    if item_kind != "tuple":
+        return issues
+    arity = item_spec.get("arity")
+    slots = item_spec.get("slots") or []
+    for i, elem in enumerate(items):
+        if not isinstance(elem, (list, tuple)):
+            issues.append({
+                "slide_idx": idx, "layout": layout, "check": "api_format",
+                "message": f"{layout}.{pname}[{i}] must be a tuple/list; got {type(elem).__name__}.",
+            })
+            continue
+        if arity is not None and len(elem) != arity:
+            issues.append({
+                "slide_idx": idx, "layout": layout, "check": "api_format",
+                "message": (f"{layout}.{pname}[{i}] must be a {arity}-tuple; "
+                            f"got {len(elem)} elements."),
+            })
+            continue
+        # Per-slot checks: only enforce max_chars on oval_label slots.
+        for slot_idx, slot in enumerate(slots):
+            if slot_idx >= len(elem):
+                break
+            if slot.get("role") != "oval_label":
+                continue
+            slot_max = slot.get("max_chars")
+            if not slot_max:
+                continue
+            slot_val = elem[slot_idx]
+            try:
+                slot_str = str(slot_val)
+            except Exception:
+                continue
+            if len(slot_str) > slot_max:
+                issues.append({
+                    "slide_idx": idx, "layout": layout, "check": "label_too_long",
+                    "message": (
+                        f"{layout}.{pname}[{i}] slot[{slot_idx}] "
+                        f"({slot.get('name','label')}) is {slot_str!r} ({len(slot_str)} chars > "
+                        f"{slot_max}); rendered inside a 0.45\" oval and will visually clip. "
+                        "Use a number, letter, or 2–3-char code; move long text into the title slot."
+                    ),
+                })
+    return issues
+
+
 # ── Per-layout checkers ───────────────────────────────────────────────────
 
-def check_four_column(slide: Dict, idx: int) -> List[Dict]:
-    """four_column items must be 3-tuples (num, col_title, desc); max 4 columns."""
-    issues = []
-    items = slide.get("items", [])
-    if len(items) > 4:
-        issues.append({
-            "slide_idx": idx, "layout": "four_column", "check": "count",
-            "message": f"four_column max 4 columns; got {len(items)}. Fix: split or merge.",
-        })
-    for i, item in enumerate(items):
-        if not isinstance(item, (list, tuple)) or len(item) != 3:
-            got = len(item) if isinstance(item, (list, tuple)) else "non-list"
-            issues.append({
-                "slide_idx": idx, "layout": "four_column", "check": "api_format",
-                "message": (f"four_column items[{i}] must be a 3-tuple (num, col_title, desc); "
-                            f"got {got} elements. Fix: prepend a number, e.g. ('1', 'Title', 'Description')."),
-            })
-    issues += _check_oval_label(slide, idx, "four_column", "items")
-    return issues
+def check_process_chevron_quirks(slide: Dict, idx: int) -> List[Dict]:
+    """process_chevron-specific rules NOT covered by the schema:
+    - step label cannot contain ``\\n`` (overflows the oval)
+    - step desc ≤ 50 chars (geometry)
 
-
-def check_executive_summary(slide: Dict, idx: int) -> List[Dict]:
-    """executive_summary items must be 3-tuples (num, item_title, desc); max 4 items."""
-    issues = []
-    items = slide.get("items", [])
-    if len(items) > 4:
-        issues.append({
-            "slide_idx": idx, "layout": "executive_summary", "check": "count",
-            "message": f"executive_summary max 4 items; got {len(items)}.",
-        })
-    for i, item in enumerate(items):
-        if not isinstance(item, (list, tuple)) or len(item) != 3:
-            got = len(item) if isinstance(item, (list, tuple)) else "non-list"
-            issues.append({
-                "slide_idx": idx, "layout": "executive_summary", "check": "api_format",
-                "message": (f"executive_summary items[{i}] must be a 3-tuple "
-                            f"(num, item_title, desc); got {got}. Fix: ('1', 'Action', 'Why').") ,
-            })
-    issues += _check_oval_label(slide, idx, "executive_summary", "items")
-    return issues
-
-
-def check_vertical_steps(slide: Dict, idx: int) -> List[Dict]:
-    """vertical_steps: 3-tuples (label, title, desc). Label goes in an oval."""
-    issues = []
+    Count and tuple-arity are handled by check_schema_structure.
+    """
+    issues: List[Dict] = []
     steps = slide.get("steps", [])
     for i, step in enumerate(steps):
         if not isinstance(step, (list, tuple)) or len(step) < 3:
-            issues.append({
-                "slide_idx": idx, "layout": "vertical_steps", "check": "api_format",
-                "message": f"vertical_steps steps[{i}] must be a 3-tuple (label, title, desc).",
-            })
-    issues += _check_oval_label(slide, idx, "vertical_steps", "steps")
-    return issues
-
-
-def check_value_chain(slide: Dict, idx: int) -> List[Dict]:
-    """value_chain stages = (stage_title, desc, accent_color).
-
-    The oval label is rendered by the engine as ``str(i + 1)`` (engine.py
-    value_chain ~line 1673); user content never enters the oval, so the
-    3-char oval-budget rule does not apply to ``stages[i][0]``.
-    """
-    return []
-
-
-def check_numbered_list_panel(slide: Dict, idx: int) -> List[Dict]:
-    """numbered_list_panel items = (item_title, desc).
-
-    Engine renders ``str(i + 1)`` in the oval (engine.py ~line 2945); the
-    user's ``items[i][0]`` is the title, not the oval label.
-    """
-    return []
-
-
-def check_toc(slide: Dict, idx: int) -> List[Dict]:
-    """toc: items are (num, title, desc); num goes in oval."""
-    return _check_oval_label(slide, idx, "toc", "items")
-
-
-def check_matrix_2x2(slide: Dict, idx: int) -> List[Dict]:
-    """matrix_2x2 quadrants must be 3-tuples (label, bg_color, desc); exactly 4."""
-    issues = []
-    quadrants = slide.get("quadrants", [])
-    if len(quadrants) != 4:
-        issues.append({
-            "slide_idx": idx, "layout": "matrix_2x2", "check": "count",
-            "message": f"matrix_2x2 requires exactly 4 quadrants; got {len(quadrants)}.",
-        })
-    for i, q in enumerate(quadrants):
-        if not isinstance(q, (list, tuple)) or len(q) != 3:
-            issues.append({
-                "slide_idx": idx, "layout": "matrix_2x2", "check": "api_format",
-                "message": (f"matrix_2x2 quadrants[{i}] must be a 3-tuple "
-                            f"(label, bg_color, desc); got {q!r}."),
-            })
-    return issues
-
-
-def check_process_chevron(slide: Dict, idx: int) -> List[Dict]:
-    """process_chevron: ≤ 5 steps, label has no \\n, desc ≤ 50 chars."""
-    issues = []
-    steps = slide.get("steps", [])
-    if len(steps) > 5:
-        issues.append({
-            "slide_idx": idx, "layout": "process_chevron", "check": "count",
-            "message": (f"process_chevron max 5 steps; got {len(steps)}. "
-                        "Fix: merge or split across slides."),
-        })
-    for i, step in enumerate(steps):
-        if not isinstance(step, (list, tuple)) or len(step) < 3:
-            issues.append({
-                "slide_idx": idx, "layout": "process_chevron", "check": "api_format",
-                "message": f"process_chevron steps[{i}] must be a 3-tuple (label, title, desc).",
-            })
             continue
         label, _title, desc = step[0], step[1], step[2]
         if "\n" in str(label):
@@ -224,38 +261,6 @@ def check_process_chevron(slide: Dict, idx: int) -> List[Dict]:
                 "message": (f"process_chevron steps[{i}] desc {len(str(desc))} chars > 50. "
                             f"Preview: {str(desc)[:40]!r}"),
             })
-    issues += _check_oval_label(slide, idx, "process_chevron", "steps")
-    return issues
-
-
-def check_donut(slide: Dict, idx: int) -> List[Dict]:
-    """donut max 6 segments."""
-    issues = []
-    segments = slide.get("segments", [])
-    if len(segments) > 6:
-        issues.append({
-            "slide_idx": idx, "layout": "donut", "check": "count",
-            "message": (f"donut max 6 segments; got {len(segments)}. "
-                        "Fix: keep top-5 and merge the rest into 'Other'."),
-        })
-    return issues
-
-
-def check_grouped_bar(slide: Dict, idx: int) -> List[Dict]:
-    """grouped_bar: ≤ 6 categories × ≤ 3 series."""
-    issues = []
-    cats = slide.get("categories", [])
-    series = slide.get("series", [])
-    if len(cats) > 6:
-        issues.append({
-            "slide_idx": idx, "layout": "grouped_bar", "check": "count",
-            "message": f"grouped_bar max 6 categories; got {len(cats)}.",
-        })
-    if len(series) > 3:
-        issues.append({
-            "slide_idx": idx, "layout": "grouped_bar", "check": "count",
-            "message": f"grouped_bar max 3 series; got {len(series)}.",
-        })
     return issues
 
 
@@ -452,18 +457,12 @@ def check_visual_density_global(slides: List[Dict]) -> List[Dict]:
 
 # ── Routing ───────────────────────────────────────────────────────────────
 
+# Layout-specific *quirks* that cannot be expressed in the schema. Structural
+# checks (count, tuple arity, oval-label budget) come from check_schema_structure
+# and run automatically for every slide.
 LAYOUT_CHECKERS = {
-    "four_column":         [check_four_column,         check_source, check_action_title],
-    "executive_summary":   [check_executive_summary,   check_source, check_action_title],
-    "matrix_2x2":          [check_matrix_2x2,          check_source, check_action_title],
-    "process_chevron":     [check_process_chevron,     check_source, check_action_title],
-    "donut":               [check_donut,               check_source, check_action_title],
-    "grouped_bar":         [check_grouped_bar,         check_source, check_action_title],
-    "timeline":            [check_timeline_last_label, check_source, check_action_title],
-    "vertical_steps":      [check_vertical_steps,      check_source, check_action_title],
-    "value_chain":         [check_value_chain,         check_source, check_action_title],
-    "numbered_list_panel": [check_numbered_list_panel, check_source, check_action_title],
-    "toc":                 [check_toc],  # toc skips source/action_title (boilerplate)
+    "process_chevron":     [check_process_chevron_quirks, check_source, check_action_title],
+    "timeline":            [check_timeline_last_label,    check_source, check_action_title],
 }
 DEFAULT_CHECKERS = [check_source, check_action_title]
 
@@ -497,6 +496,9 @@ def run_gate(content_json_path: str, project_dir: str) -> Dict[str, Any]:
         layout = slide.get("layout", "unknown")
         checkers = LAYOUT_CHECKERS.get(layout, DEFAULT_CHECKERS)
         slide_issues: List[Dict] = []
+        # Schema-driven structural check runs for every slide before the
+        # layout-specific quirks (process_chevron \n, timeline last-label, …).
+        slide_issues.extend(check_schema_structure(slide, idx))
         for fn in checkers:
             slide_issues.extend(fn(slide, idx))
         if slide_issues:

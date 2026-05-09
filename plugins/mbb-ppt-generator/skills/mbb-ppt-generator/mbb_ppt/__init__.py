@@ -22,4 +22,4 @@ from .review import SlideReviewer, AutoFixPipeline, review, autofix
 
 ExecEngine = MbbEngine
 
-__version__ = '0.4.2'
+__version__ = '0.5.1'

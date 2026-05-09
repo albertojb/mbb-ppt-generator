@@ -77,7 +77,7 @@ description: >-
 
    This pattern works on Mac, Windows, and Linux for plugin-installed skills, Cowork manifest installs, Claude Code direct installs, and dev/symlinked layouts. No hardcoded user paths.
 
-7. **Hard limits** from `references/layout-matrix.yaml` are authoritative. Never exceed them in `content.json` — the S3 gate enforces this.
+7. **Hard limits** from `references/api-schemas.yaml` are authoritative. Never exceed them in `content.json` — the S3 gate enforces this.
 8. **Layout reference docs are lazy-loaded.** Never bulk-load `references/layouts/*.md` at the start of S4. Read each layout's reference inline at the moment you are preparing that specific render call, and only that file. The 12 layout files together are ~10K tokens; loading them all when the deck uses three is wasted context.
 9. **No `cover` or `closing` slide by default.** Skip both unless the operator explicitly requests one. Cover slides waste a minute of audience attention; closing/"thank you" slides waste a minute the audience could spend on the recommendation. If unsure, ask: *"Do you want a cover slide?"* Default answer is no.
 
@@ -183,7 +183,7 @@ The skill is organised so each stage loads only what it needs. The full router i
 | Stage | Required reading | Optional reading |
 |---|---|---|
 | S1 — Brief | `references/team/brand-guide.md` | — |
-| S2 — Structure | `references/framework/engine-api.md`, `references/layout-matrix.yaml` | per-layout files in `references/layouts/` |
+| S2 — Structure | `references/framework/engine-api.md`, `references/api-schemas.yaml` | per-layout files in `references/layouts/` |
 | S3 — Content | `references/framework/guard-rails.md`, every file in `experiences/` | `references/framework/planning-guide.md` for complex structures |
 | S4 — Render + QA | only the `references/layouts/*.md` files for the layouts actually used | `references/team/presentation-convention.md` |
 | S5 — Deliver | none | — |
@@ -222,7 +222,7 @@ Every project lives under a working directory named `ppt-project-{slug}/`. Each 
 
 ### S2 — Structure
 
-**Read:** `references/api-cheatsheet.md`, `references/layout-matrix.yaml`, `references/framework/planning-guide.md` (sections 3 *Layout selection by task* and 5 *Layout diversity*).
+**Read:** `references/api-cheatsheet.md`, `references/api-schemas.yaml`, `references/framework/planning-guide.md` (sections 3 *Layout selection by task* and 5 *Layout diversity*).
 
 **Visual-layout rule (mechanically enforced at S3):** for any deck with ≥ 6 content slides (excluding cover/TOC/section_divider/closing), pick at least 2 chart, diagram, image, or process-flow layouts. The S3 gate fails decks that are wall-to-wall text columns. Match the layout to the content shape:
 
@@ -238,7 +238,7 @@ Every project lives under a working directory named `ppt-project-{slug}/`. Each 
 1. Compute slide count from duration. **Do not include `cover` or `closing` slides by default — every minute spent on them is a minute not spent on argument slides.** Add a `cover` only if the user explicitly asks for one. Never auto-add a `closing` / "thank you" slide. The first slide is normally an `executive_summary` carrying the recommendation.
 2. Choose a `layout` for each slide from the engine catalog.
 3. Write a one-sentence `key_point` per slide — a complete clause, not a label.
-4. Verify each layout against `layout-matrix.yaml` capacity limits.
+4. Verify each layout against `api-schemas.yaml` capacity limits.
 
 **Produce:** `ppt-project-{slug}/outline.json`
 
@@ -256,7 +256,7 @@ Every project lives under a working directory named `ppt-project-{slug}/`. Each 
 
 **Gate S2 (self-check):**
 - Slide count ≤ `duration_minutes × 1.2`.
-- Every `layout` exists in `layout-matrix.yaml`.
+- Every `layout` exists in `api-schemas.yaml`.
 - Every action title is a complete clause (length > 10, contains a verb).
 - At most one `two_column_text` slide globally.
 - No `cover` or `closing` slides unless the operator explicitly requested one (Rule 9).
@@ -268,7 +268,7 @@ Every project lives under a working directory named `ppt-project-{slug}/`. Each 
 **Tasks:**
 1. Fill in concrete copy, numbers, and chart data per slide.
 2. Add a `source` line to every content slide.
-3. Respect the `char_budget` for each field per `layout-matrix.yaml`.
+3. Respect the `char_budget` for each field per `api-schemas.yaml`.
 
 **Produce:** `ppt-project-{slug}/content.json`
 
@@ -348,7 +348,7 @@ For ≤ 5-slide decks: read the brief, write `content.json` directly, render, ga
 
 ## 6. Layout capacity — hard limits
 
-These are derived from `references/layout-matrix.yaml`. The S3 gate enforces them.
+These are derived from `references/api-schemas.yaml`. The S3 gate enforces them.
 
 | Layout | Max items | Title chars | Body chars | Notes |
 |---|---|---|---|---|
@@ -366,7 +366,7 @@ These are derived from `references/layout-matrix.yaml`. The S3 gate enforces the
 | `horizontal_bar` | 8 items | 30 | label 20 | — |
 | `two_column_text` | 2 × 5 bullets | 40 | bullet 60 | **At most one slide of this type globally** |
 
-For the full matrix, see [`references/layout-matrix.yaml`](./references/layout-matrix.yaml).
+For the full matrix, see [`references/api-schemas.yaml`](./references/api-schemas.yaml).
 
 ### Retired layouts
 
@@ -590,6 +590,6 @@ This is the operator entry point. Detailed maintenance notes — common-mistakes
 When updating the skill:
 
 - Treat `experiences/` as append-only — never delete entries; mark superseded ones with `Superseded by NNN`.
-- When adding a layout limit, update `references/layout-matrix.yaml` AND `gate_check_content.py` together.
+- When adding a layout limit, update `references/api-schemas.yaml` AND `gate_check_content.py` together.
 - When adding a render check, update `gate_check_render.py` AND § 9 (Production guard rails) together.
 - Keep credit upstream — this skill is built on Likaku's work and that attribution stays.
