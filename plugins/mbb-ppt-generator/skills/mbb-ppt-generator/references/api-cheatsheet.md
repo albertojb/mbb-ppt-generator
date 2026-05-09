@@ -4,13 +4,14 @@
 > Do not hand-edit this file — edit the schema and re-run the generator.
 > Convention: `eng = ExecEngine(total_slides=N)` then call methods one per slide. `eng.save(outpath)` finalizes.
 
-_Schema version: 1. 62 active layouts, 5 retired._
+_Schema version: 1. 63 active layouts, 5 retired._
 
 ## Structure
 
 | Method | Signature | One-liner | Param shapes |
 |---|---|---|---|
-| `cover` | `(title, subtitle='', author='', date='', cover_image=None)` | #1 Cover slide — title, subtitle, author, date, accent line. | subtitle=str(60), author=str(30), date=str(30), cover_image=path, … |
+| `cover` | `(title, subtitle='', author='', date='', cover_image=None)` | #1 Cover slide — navy left-block + right text pane (36pt title, fits ~50 chars/line). | subtitle=str(80), author=str(30), date=str(30), cover_image=path, … |
+| `cover_centered` | `(title, subtitle='', author='', date='', cover_image=None)` | #1b Cover slide (legacy centered) — 44pt title, ~28 chars/line. Use for full-bleed image covers. | subtitle=str(60), author=str(30), date=str(30), cover_image=path, … |
 | `closing` | `(title, message='', source_text='')` | #36 Closing / thank-you slide. | message=str(60), source_text=str(80) |
 | `section_divider` | `(section_label, title, subtitle='')` | #5 Section divider — primary left bar, large title. | section_label=str(8)*, subtitle=str(80) |
 | `toc` | `(title='Table of Contents', items=None, source='')` | #6 Table of contents — numbered items with descriptions. | items=list[tuple3]≤6, source=str(80) |

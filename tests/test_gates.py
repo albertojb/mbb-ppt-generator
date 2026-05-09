@@ -544,6 +544,80 @@ def test_render_gate_passes_4_option_harvey_ball_table(project_root: Path,
         f"4-option harvey_ball_table should not overflow; got: {overflow_items}"
 
 
+def test_render_gate_passes_chart_with_long_action_title(project_root: Path,
+                                                          tmp_project_dir: Path):
+    """Long action titles on grouped_bar / stacked_bar do not overflow.
+
+    Regression for v0.5.2: the engine previously re-rendered the action title
+    at 13pt in a 5"×0.3" box, which overflowed for any title >38 chars.
+    """
+    from mbb_ppt import MbbEngine
+    from mbb_ppt.constants import NAVY, ACCENT_BLUE
+
+    eng = MbbEngine(total_slides=3)
+    eng.cover(title="Chart subtitle regression")
+    long_title = ("Margin pressure is concentrated in two product lines "
+                  "across all four regions — 110 chars total here today")
+    eng.grouped_bar(
+        title=long_title,
+        categories=["Q1", "Q2", "Q3", "Q4"],
+        series=[("A", NAVY), ("B", ACCENT_BLUE)],
+        data=[[100, 80], [120, 95], [140, 110], [160, 125]],
+        source="Source: test",
+    )
+    eng.stacked_bar(
+        title=long_title,
+        periods=["FY24", "FY25", "FY26"],
+        series=[("Premium", NAVY), ("Standard", ACCENT_BLUE)],
+        data=[[60, 40], [55, 45], [50, 50]],
+        source="Source: test",
+    )
+
+    out = tmp_project_dir / "deck.pptx"
+    eng.save(str(out))
+    result = _run_render_gate(project_root, out, tmp_project_dir)
+    overflow_items = [
+        item for item in result.get("fail_items", [])
+        if "overflow" in str(item.get("check", "")).lower()
+    ]
+    assert not overflow_items, \
+        f"Charts should not overflow with long titles; got: {overflow_items}"
+
+
+def test_cover_renders_long_title_in_left_block(project_root: Path,
+                                                  tmp_project_dir: Path):
+    """v0.5.2 left-block cover fits ~50-char titles without overflow."""
+    from mbb_ppt import MbbEngine
+
+    eng = MbbEngine(total_slides=1)
+    # 45 chars — the post-mortem's example.
+    eng.cover(
+        title="Commercial renewal: proposed offer for ACME",
+        subtitle="Recommended structure and pricing",
+        author="Working team",
+        date="May 2026",
+    )
+    out = tmp_project_dir / "deck.pptx"
+    eng.save(str(out))
+    result = _run_render_gate(project_root, out, tmp_project_dir)
+    overflow_items = [
+        item for item in result.get("fail_items", [])
+        if "overflow" in str(item.get("check", "")).lower()
+    ]
+    assert not overflow_items, \
+        f"45-char cover title should not overflow the left-block; got: {overflow_items}"
+
+
+def test_cover_centered_still_callable(tmp_project_dir):
+    """cover_centered() preserves the v0.5.1 layout for back-compat."""
+    from mbb_ppt import MbbEngine
+    eng = MbbEngine(total_slides=1)
+    eng.cover_centered(title="Legacy cover", subtitle="Centered layout")
+    out = tmp_project_dir / "deck.pptx"
+    eng.save(str(out))
+    assert out.exists() and out.stat().st_size > 5_000
+
+
 def test_render_gate_passes_clean_deck(project_root: Path,
                                         tmp_project_dir: Path):
     """A clean rendered deck passes the S4 render gate."""

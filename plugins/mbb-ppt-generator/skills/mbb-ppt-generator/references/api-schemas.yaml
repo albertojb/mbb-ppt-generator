@@ -110,15 +110,30 @@ layouts:
     family: structure
     status: active
     signature: "(title, subtitle='', author='', date='', cover_image=None)"
-    summary: "#1 Cover slide — title, subtitle, author, date, accent line."
+    summary: "#1 Cover slide — navy left-block + right text pane (36pt title, fits ~50 chars/line)."
     requires: []
     visual: false
     params:
-      title:        {kind: scalar, type: str, required: true, max_chars: 28, notes: "Title supports '\\n'. Geometry fits ~28 chars per line at 44pt."}
+      title:        {kind: scalar, type: str, required: true, max_chars: 50, notes: "Title supports '\\n'. Right-pane geometry fits ~50 chars per line at 36pt."}
+      subtitle:     {kind: scalar, type: str, max_chars: 80}
+      author:       {kind: scalar, type: str, max_chars: 30}
+      date:         {kind: scalar, type: str, max_chars: 30}
+      cover_image:  {kind: scalar, type: path, role: image_path, notes: "If provided, falls back to cover_centered() so the image acts as a full-bleed background."}
+
+  cover_centered:
+    pattern: "1b"
+    family: structure
+    status: active
+    signature: "(title, subtitle='', author='', date='', cover_image=None)"
+    summary: "#1b Cover slide (legacy centered) — 44pt title, ~28 chars/line. Use for full-bleed image covers."
+    requires: []
+    visual: false
+    params:
+      title:        {kind: scalar, type: str, required: true, max_chars: 28, notes: "44pt title; fits ~28 effective chars before wrapping. Use '\\n' for explicit two-line layout."}
       subtitle:     {kind: scalar, type: str, max_chars: 60}
       author:       {kind: scalar, type: str, max_chars: 30}
       date:         {kind: scalar, type: str, max_chars: 30}
-      cover_image:  {kind: scalar, type: path, role: image_path, notes: "Path to a background image; falls back to a clean fill when omitted."}
+      cover_image:  {kind: scalar, type: path, role: image_path, notes: "Path to a local image; rendered as full-bleed background."}
 
   toc:
     pattern: 6

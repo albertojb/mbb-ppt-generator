@@ -51,7 +51,7 @@ except ImportError:  # pragma: no cover — yaml is a hard dep of the engine
 
 # ── Skip layouts that don't need source / action title ────────────────────
 LAYOUTS_WITHOUT_SOURCE = {
-    "cover", "toc", "section_divider", "closing", "appendix_title",
+    "cover", "cover_centered", "toc", "section_divider", "closing", "appendix_title",
 }
 LAYOUTS_WITHOUT_ACTION_TITLE = LAYOUTS_WITHOUT_SOURCE
 
@@ -402,7 +402,7 @@ VISUAL_LAYOUTS = {
 }
 
 # Boilerplate slides excluded from the content-slide count for density purposes.
-BOILERPLATE_LAYOUTS = {"cover", "toc", "section_divider", "closing", "appendix_title"}
+BOILERPLATE_LAYOUTS = {"cover", "cover_centered", "toc", "section_divider", "closing", "appendix_title"}
 
 VISUAL_DENSITY_THRESHOLD_SLIDES = 6   # ≥ 6 content slides triggers the rule
 

@@ -6,6 +6,32 @@ This project is an Apache 2.0-licensed adaptation of [`Mck-ppt-design-skill`](ht
 
 ---
 
+## [0.5.2] — 2026-05-09 (cover redesign + chart-subtitle fix)
+
+Layout-quality work continues. v0.5.2 ships the two engine-side fixes the post-mortem flagged: charts re-rendered the action title at 13pt below it (overflowed for any title >38 chars), and the cover only fit ~28 chars at 44pt. Both are gone.
+
+### Added
+
+- **`cover_centered()`** — preserves the v0.5.1 cover layout (44pt centered title, full-bleed image option). Use this when you need an image-overlay cover; otherwise prefer `cover()`.
+
+### Changed
+
+- **`cover()` redesigned** — navy left-block (4.5"×full height) + right text pane (~7.6" wide) at 36pt. Fits ~50 effective chars per title line. Schema's `cover.title` budget bumped from 28 → 50. Passing `cover_image=...` transparently delegates to `cover_centered()` so existing callers using image-overlays do not break.
+- **`grouped_bar` and `stacked_bar`** no longer re-render the action title at 13pt under the legend. The chart-subtitle box was the documented overflow trigger for any title >38 chars (post-mortem § 3.5). The legend stays.
+
+### Schema
+
+- Added `cover_centered` entry. Updated `cover` summary and `cover.title.max_chars` to 50.
+
+### Tests
+
+- 33/33 passing (was 30/30). New regression tests:
+  - Long action title on grouped_bar / stacked_bar passes the render gate.
+  - 45-char cover title renders without overflow.
+  - `cover_centered()` is callable and saves a non-empty .pptx.
+
+---
+
 ## [0.5.1] — 2026-05-09 (api-schemas.yaml as single source of truth)
 
 Per the post-mortem, the matrix + cheatsheet + gate were three sources for the same constraints, drifting in different directions. v0.5.1 collapses them into one schema. A single edit now updates structural validation, the operator-facing cheatsheet, and the documentation.

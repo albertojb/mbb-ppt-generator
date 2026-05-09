@@ -60,13 +60,69 @@ class MbbEngine:
     # ═══════════════════════════════════════════
 
     def cover(self, title, subtitle='', author='', date='', cover_image=None):
-        """#1 Cover Slide — title, subtitle, author, date, accent line.
+        """#1 Cover slide — navy left-block + right text pane.
+
+        The left-block design fits ~50 effective chars per title line at
+        36pt (vs ~28 for the legacy centered design). Pass ``cover_image``
+        to fall back to ``cover_centered()`` — full-bleed images conflict
+        with the left-block.
 
         Parameters
         ----------
         cover_image : str or None
-            - None : do not insert an image (default; text-only layout)
-            - path : path to a local image file (full-bleed background)
+            - None : standard left-block layout (default)
+            - path : delegate to ``cover_centered()`` so the image can
+              act as a full-bleed background
+        """
+        # Image path → centered cover handles the background.
+        if cover_image and os.path.isfile(cover_image):
+            return self.cover_centered(title, subtitle, author, date, cover_image)
+
+        s = self._ns()
+
+        # ── Navy left-block: 4.5" × full height ─────────────
+        block_w = Inches(4.5)
+        add_rect(s, 0, 0, block_w, SH, NAVY)
+
+        # Right text pane
+        text_left = block_w + Inches(0.6)
+        text_width = SW - text_left - Inches(0.6)  # ~7.6"
+
+        # ── Title (36pt, ~50 chars per line) ────────────────
+        n_lines = title.count('\n') + 1 if isinstance(title, str) else len(title)
+        title_h = Inches(0.7 + 0.55 * max(n_lines - 1, 0))
+        title_y = Inches(2.4)
+        add_text(s, text_left, title_y, text_width, title_h,
+                 title, font_size=Pt(36), font_name=FONT_HEADER,
+                 font_color=NAVY, bold=True)
+
+        # Accent rule under the title
+        rule_y = title_y + title_h + Inches(0.15)
+        add_hline(s, text_left, rule_y, Inches(2.2), NAVY, Pt(2.5))
+
+        # ── Subtitle ────────────────────────────────────────
+        sub_y = rule_y + Inches(0.25)
+        if subtitle:
+            add_text(s, text_left, sub_y, text_width, Inches(0.55),
+                     subtitle, font_size=Pt(18), font_color=DARK_GRAY)
+
+        # ── Author + date pinned near the bottom ────────────
+        meta_y = SH - Inches(1.1)
+        if author:
+            add_text(s, text_left, meta_y, text_width, Inches(0.34),
+                     author, font_size=BODY_SIZE, font_color=MED_GRAY)
+        if date:
+            add_text(s, text_left, meta_y + Inches(0.4), text_width, Inches(0.34),
+                     date, font_size=BODY_SIZE, font_color=MED_GRAY)
+
+        return s
+
+    def cover_centered(self, title, subtitle='', author='', date='', cover_image=None):
+        """#1b Cover slide — legacy centered layout (11" wide title block).
+
+        Use this when you want a full-bleed image background with text
+        overlay, or a centered-headline aesthetic. Title fits ~28 effective
+        chars at 44pt before wrapping. For most decks prefer ``cover()``.
         """
         s = self._ns()
 
@@ -1707,9 +1763,9 @@ class MbbEngine:
         cr = Inches(11.5); cww = cr - cl
         if max_val is None:
             max_val = max(max(row) for row in data) * 1.15
-        # Chart sub-title + legend
-        add_text(s, cl, Inches(1.2), Inches(5.0), Inches(0.3),
-                 title, font_size=Pt(13), font_color=DARK_GRAY, bold=True)
+        # Legend only — action title already rendered at the top by
+        # add_action_title(). The earlier duplicate 13pt sub-title in a
+        # 5"×0.3" box overflowed for any title >38 chars (post-mortem § 3.5).
         for ci, (sname, scolor) in enumerate(series):
             lx = LM + Inches(8.0) + Inches(1.8) * ci
             add_rect(s, lx, Inches(1.25), Inches(0.2), Inches(0.2), scolor)
@@ -1771,10 +1827,10 @@ class MbbEngine:
         cl = LM + Inches(0.8); ct = Inches(2.0); ch = cb - ct
         cr = Inches(11.5); cww = cr - cl; np_ = len(periods)
         bw = Inches(1.2); sbs = cww / np_
-        # Sub-title + legend (adaptive spacing to prevent overflow)
+        # Legend only — action title already rendered at the top. The earlier
+        # duplicate 13pt sub-title in a 5"×0.3" box overflowed for any title
+        # >38 chars (post-mortem § 3.5).
         legend_y = Inches(1.55)
-        add_text(s, cl, Inches(1.2), Inches(5.0), Inches(0.3),
-                 title, font_size=Pt(13), font_color=DARK_GRAY, bold=True)
         n_series = len(series)
         legend_total_w = cr - LM - Inches(5.0)
         legend_spacing = legend_total_w / max(n_series, 1)
