@@ -6,7 +6,9 @@
 >
 > **Project root.** `/home/ajb/Projects/MBB-PPT-2/`
 > **Public repo.** https://github.com/albertojb/mbb-ppt-generator
-> **Latest tag.** `v0.5.4` on commit `b6d4870`. All v0.5.x milestones (0.5.0 → 0.5.4) shipped and pushed. Tests at 37/37 passing.
+> **Latest tag.** `v0.5.4` on commit `b6d4870`. All v0.5.x milestones (0.5.0 → 0.5.4) shipped and pushed. Tests at 37/37 passing. CI green on `main`.
+>
+> **➡️ Next phase:** see [`HANDOFF.md`](./HANDOFF.md) — new layouts, layout-usage variability/consistency, and a speed/token/contradiction audit. That brief supersedes the v0.6.0 plan below as the immediate priority.
 
 ## v0.5.x summary (closed)
 
