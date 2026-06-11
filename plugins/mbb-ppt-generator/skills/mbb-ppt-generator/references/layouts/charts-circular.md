@@ -86,7 +86,7 @@ eng.donut(
 
 ### Cross-references
 
-- Capacity: `donut` row in [`../layout-matrix.yaml`](../layout-matrix.yaml).
+- Capacity: `donut` row in [`../api-schemas.yaml`](../api-schemas.yaml).
 - Why circular charts use `BLOCK_ARC`: § "BLOCK_ARC mechanism" below.
 - Past donut sizing issues: [`../../experiences/chart-limits.md`](../../experiences/chart-limits.md).
 
@@ -176,5 +176,5 @@ Operator-level code rarely calls `add_block_arc()` directly — `donut` and the 
 ## Cross-references
 
 - **Method index:** [`../framework/engine-api.md`](../framework/engine-api.md).
-- **Capacity matrix:** [`../layout-matrix.yaml`](../layout-matrix.yaml).
+- **Capacity matrix:** [`../api-schemas.yaml`](../api-schemas.yaml).
 - **Past chart-capacity issues:** [`../../experiences/chart-limits.md`](../../experiences/chart-limits.md).

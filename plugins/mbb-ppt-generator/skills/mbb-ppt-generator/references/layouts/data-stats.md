@@ -2,7 +2,7 @@
 
 > **Loaded on demand at S4 (Render).** Open this file when rendering `big_number`, `two_stat`, `three_stat`, `data_table`, `metric_cards`, or `table_insight`. These are the heaviest-used data layouts — `table_insight` in particular is the editorial workhorse for opening slides.
 >
-> Capacity numbers are authoritative in [`../layout-matrix.yaml`](../layout-matrix.yaml). This file's matrix references are summaries.
+> Capacity numbers are authoritative in [`../api-schemas.yaml`](../api-schemas.yaml). This file's matrix references are summaries.
 
 ---
 
@@ -224,7 +224,7 @@ eng.data_table(title, headers, rows, col_widths=None,
 |---|---|---|---|---|
 | `title` | str | yes | ≤ 120 | — |
 | `headers` | list[str] | yes | ≤ 15 chars per header | Rendered 14pt `MED_GRAY` bold. |
-| `rows` | list[list[str]] | yes | ≤ 40 chars per cell | Each row's length must match `len(headers)`. Max **8 rows** ([`layout-matrix`](../layout-matrix.yaml)). |
+| `rows` | list[list[str]] | yes | ≤ 40 chars per cell | Each row's length must match `len(headers)`. Max **8 rows** ([`../api-schemas.yaml`](../api-schemas.yaml)). |
 | `col_widths` | list[Inches] or `None` | no | — | If `None`, columns split evenly. Pass explicit widths when one column is much wider (e.g. a description column). |
 | `source` | str | data → yes | — | — |
 | `bottom_bar` | tuple | no | — | Optional gray summary bar. |
@@ -426,13 +426,13 @@ eng.table_insight(
 ### Cross-references
 
 - **Why this layout matters in slides 2–5:** [`../framework/planning-guide.md`](../framework/planning-guide.md) § 4 (Opening slides).
-- Capacity: `table_insight` row in [`../layout-matrix.yaml`](../layout-matrix.yaml).
+- Capacity: `table_insight` row in [`../api-schemas.yaml`](../api-schemas.yaml).
 
 ---
 
 ## Cross-references
 
 - **Method index:** [`../framework/engine-api.md`](../framework/engine-api.md).
-- **Capacity matrix:** [`../layout-matrix.yaml`](../layout-matrix.yaml).
+- **Capacity matrix:** [`../api-schemas.yaml`](../api-schemas.yaml).
 - **Production rules:** [`../framework/guard-rails.md`](../framework/guard-rails.md).
 - **Past defects in these layouts:** [`../../experiences/overflow.md`](../../experiences/overflow.md), [`../../experiences/layout-pitfalls.md`](../../experiences/layout-pitfalls.md).

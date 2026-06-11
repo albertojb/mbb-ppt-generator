@@ -2,7 +2,7 @@
 
 > **Loaded on demand at S4 (Render).** Open this file when rendering `side_by_side`, `before_after`, `pros_cons`, `rag_status`, or `scorecard`. These layouts each pair items for evaluation; pick by what kind of pairing your argument needs.
 >
-> Capacity in [`../layout-matrix.yaml`](../layout-matrix.yaml).
+> Capacity in [`../api-schemas.yaml`](../api-schemas.yaml).
 
 ---
 
@@ -386,6 +386,6 @@ eng.scorecard(
 ## Cross-references
 
 - **Method index:** [`../framework/engine-api.md`](../framework/engine-api.md).
-- **Capacity matrix:** [`../layout-matrix.yaml`](../layout-matrix.yaml).
+- **Capacity matrix:** [`../api-schemas.yaml`](../api-schemas.yaml).
 - **When to use comparison vs. matrix:** [`../framework/planning-guide.md`](../framework/planning-guide.md) § 3.
 - **Past defects in these layouts:** [`../../experiences/`](../../experiences/).

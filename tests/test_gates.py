@@ -878,3 +878,296 @@ def test_render_gate_handles_missing_file(project_root: Path,
     result = _run_render_gate(project_root, fake, tmp_project_dir)
     assert result["passed"] is False
     assert "error" in result or result["verdict"].startswith("FAIL")
+
+
+def test_v060_new_layouts_render_clean(project_root: Path, tmp_project_dir: Path):
+    """v0.6.0 archetype layouts (insight_rail, icon_ledger, memo_text,
+    ranked_table, mekko, box_roadmap, project_gantt) plus the extended
+    waterfall/line_chart render without overflow or user-code errors."""
+    from mbb_ppt import MbbEngine
+
+    eng = MbbEngine(total_slides=10)
+    eng.insight_rail(
+        title="Premium-tier revenue is compounding while base tiers stay flat",
+        chart={'kind': 'bar', 'heading': 'Revenue by tier', 'units': 'USD m',
+               'categories': ['2022', '2023', '2024', '2025'],
+               'values': [42, 51, 63, 78]},
+        rail_items=[("Premium drives all growth", "base flat for three years."),
+                    ("Margin follows mix", "premium margin is 12pts above base."),
+                    ("Capacity is the constraint", "onboarding is the bottleneck.")],
+        source="Source: test")
+    eng.insight_rail(
+        title="Three numbers summarize the operating turnaround this quarter",
+        chart={'kind': 'line', 'heading': 'Weekly active accounts',
+               'units': 'thousands',
+               'categories': ['W1', 'W4', 'W8', 'W12'],
+               'values': [120, 135, 162, 198]},
+        rail_items=[("+65%", "Active-account growth over the quarter"),
+                    ("9.2", "Average NPS across enterprise cohort"),
+                    ("-18%", "Cost to serve per account")],
+        rail_mode='stats', rail_title='Impact', source="Source: test")
+    eng.icon_ledger(
+        title="Demand patterns and supply both shifted in the same direction",
+        columns=[
+            {'header': 'Changes in demand patterns', 'rows': [
+                ("1", "Timing", ("Orders arrive later", "peak compressed to six weeks.")),
+                ("2", "Channel", ("Direct overtook retail", "55% of volume is direct.")),
+                ("3", "Mix", ("Premium share doubled", "entry SKUs declining."))]},
+            {'header': 'Increased supply', 'rows': [
+                ("4", "Capacity", ("Two plants added", "regional capacity up 30%.")),
+                ("5", "Imports", ("Import volume rose", "tariff change opened lanes.")),
+                ("6", "Inventory", ("Stocks normalized", "days-on-hand at 2019 levels."))]}],
+        source="Source: test")
+    eng.memo_text(
+        title="The acquisition closes a capability gap we cannot build internally",
+        paragraphs=[
+            ("The deal", "brings 240 engineers and a platform deployed in 14 markets."),
+            ("Strategic fit is strong.", "Channel model mirrors ours; overlap under 10%."),
+            ("Integration risk is manageable", "leadership stays through a 24-month earn-out.")],
+        source="Source: test")
+    eng.ranked_table(
+        title="Five producers control over half of global output",
+        headers=["#", "Producer", "Output kt", "Share %", "YoY %"],
+        rows=[[1, "Producer A", "1,240", "18%", "+6%"],
+              [2, "Producer B", "980", "14%", "+2%"],
+              [3, "Producer C", "760", "11%", "-1%"],
+              [4, "Producer D", "540", "8%", "+9%"],
+              [5, "Producer E", "410", "6%", "N/A"]],
+        emphasis_cells=[(0, 2), (3, 4)],
+        source="Source: test")
+    eng.mekko(
+        title="Two segments hold most of the profit despite a third of revenue",
+        columns=[
+            {'label': 'Enterprise', 'width': 40,
+             'segments': [("Software", 55), ("Services", 30), ("Support", 15)]},
+            {'label': 'Mid-market', 'width': 35,
+             'segments': [("Software", 40), ("Services", 45), ("Support", 15)]},
+            {'label': 'SMB', 'width': 25,
+             'segments': [("Software", 70), ("Services", 10), ("Support", 20)]}],
+        commentary=[("Enterprise mix is healthiest", "software share keeps margin high."),
+                    ("SMB looks deceptively good", "support load drags net margin.")],
+        total_label="Total = USD 4.2 bn revenue, 2025",
+        source="Source: test")
+    eng.box_roadmap(
+        title="Battery technology advances through three distinct generations",
+        stacks=[
+            {'name': 'Gen 1', 'caption': '100-200 Wh/kg', 'boxes': [
+                ("Graphite anode", 'primary'), ("Liquid electrolyte", 'mid'),
+                ("NMC cathode", 'light')]},
+            {'name': 'Gen 2', 'caption': '250-350 Wh/kg', 'boxes': [
+                ("Si-blend anode", 'primary'), ("Gel electrolyte", 'mid'),
+                ("Hi-Ni cathode", 'light'), ("New BMS", 'outline')]},
+            {'name': 'Gen 3', 'caption': '400+ Wh/kg', 'boxes': [
+                ("Li-metal anode", 'primary'), ("Solid electrolyte", 'mid')]}],
+        caveat="Timelines assume current lab-to-line conversion rates.",
+        source="Source: test")
+    eng.project_gantt(
+        title="A new mine takes over a decade from exploration to production",
+        periods=[str(y) for y in range(1, 13)],
+        rows=[
+            {'label': 'Exploration', 'phases': [(0, 2.5, 'dotted'), (2.5, 4, 'solid')],
+             'duration_label': '4 yrs'},
+            {'label': 'Permitting', 'phases': [(2, 4, 'dotted'), (4, 6.5, 'solid')],
+             'duration_label': '4-5 yrs'},
+            {'label': 'Construction', 'phases': [(6, 7, 'dotted'), (7, 10, 'solid')],
+             'duration_label': '3-4 yrs'},
+            {'label': 'Ramp-up', 'phases': [(10, 12, 'solid')],
+             'duration_label': '2 yrs'}],
+        header_note="Typical project lead time — years from exploration to production",
+        source="Source: test")
+    eng.waterfall(
+        title="Supply growth covers only half of the projected demand gap",
+        items=[("2025 supply", 60, 'start'), ("Recycling", 8, 'positive'),
+               ("New mines", 12, 'positive'), ("Disruptions", -6, 'negative'),
+               ("2030 supply", 74, 'total')],
+        group_brackets=[("Primary supply", 0, 2), ("Adjustments", 3, 4)],
+        source="Source: test")
+    eng.line_chart(
+        title="Prices spiked far above the historical band before correcting",
+        x_labels=['2019', '2020', '2021', '2022', '2023', '2024'],
+        y_labels=['0', '20k', '40k', '60k', '80k'],
+        values=[0.18, 0.15, 0.45, 0.85, 0.5, 0.32],
+        event_band=(1, 3, '2020-22 supply shock'),
+        endpoint_chip='-62%',
+        source="Source: test")
+    out = tmp_project_dir / "deck.pptx"
+    eng.save(str(out))
+    result = _run_render_gate(project_root, out, tmp_project_dir)
+    assert result["checklist"]["user_code_errors"] == 0, \
+        f"v0.6.0 layouts should render clean; got: {result['user_code_error_detail']}"
+
+
+def test_v060_layouts_pass_content_gate(project_root: Path, tmp_project_dir: Path):
+    """Schema-driven content gate accepts canonical inputs for v0.6.0 layouts."""
+    content = {
+        "slides": [
+            {"idx": 1, "layout": "insight_rail",
+             "title": "Premium-tier revenue is compounding while base stays flat",
+             "chart": {"kind": "bar", "categories": ["2022", "2023"],
+                       "values": [42, 51]},
+             "rail_items": [("Premium drives growth", "base flat for three years.")],
+             "source": "Source: test"},
+            {"idx": 2, "layout": "icon_ledger",
+             "title": "Demand patterns and supply shifted in the same direction",
+             "columns": [
+                 {"header": "Demand", "rows": [("1", "Timing", "Orders later.")]},
+                 {"header": "Supply", "rows": [("2", "Capacity", "Plants added.")]}],
+             "source": "Source: test"},
+            {"idx": 3, "layout": "memo_text",
+             "title": "The acquisition closes a capability gap we cannot build",
+             "paragraphs": [("The deal", "brings 240 engineers."),
+                            ("Fit is strong", "overlap under 10%.")],
+             "source": "Source: test"},
+            {"idx": 4, "layout": "ranked_table",
+             "title": "Five producers control over half of global output",
+             "headers": ["#", "Producer", "Output"],
+             "rows": [["1", "A", "1,240"], ["2", "B", "980"]],
+             "source": "Source: test"},
+            {"idx": 5, "layout": "mekko",
+             "title": "Two segments hold most of the profit pool today",
+             "columns": [
+                 {"label": "Enterprise", "width": 40,
+                  "segments": [("Software", 55), ("Services", 45)]},
+                 {"label": "SMB", "width": 60,
+                  "segments": [("Software", 70), ("Services", 30)]}],
+             "source": "Source: test"},
+            {"idx": 6, "layout": "box_roadmap",
+             "title": "Battery technology advances through three generations",
+             "stacks": [
+                 {"name": "Gen 1", "boxes": [("Graphite", "primary")]},
+                 {"name": "Gen 2", "boxes": [("Si-blend", "primary")]},
+                 {"name": "Gen 3", "boxes": [("Li-metal", "primary")]}],
+             "source": "Source: test"},
+            {"idx": 7, "layout": "project_gantt",
+             "title": "A new mine takes a decade from exploration to production",
+             "periods": ["1", "2", "3", "4"],
+             "rows": [{"label": "Exploration", "phases": [(0, 2, "dotted")],
+                       "duration_label": "2 yrs"}],
+             "source": "Source: test"},
+        ],
+    }
+    content_path = tmp_project_dir / "content.json"
+    content_path.write_text(json.dumps(content))
+    result = _run_content_gate(project_root, content_path, tmp_project_dir)
+    assert result["passed"] is True, \
+        f"Schema-driven gate should accept v0.6.0 layouts; fails: {result['fail_items']}"
+
+
+def test_waterfall_accepts_both_kind_vocabularies(project_root: Path,
+                                                  tmp_project_dir: Path):
+    """The schema documented 'start'/'positive'/'negative'/'total' while the
+    engine matched 'base'/'up'/'down' — both vocabularies must now render
+    identically (same bar geometry for synonymous kinds)."""
+    from mbb_ppt import MbbEngine
+
+    def bar_tops(kinds):
+        eng = MbbEngine(total_slides=1)
+        s = eng.waterfall(
+            title="Vocabulary equivalence regression slide",
+            items=[("Start", 60, kinds[0]), ("Gain", 8, kinds[1]),
+                   ("Loss", -6, kinds[2])],
+            source="Source: test")
+        return [sh.top for sh in s.shapes]
+
+    legacy = bar_tops(("base", "up", "down"))
+    schema = bar_tops(("start", "positive", "negative"))
+    assert legacy == schema, "synonymous waterfall kinds must render identically"
+
+
+def _chart_slide(idx: int, theme: str = None) -> dict:
+    s = {
+        "idx": idx,
+        "layout": "grouped_bar",
+        "title": "Action title here, long enough to pass the title check",
+        "categories": ["Q1", "Q2"],
+        "series": [["A", "#0F4C3A"]],
+        "data": [[10], [20]],
+        "source": "Source: test",
+    }
+    if theme:
+        s["theme"] = theme
+    return s
+
+
+def _varied_filler(start_idx: int, n: int) -> list:
+    """n distinct-ish slides that don't trip the share cap or density floor."""
+    layouts = [
+        ("matrix_2x2", {"quadrants": [["A", "#FFE0E0", "x"], ["B", "#E0FFE0", "y"],
+                                       ["C", "#FFFFE0", "z"], ["D", "#E0E0FF", "w"]]}),
+        ("horizontal_bar", {"items": [["A", 80], ["B", 60]]}),
+        ("vertical_steps", {"steps": [["1", "A", "D"], ["2", "B", "D"]]}),
+        ("side_by_side", {"options": [["A", "Desc"], ["B", "Desc"]]}),
+        ("timeline", {"milestones": [["Q1", "Kickoff"], ["Q2", "Build"]]}),
+        ("big_number", {"number": "42%", "description": "Share of total"}),
+        ("process_chevron", {"steps": [["1", "Scope", "Define it"],
+                                        ["2", "Build", "Make it"]]}),
+        ("donut", {"segments": [["A", 60], ["B", 40]]}),
+    ]
+    out = []
+    for i in range(n):
+        layout, params = layouts[i % len(layouts)]
+        s = {"idx": start_idx + i, "layout": layout,
+             "title": "Action title here, long enough to pass the title check",
+             "source": "Source: test"}
+        s.update(params)
+        out.append(s)
+    return out
+
+
+def test_layout_share_cap_fails_on_untagged_repetition(project_root: Path,
+                                                       tmp_project_dir: Path):
+    """12 untagged grouped_bar in a 24-slide deck (50%) exceeds the 25% cap."""
+    slides = [_chart_slide(i + 1) for i in range(12)]
+    slides += _varied_filler(13, 12)
+    content_path = tmp_project_dir / "content.json"
+    content_path.write_text(json.dumps({"slides": slides}))
+    result = _run_content_gate(project_root, content_path, tmp_project_dir)
+    cats = {item["check"] for item in result["fail_items"]}
+    assert "layout_share_cap" in cats, \
+        f"12/24 grouped_bar should fail the 25% share cap; got {cats}"
+
+
+def test_layout_share_cap_allows_themed_series(project_root: Path,
+                                               tmp_project_dir: Path):
+    """The same 12 grouped_bar slides tagged with one theme count once."""
+    slides = [_chart_slide(i + 1, theme="market-deep-dive") for i in range(12)]
+    slides += _varied_filler(13, 12)
+    content_path = tmp_project_dir / "content.json"
+    content_path.write_text(json.dumps({"slides": slides}))
+    result = _run_content_gate(project_root, content_path, tmp_project_dir)
+    cats = {item["check"] for item in result["fail_items"]}
+    assert "layout_share_cap" not in cats, \
+        f"A themed series must not trip the share cap; fails: {result['fail_items']}"
+    assert "theme_consistency" not in cats
+
+
+def test_theme_consistency_fails_on_mixed_layouts(project_root: Path,
+                                                  tmp_project_dir: Path):
+    """Two slides sharing a theme but using different layouts fail."""
+    slides = [_chart_slide(1, theme="case-studies")]
+    s2 = _varied_filler(2, 1)[0]
+    s2["theme"] = "case-studies"
+    slides.append(s2)
+    content_path = tmp_project_dir / "content.json"
+    content_path.write_text(json.dumps({"slides": slides}))
+    result = _run_content_gate(project_root, content_path, tmp_project_dir)
+    cats = {item["check"] for item in result["fail_items"]}
+    assert "theme_consistency" in cats, \
+        f"Mixed layouts under one theme should fail; got {cats}"
+
+
+def test_memo_text_hard_cap(project_root: Path, tmp_project_dir: Path):
+    """Two memo_text slides in one deck fail the hard count cap."""
+    def memo(idx):
+        return {"idx": idx, "layout": "memo_text",
+                "title": "A narrative memo slide about the announced deal",
+                "paragraphs": [["The deal", "brings 240 engineers."],
+                                ["Fit is strong", "overlap under 10%."]],
+                "source": "Source: test"}
+    slides = [memo(1), memo(2)]
+    content_path = tmp_project_dir / "content.json"
+    content_path.write_text(json.dumps({"slides": slides}))
+    result = _run_content_gate(project_root, content_path, tmp_project_dir)
+    bad = [i for i in result["fail_items"]
+           if i.get("check") == "global_max" and i.get("layout") == "memo_text"]
+    assert bad, f"2 memo_text should fail the hard cap; got {result['fail_items']}"

@@ -30,9 +30,13 @@ Checks:
     3. Layout-specific constraints — process_chevron label \\n, timeline last label ≤ 6
     4. Source attribution — every content slide has non-empty `source`
     5. Action title — > 10 characters and ≤ 120 characters
-    6. two_column_text — at most one slide per deck (global)
+    6. Hard count caps — two_column_text and memo_text ≤ 1 per deck (global)
     7. executive_summary cap — ≤ 15% of content slides (global)
-    8. Visual density — decks with ≥ 6 content slides need
+    8. Layout share cap — no other layout > 25% of content slides; slides
+       of one layout sharing a "theme" tag count once (a deliberate series
+       is consistency, not monotony) (global)
+    9. Theme consistency — slides sharing a theme tag use the same layout (global)
+   10. Visual density — decks with ≥ 6 content slides need
        max(2, N // 4) chart/diagram/image layouts (global)
 """
 
@@ -319,16 +323,127 @@ def check_action_title(slide: Dict, idx: int) -> List[Dict]:
     return issues
 
 
-def check_two_column_text_global(slides: List[Dict]) -> List[Dict]:
-    """At most one two_column_text slide per deck."""
-    count = sum(1 for s in slides if s.get("layout") == "two_column_text")
-    if count > 1:
-        return [{
-            "slide_idx": "(global)", "layout": "two_column_text", "check": "global_max",
-            "message": (f"two_column_text used {count} times; max 1 per deck. "
-                        "Replace extras with table_insight, four_column, or side_by_side."),
-        }]
-    return []
+# Layouts so permissive (or so visually flat) that even two per deck reads
+# as filler. Hard count caps, not percentage caps.
+HARD_COUNT_CAPS = {
+    "two_column_text": 1,
+    "memo_text": 1,
+}
+
+HARD_CAP_ALTERNATIVES = {
+    "two_column_text": "table_insight, four_column, or side_by_side",
+    "memo_text": "executive_summary, key_takeaway, or icon_ledger",
+}
+
+
+def check_hard_count_caps_global(slides: List[Dict]) -> List[Dict]:
+    """Enforce per-layout hard count caps (HARD_COUNT_CAPS)."""
+    issues: List[Dict] = []
+    for layout, cap in HARD_COUNT_CAPS.items():
+        count = sum(1 for s in slides if s.get("layout") == layout)
+        if count > cap:
+            issues.append({
+                "slide_idx": "(global)", "layout": layout, "check": "global_max",
+                "message": (f"{layout} used {count} times; max {cap} per deck. "
+                            f"Replace extras with "
+                            f"{HARD_CAP_ALTERNATIVES.get(layout, 'a layout matched to the content shape')}."),
+            })
+    return issues
+
+
+# ── Generalized layout-share cap + theme consistency ─────────────────────
+# Principle (HANDOFF / post-mortem): vary layouts ACROSS themes, stay
+# consistent WITHIN a theme. Two mechanisms:
+#
+#   1. Share cap — no single layout may exceed LAYOUT_SHARE_CAP_PCT of
+#      content slides (floor of MIN_LAYOUT_ALLOWANCE so small decks are
+#      not over-constrained). Slides may declare an optional `"theme"`
+#      string in content.json; all slides of one layout sharing a theme
+#      count as ONE occurrence — a deliberate series (e.g. five case
+#      studies tagged "case-studies") is consistency, not monotony.
+#      `executive_summary` keeps its own stricter 15% cap above and is
+#      excluded here (theme tags do not bypass it).
+#
+#   2. Theme consistency — slides sharing a theme tag must all use the
+#      same layout. A "case-studies" theme where one slide uses
+#      case_study and another four_column defeats the purpose of the tag.
+
+LAYOUT_SHARE_CAP_PCT = 0.25
+MIN_LAYOUT_ALLOWANCE = 2
+SHARE_CAP_EXCLUDED = {"executive_summary"}  # has its own stricter check
+
+
+def check_layout_share_global(slides: List[Dict]) -> List[Dict]:
+    """No single layout > 25% of content slides, unless repeats are
+    grouped under a declared theme."""
+    content_slides = [
+        s for s in slides if s.get("layout") not in BOILERPLATE_LAYOUTS
+    ]
+    n_content = len(content_slides)
+    if n_content < VISUAL_DENSITY_THRESHOLD_SLIDES:
+        return []
+    allowed = max(MIN_LAYOUT_ALLOWANCE, int(LAYOUT_SHARE_CAP_PCT * n_content))
+    by_layout: Dict[str, List[Dict]] = {}
+    for s in content_slides:
+        by_layout.setdefault(s.get("layout", "unknown"), []).append(s)
+    issues: List[Dict] = []
+    for layout, group in by_layout.items():
+        if layout in SHARE_CAP_EXCLUDED or layout in HARD_COUNT_CAPS:
+            continue
+        raw = len(group)
+        if raw <= allowed:
+            continue
+        themes = {s.get("theme") for s in group if s.get("theme")}
+        untagged = sum(1 for s in group if not s.get("theme"))
+        effective = untagged + len(themes)
+        if effective <= allowed:
+            continue
+        issues.append({
+            "slide_idx": "(global)", "layout": layout, "check": "layout_share_cap",
+            "message": (
+                f"{layout} used {raw}× in {n_content} content slides "
+                f"({raw / n_content:.0%}); cap is {LAYOUT_SHARE_CAP_PCT:.0%} "
+                f"(max {allowed} for this deck). Over-using one layout makes "
+                "the deck visually monotonous. Two remedies: (a) switch some "
+                "slides to a different layout matched to their content shape "
+                "(see references/framework/planning-guide.md § 'Layout "
+                "selection by task'); or (b) if the repetition is a deliberate "
+                'series (e.g. one slide per case study), tag those slides with '
+                'the same "theme" string in content.json — a themed series '
+                "counts as one occurrence because repeating a template across "
+                "thematically parallel slides is consistency, not monotony."
+            ),
+        })
+    return issues
+
+
+def check_theme_consistency_global(slides: List[Dict]) -> List[Dict]:
+    """Slides sharing a theme tag must use the same layout."""
+    by_theme: Dict[str, Dict[str, List]] = {}
+    for s in slides:
+        theme = s.get("theme")
+        if not theme:
+            continue
+        by_theme.setdefault(str(theme), {}).setdefault(
+            s.get("layout", "unknown"), []).append(s.get("idx", "?"))
+    issues: List[Dict] = []
+    for theme, layouts in by_theme.items():
+        if len(layouts) > 1:
+            detail = "; ".join(
+                f"{layout} on slide(s) {', '.join(map(str, idxs))}"
+                for layout, idxs in sorted(layouts.items())
+            )
+            issues.append({
+                "slide_idx": "(global)", "layout": "(deck-level)",
+                "check": "theme_consistency",
+                "message": (
+                    f'theme "{theme}" spans {len(layouts)} different layouts '
+                    f"({detail}). Thematically parallel slides must reuse the "
+                    "same template so the audience reads them as one series — "
+                    "pick one layout for the whole theme."
+                ),
+            })
+    return issues
 
 
 # ── executive_summary frequency cap ───────────────────────────────────────
@@ -367,7 +482,7 @@ def check_executive_summary_cap_global(slides: List[Dict]) -> List[Dict]:
             "permissive layout, so over-using it produces visually monotonous decks. "
             "Replace by content shape: "
             "(a) 3–4 numbered actions with rationale → four_column or vertical_steps; "
-            "(b) one headline number + supporting detail → big_number_callout or "
+            "(b) one headline number + supporting detail → big_number or "
             "content_right_image; "
             "(c) numbered items with a side panel → numbered_list_panel; "
             "(d) two contrasting positions → side_by_side or two_col_image_grid; "
@@ -403,6 +518,8 @@ VISUAL_LAYOUTS = {
     "concept_three", "journey_map",
     # v0.5.4 new layouts
     "pyramid_staircase", "cycle_4stage",
+    # v0.6.0 new layouts (archetype batch)
+    "insight_rail", "mekko", "box_roadmap", "project_gantt",
 }
 
 # Boilerplate slides excluded from the content-slide count for density purposes.
@@ -510,8 +627,10 @@ def run_gate(content_json_path: str, project_dir: str) -> Dict[str, Any]:
         else:
             passed_items.append({"slide_idx": idx, "layout": layout, "status": "ok"})
 
-    all_issues.extend(check_two_column_text_global(slides))
+    all_issues.extend(check_hard_count_caps_global(slides))
     all_issues.extend(check_executive_summary_cap_global(slides))
+    all_issues.extend(check_layout_share_global(slides))
+    all_issues.extend(check_theme_consistency_global(slides))
     all_issues.extend(check_visual_density_global(slides))
 
     passed = len(all_issues) == 0

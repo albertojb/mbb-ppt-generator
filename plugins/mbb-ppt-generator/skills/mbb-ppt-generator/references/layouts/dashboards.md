@@ -2,7 +2,7 @@
 
 > **Loaded on demand at S4 (Render).** Open this file when rendering `dashboard_kpi_chart` or `dashboard_table_chart`. These layouts compress multiple analytical views onto one slide; use them sparingly — typically as a section opener or a "state of the business" summary.
 >
-> Capacity in [`../layout-matrix.yaml`](../layout-matrix.yaml).
+> Capacity in [`../api-schemas.yaml`](../api-schemas.yaml).
 
 ---
 
@@ -202,5 +202,5 @@ Use multiple slides instead when:
 ## Cross-references
 
 - **Method index:** [`../framework/engine-api.md`](../framework/engine-api.md).
-- **Capacity matrix:** [`../layout-matrix.yaml`](../layout-matrix.yaml).
+- **Capacity matrix:** [`../api-schemas.yaml`](../api-schemas.yaml).
 - **When to break a dashboard into multiple slides:** [`../framework/planning-guide.md`](../framework/planning-guide.md) § 3.

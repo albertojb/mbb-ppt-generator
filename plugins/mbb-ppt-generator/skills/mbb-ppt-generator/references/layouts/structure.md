@@ -2,7 +2,7 @@
 
 > **Loaded on demand at S4 (Render).** Open this file when you are about to render a `cover`, `toc`, `section_divider`, `closing`, or `appendix_title` slide and want the parameter contract, capacity limits, common pitfalls, and a wireframe sketch.
 >
-> Capacity numbers are authoritative in [`../layout-matrix.yaml`](../layout-matrix.yaml). This file's matrix references are summaries.
+> Capacity numbers are authoritative in [`../api-schemas.yaml`](../api-schemas.yaml). This file's matrix references are summaries.
 
 ---
 
@@ -65,7 +65,7 @@ eng.cover(
 
 ### Cross-references
 
-- Capacity: [`../layout-matrix.yaml`](../layout-matrix.yaml) → `cover`.
+- Capacity: [`../api-schemas.yaml`](../api-schemas.yaml) → `cover`.
 - Cover-image security posture: [`../../SKILL.md`](../../SKILL.md) § 13.
 
 ---
@@ -129,7 +129,7 @@ eng.toc(items=[
 
 ### Cross-references
 
-- Capacity: `toc` row in [`../layout-matrix.yaml`](../layout-matrix.yaml).
+- Capacity: `toc` row in [`../api-schemas.yaml`](../api-schemas.yaml).
 
 ---
 
@@ -295,7 +295,7 @@ eng.appendix_title(
 ## Cross-references
 
 - **Method index for these and all other layouts:** [`../framework/engine-api.md`](../framework/engine-api.md).
-- **Capacity matrix:** [`../layout-matrix.yaml`](../layout-matrix.yaml).
+- **Capacity matrix:** [`../api-schemas.yaml`](../api-schemas.yaml).
 - **Production rules these layouts must satisfy:** [`../framework/guard-rails.md`](../framework/guard-rails.md).
 - **Slide-2-through-5 priority (which layouts to lead with after cover/TOC):** [`../framework/planning-guide.md`](../framework/planning-guide.md) § 4.
 - **Engine source (authoritative):** `../../mbb_ppt/engine.py`.

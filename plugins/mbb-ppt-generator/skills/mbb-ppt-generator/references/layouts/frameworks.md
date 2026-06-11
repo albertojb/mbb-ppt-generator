@@ -2,7 +2,7 @@
 
 > **Loaded on demand at S4 (Render).** Open this file when rendering `matrix_2x2`, `swot`, `temple`, `pyramid`, `stakeholder_map`, or `risk_matrix`. These layouts encode classical strategic frameworks visually; pick the one whose semantic shape matches your argument.
 >
-> Capacity in [`../layout-matrix.yaml`](../layout-matrix.yaml).
+> Capacity in [`../api-schemas.yaml`](../api-schemas.yaml).
 
 ---
 
@@ -418,6 +418,6 @@ eng.risk_matrix(
 ## Cross-references
 
 - **Method index:** [`../framework/engine-api.md`](../framework/engine-api.md).
-- **Capacity matrix:** [`../layout-matrix.yaml`](../layout-matrix.yaml).
+- **Capacity matrix:** [`../api-schemas.yaml`](../api-schemas.yaml).
 - **When to use a matrix vs. a list:** [`../framework/planning-guide.md`](../framework/planning-guide.md) § 3.
 - **Past defects in these layouts:** [`../../experiences/`](../../experiences/).

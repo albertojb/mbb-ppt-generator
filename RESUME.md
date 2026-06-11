@@ -2,13 +2,13 @@
 
 > **Purpose.** Give a fresh Claude session everything it needs to continue work on this skill without re-reading the entire history. Read this file first; everything else (`STATE.md`, `BACKLOG.md`, the post-mortem) is supporting detail.
 >
-> **Last updated.** 2026-05-09 by albertojb (with Claude Sonnet 4.5+).
+> **Last updated.** 2026-06-11 by Claude (Fable 5), session approved by albertojb.
 >
 > **Project root.** `/home/ajb/Projects/MBB-PPT-2/`
 > **Public repo.** https://github.com/albertojb/mbb-ppt-generator
-> **Latest tag.** `v0.5.4` on commit `b6d4870`. All v0.5.x milestones (0.5.0 → 0.5.4) shipped and pushed. Tests at 37/37 passing. CI green on `main`.
+> **Latest tag.** `v0.6.0`. All of `HANDOFF.md` shipped: 7 archetype layouts + 2 chart extensions, layout-share/theme-consistency variability gates, the speed/token/contradiction audit (findings fixed), English-only hardening (CJK purge + CI scan). Tests at 44/44 passing.
 >
-> **➡️ Next phase:** see [`HANDOFF.md`](./HANDOFF.md) — new layouts, layout-usage variability/consistency, and a speed/token/contradiction audit. That brief supersedes the v0.6.0 plan below as the immediate priority.
+> **➡️ Next phase: v0.7.0 — process discipline** (the milestone formerly numbered v0.6.0 in § 4 below): S2 storyboarding gate, render-gate auto-fix, stronger section_divider. Deferred archetype backlog: cost_curve (A6), survey waffle/rank-chips (A15), eyebrow-tag primitive. Full session log + audit findings: [`reports/2026-06-11-v0.6.0-session-report.md`](./reports/2026-06-11-v0.6.0-session-report.md).
 
 ## v0.5.x summary (closed)
 
@@ -67,9 +67,9 @@ Full doc: `/home/ajb/claude-cowork-linux/mbb-ppt-skill-postmortem.md` (480 lines
 
 ---
 
-## 4. Next milestone: v0.6.0 — process discipline (~1 week)
+## 4. Next milestone: v0.7.0 — process discipline (~1 week; formerly numbered v0.6.0)
 
-All of v0.5.x shipped. Next work is v0.6.0 (process discipline). Three tasks from the original plan:
+All of v0.5.x and the v0.6.0 HANDOFF batch shipped. Next work is v0.7.0 (process discipline). Three tasks from the original plan:
 
 | # | Task | Acceptance |
 |---|---|---|

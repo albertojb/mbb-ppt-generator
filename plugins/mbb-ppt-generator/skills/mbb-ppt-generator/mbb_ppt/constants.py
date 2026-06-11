@@ -104,25 +104,20 @@ BOTTOM_BAR_Y    = Inches(6.2)    # Default bottom summary bar
 BOTTOM_BAR_H    = Inches(0.65)   # Bottom bar height
 
 # ═══════════════════════════════════════════
-# CONTENT AREA BOUNDARY (Rule 15)
+# LEGACY 4:3-ERA CONSTANTS (unused — kept for import compatibility)
 # ═══════════════════════════════════════════
-# Hard bounding box for all shapes, text boxes, and charts on a content
-# slide. The render gate validates placement against these limits.
-#
-# These are tighter than the legacy LM/RM values; the render-gate
-# enforces them but engine layouts using LM/CW continue to work because
-# Rule 15 governs the *outer* envelope, not internal column widths.
+# These values predate the 16:9 canvas and are NOT what the engine or the
+# render gate enforce. Rule 15 (element containment) is enforced by
+# mbb_ppt/qa.py against the actual slide bounds (SAFE_RIGHT = SW,
+# SAFE_BOTTOM = SH). Rule 18 (page-number lock) is enforced by
+# core.add_page_number() at PAGE_NUM_X (12.2") / 7.1". Do not use the
+# constants below in new code; they survive only so that any external
+# script importing them does not break.
 
 CONTENT_LEFT   = Inches(0.5)
 CONTENT_TOP_BOUND   = Inches(1.1)
 CONTENT_RIGHT  = Inches(9.5)
 CONTENT_BOTTOM = Inches(6.9)
-
-# ═══════════════════════════════════════════
-# PAGE-NUMBER PLACEMENT LOCK (Rule 18)
-# ═══════════════════════════════════════════
-# Page numbers must be placed at this exact position on every slide.
-# Never compute dynamically.
 
 PAGE_NUM_LEFT   = Inches(9.3)
 PAGE_NUM_TOP    = Inches(7.05)

@@ -2,7 +2,7 @@
 
 > **Loaded on demand at S4 (Render).** Open this file when rendering `icon_grid`, `checklist`, `harvey_ball_table`, `meet_the_team`, `case_study`, or `metric_comparison`. These are layouts that don't fit the structure / data / chart / framework / comparison / process / image families.
 >
-> Capacity in [`../layout-matrix.yaml`](../layout-matrix.yaml).
+> Capacity in [`../api-schemas.yaml`](../api-schemas.yaml).
 
 ---
 
@@ -335,6 +335,6 @@ eng.metric_comparison(
 ## Cross-references
 
 - **Method index:** [`../framework/engine-api.md`](../framework/engine-api.md).
-- **Capacity matrix:** [`../layout-matrix.yaml`](../layout-matrix.yaml).
+- **Capacity matrix:** [`../api-schemas.yaml`](../api-schemas.yaml).
 - **`draw_harvey_ball()` implementation:** `mbb_ppt/core.py`.
 - **Past defects in these layouts:** [`../../experiences/`](../../experiences/).

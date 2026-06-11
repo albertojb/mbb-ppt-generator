@@ -10,12 +10,12 @@ description: >-
   five-stage workflow (brief → outline → content → render → deliver)
   with two machine-readable QA gates whose `passed` is a Python boolean,
   not a verbal claim. The engine (ExecEngine, python-pptx-based) provides
-  67 high-level layout methods including eng.cover(), eng.toc(),
-  eng.big_number(), eng.timeline(), eng.grouped_bar(), eng.table_insight(),
+  83 high-level layout methods including eng.cover(), eng.toc(),
+  eng.big_number(), eng.timeline(), eng.grouped_bar(), eng.insight_rail(),
   and eng.donut(), with strict typography, anti-corruption XML cleanup,
-  native circular charts, overflow guard rails, and an append-only
-  self-refinement loop. Communication architecture grounded in Barbara
-  Minto's Pyramid Principle.
+  native circular charts, overflow guard rails, layout-variability caps,
+  and an append-only self-refinement loop. Communication architecture
+  grounded in Barbara Minto's Pyramid Principle.
 ---
 
 # MBB PPT Generator
@@ -78,7 +78,7 @@ description: >-
    This pattern works on Mac, Windows, and Linux for plugin-installed skills, Cowork manifest installs, Claude Code direct installs, and dev/symlinked layouts. No hardcoded user paths.
 
 7. **Hard limits** from `references/api-schemas.yaml` are authoritative. Never exceed them in `content.json` — the S3 gate enforces this.
-8. **Layout reference docs are lazy-loaded.** Never bulk-load `references/layouts/*.md` at the start of S4. Read each layout's reference inline at the moment you are preparing that specific render call, and only that file. The 12 layout files together are ~10K tokens; loading them all when the deck uses three is wasted context.
+8. **Layout reference docs are lazy-loaded.** Never bulk-load `references/layouts/*.md` at the start of S4. Read each layout's reference inline at the moment you are preparing that specific render call, and only that file. The 12 layout files together are ~55K tokens — loading them all when the deck uses three burns more context than the rest of the run combined. The same rule applies to `references/api-schemas.yaml` (~18K tokens): the generated `api-cheatsheet.md` exists precisely so S2 never loads the full schema; spot-look-up single layout entries only.
 9. **No `cover` or `closing` slide by default.** Skip both unless the operator explicitly requests one. Cover slides waste a minute of audience attention; closing/"thank you" slides waste a minute the audience could spend on the recommendation. If unsure, ask: *"Do you want a cover slide?"* Default answer is no.
 
 ---
@@ -183,7 +183,7 @@ The skill is organised so each stage loads only what it needs. The full router i
 | Stage | Required reading | Optional reading |
 |---|---|---|
 | S1 — Brief | `references/team/brand-guide.md` | — |
-| S2 — Structure | `references/framework/engine-api.md`, `references/api-schemas.yaml` | per-layout files in `references/layouts/` |
+| S2 — Structure | `references/api-cheatsheet.md`, `references/framework/planning-guide.md` §3 + §5 | single-layout spot-lookups in `references/api-schemas.yaml`; per-layout files in `references/layouts/` |
 | S3 — Content | `references/framework/guard-rails.md`, every file in `experiences/` | `references/framework/planning-guide.md` for complex structures |
 | S4 — Render + QA | only the `references/layouts/*.md` files for the layouts actually used | `references/team/presentation-convention.md` |
 | S5 — Deliver | none | — |
@@ -222,17 +222,19 @@ Every project lives under a working directory named `ppt-project-{slug}/`. Each 
 
 ### S2 — Structure
 
-**Read:** `references/api-cheatsheet.md`, `references/api-schemas.yaml`, `references/framework/planning-guide.md` (sections 3 *Layout selection by task* and 5 *Layout diversity*).
+**Read:** `references/api-cheatsheet.md`, `references/framework/planning-guide.md` (sections 3 *Layout selection by task* and 5 *Layout diversity*). Consult `references/api-schemas.yaml` only to spot-check a single layout's entry — never load the whole file (HARD RULE 8).
 
 **Visual-layout rule (mechanically enforced at S3):** for any deck with ≥ 6 content slides (excluding cover/TOC/section_divider/closing), pick at least 2 chart, diagram, image, or process-flow layouts. The S3 gate fails decks that are wall-to-wall text columns. Match the layout to the content shape:
 
-- Trend / time series → `grouped_bar`, `line_chart`, `stacked_area`, `multi_bar_panel`
-- Composition / share → `donut`, `stacked_bar`, `horizontal_bar`
-- Ranking / outliers → `horizontal_bar`, `pareto`, `bubble`
+- Trend / time series → `grouped_bar`, `line_chart` (event band + endpoint chip), `stacked_area`, `multi_bar_panel`
+- Composition / share → `donut`, `stacked_bar`, `mekko`, `horizontal_bar`
+- Ranking / outliers → `horizontal_bar`, `pareto`, `bubble`, `ranked_table`
+- Chart + so-what → `insight_rail` (exhibit left, bullet or stat rail right)
 - Two/four-way framework → `matrix_2x2`, `swot`, `risk_matrix`, `harvey_ball_table`
-- Process / phased plan → `process_chevron`, `timeline`, `value_chain`
+- Process / phased plan → `process_chevron`, `timeline`, `value_chain`, `project_gantt`, `box_roadmap`
 - Operating snapshot → `dashboard_kpi_chart`, `dashboard_table_chart`
 - Case proof → `case_study`, `case_study_image`, `content_right_image`
+- Paired text-and-icon factors → `icon_ledger`; narrative memo (max 1) → `memo_text`
 
 **Tasks:**
 1. Compute slide count from duration. **Do not include `cover` or `closing` slides by default — every minute spent on them is a minute not spent on argument slides.** Add a `cover` only if the user explicitly asks for one. Never auto-add a `closing` / "thank you" slide. The first slide is normally an `executive_summary` carrying the recommendation.
@@ -258,7 +260,8 @@ Every project lives under a working directory named `ppt-project-{slug}/`. Each 
 - Slide count ≤ `duration_minutes × 1.2`.
 - Every `layout` exists in `api-schemas.yaml`.
 - Every action title is a complete clause (length > 10, contains a verb).
-- At most one `two_column_text` slide globally.
+- At most one `two_column_text` and one `memo_text` slide globally.
+- **Variability:** no single layout drives more than ~25% of content slides (`executive_summary` is capped tighter at 15%). If a layout repeats *deliberately* — one slide per case study, per region, per option — tag those slides with the same `"theme"` string in `outline.json`/`content.json`: a themed series counts as one occurrence, and all slides in one theme must use the same layout. Vary across themes; stay consistent within a theme. The S3 gate enforces all of this mechanically.
 - No `cover` or `closing` slides unless the operator explicitly requested one (Rule 9).
 
 ### S3 — Content
@@ -348,25 +351,21 @@ For ≤ 5-slide decks: read the brief, write `content.json` directly, render, ga
 
 ## 6. Layout capacity — hard limits
 
-These are derived from `references/api-schemas.yaml`. The S3 gate enforces them.
+Capacity limits (max items, char budgets, tuple shapes) live in
+[`references/api-schemas.yaml`](./references/api-schemas.yaml) — the single
+source of truth — and are surfaced per layout in the generated
+[`references/api-cheatsheet.md`](./references/api-cheatsheet.md). The S3
+gate enforces them; do not duplicate them here (a hand-maintained copy of
+this table drifted from the schema once already).
 
-| Layout | Max items | Title chars | Body chars | Notes |
-|---|---|---|---|---|
-| `cover` | — | 40 | subtitle 60 | Title supports `\n`; height auto-computed |
-| `toc` | 6 | 15 | desc 40 | — |
-| `executive_summary` | 4 items | 40 | headline 60, item title 25, desc 80 | Items must be 3-tuples `(num, title, desc)` |
-| `four_column` | **4 columns max** | 40 | col title 20, desc 120 | Items must be 3-tuples; > 4 cols overflows |
-| `table_insight` | 6 rows | 40 | header 15, cell 40, insight 60 | — |
-| `matrix_2x2` | 4 quadrants | 40 | label 15, desc 80 | Quadrants must be 3-tuples `(label, bg, desc)` |
-| `process_chevron` | **5 steps max** | 40 | label 10, title 20, desc 50 | Step label cannot contain `\n`; > 5 steps shrinks below readable |
-| `timeline` | 6 milestones | 40 | label 8, desc 40 | **Last** milestone label ≤ 6 chars (engine pins right edge) |
-| `donut` / `pie` | **6 segments max** | 30 | segment label 15 | > 6 → labels collide; merge to top-N + "Other" |
-| `grouped_bar` | **6 cats × 3 series** | 30 | category 8, series label 15 | > 6 → bar widths go negative |
-| `stacked_bar` | 6 categories | 30 | category 8 | — |
-| `horizontal_bar` | 8 items | 30 | label 20 | — |
-| `two_column_text` | 2 × 5 bullets | 40 | bullet 60 | **At most one slide of this type globally** |
+Cross-layout traps that are easy to miss:
 
-For the full matrix, see [`references/api-schemas.yaml`](./references/api-schemas.yaml).
+- **Oval labels ≤ 3 chars** — any tuple slot rendered inside a 0.45" circle (`process_chevron` step labels, `four_column`/`executive_summary` numbers) clips beyond 3 characters. Use `'1'`, `'2'`, `'A'`.
+- **`timeline` last milestone label ≤ 6 chars** — the engine pins it to the right edge.
+- **`process_chevron` step labels cannot contain `\n`.**
+- **`donut` ≤ 6 segments** — merge the tail into "Other".
+- **`grouped_bar` ≤ 6 categories × 3 series** — beyond that, bar widths go negative.
+- **Global caps:** ≤ 1 `two_column_text`, ≤ 1 `memo_text`, `executive_summary` ≤ 15% of content slides, any other layout ≤ 25% unless theme-tagged (§ 5 Gate S2).
 
 ### Retired layouts
 
@@ -409,11 +408,8 @@ from pptx.util import Inches
 ### Minimal generation
 
 ```python
-eng = ExecEngine(total_slides=10)
-eng.cover(title='Q1 2026 strategy review', subtitle='Board update',
-          author='Strategy team', date='March 2026')
-eng.toc(items=[('1', 'Executive summary', 'Recommendation and key evidence'),
-               ('2', 'Market dynamics',  'Where pressure and opportunity are shifting')])
+# Note: no cover/closing slides — HARD RULE 9. Open on the recommendation.
+eng = ExecEngine(total_slides=2)
 eng.executive_summary(
     title='Revenue can return to double-digit growth with three targeted actions',
     headline='Growth is concentrated in two channels and one product tier',
@@ -422,7 +418,13 @@ eng.executive_summary(
            ('2', 'Expand in underpenetrated channels',
                 'Two distributor channels remain underdeveloped relative to peers')],
     source='Source: internal analysis, Q1 2026')
-eng.closing(title='Thank you', message='Discussion and decision points')
+eng.insight_rail(
+    title='Premium-tier revenue is compounding while base tiers stay flat',
+    chart={'kind': 'bar', 'heading': 'Revenue by tier', 'units': 'USD m',
+           'categories': ['2023', '2024', '2025'], 'values': [51, 63, 78]},
+    rail_items=[('Premium drives all growth', 'the base tier has been flat for three years.'),
+                ('Margin follows mix', 'premium gross margin is 12pts above base.')],
+    source='Source: internal analysis, Q1 2026')
 eng.save('ppt-project-q1-strategy/deck.pptx')
 ```
 
@@ -438,19 +440,21 @@ eng.save('ppt-project-q1-strategy/deck.pptx')
 
 **Structure:** `cover` · `toc` · `section_divider` · `executive_summary` · `key_takeaway` · `table_insight` · `closing` · `appendix_title`
 
-**Data:** `big_number` · `two_stat` · `three_stat` · `data_table` · `metric_cards` · `metric_comparison` · `side_by_side` · `before_after` · `pros_cons` · `scorecard` · `rag_status` · `checklist` · `harvey_ball_table`
+**Data:** `big_number` · `two_stat` · `three_stat` · `data_table` · `ranked_table` · `metric_cards` · `metric_comparison` · `side_by_side` · `before_after` · `pros_cons` · `scorecard` · `rag_status` · `checklist` · `harvey_ball_table`
 
-**Process:** `timeline` · `vertical_steps` · `process_chevron` · `value_chain` · `decision_tree` · `agenda` · `action_items`
+**Process:** `timeline` · `vertical_steps` · `process_chevron` · `value_chain` · `project_gantt` · `decision_tree` · `agenda` · `action_items` · `journey_map`
 
-**Frameworks:** `matrix_2x2` · `swot` · `temple` · `pyramid` · `stakeholder_map` · `risk_matrix` · `icon_grid`
+**Frameworks:** `matrix_2x2` · `swot` · `temple` · `pyramid` · `pyramid_staircase` · `stakeholder_map` · `risk_matrix` · `icon_grid` · `icon_ledger` · `box_roadmap` · `concept_three` · `cycle_4stage`
 
-**Charts:** `grouped_bar` · `stacked_bar` · `horizontal_bar` · `line_chart` · `waterfall` · `pareto` · `stacked_area` · `donut` · `bubble` · `kpi_tracker` · `multi_bar_panel`
+**Charts:** `grouped_bar` · `stacked_bar` · `horizontal_bar` · `line_chart` · `waterfall` · `pareto` · `stacked_area` · `donut` · `bubble` · `kpi_tracker` · `multi_bar_panel` · `insight_rail` · `mekko`
 
 **Image / visual:** `content_right_image` · `three_images` · `image_four_points` · `full_width_image` · `case_study_image` · `two_col_image_grid` · `goals_illustration` · `quote_bg_image` · `quote` · `numbered_list_panel`
 
 **Dashboards:** `dashboard_kpi_chart` · `dashboard_table_chart`
 
 **Team / meta:** `meet_the_team` · `case_study` · `two_column_text` · `four_column`
+
+**Narrative (v0.5.3+):** `ask` · `numbered_tiles` · `index_callout` · `extension_rows` · `memo_text`
 
 ---
 
@@ -498,10 +502,10 @@ These are mandatory and address recurring real-world defects. The render gate (`
 | 12 | Z-order: backgrounds back, text front, verified at save | code |
 | 13 | `auto_size` floor 9pt; titles disable `auto_size` and truncate | code |
 | 14 | Action titles ≤ 120 chars; engine warns and trims if longer | content gate + code |
-| 15 | Content boundary `(0.5, 1.1)` to `(9.5, 6.9)` | render gate |
+| 15 | Every shape stays inside the slide bounds (13.333" × 7.5"); the render gate flags any element crossing the slide edge | render gate (`qa.py` `SAFE_RIGHT`/`SAFE_BOTTOM`) |
 | 16 | ≥ 0.1" between vertically adjacent elements | render gate |
 | 17 | Insight bar / footnote area ≥ 0.4" tall | render gate |
-| 18 | Page numbers locked at `(9.3, 7.05, 0.5×0.25)` | code |
+| 18 | Page numbers locked at `(12.2, 7.1)`, bottom-right, never computed dynamically | code (`add_page_number`) |
 
 Rules numbered 1–10 originate in Likaku's upstream skill (`v1.9` and `v2.0`); 11–18 are added in this adaptation.
 

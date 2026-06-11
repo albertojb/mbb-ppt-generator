@@ -71,7 +71,7 @@ jobs:
           #   - STATE.md documents v0.2.0 rebrand decisions.
           # Paths reflect the v0.4.0 plugin layout (skill files moved under
           # plugins/mbb-ppt-generator/skills/mbb-ppt-generator/).
-          ALLOWED_FILES='MBB_PPT_QA_CHECKLIST.md CHANGELOG.md README.md NOTICE STATE.md BACKLOG.md RESUME.md plugins/mbb-ppt-generator/skills/mbb-ppt-generator/MAINTAINERS.md plugins/mbb-ppt-generator/skills/mbb-ppt-generator/SKILL.md plugins/mbb-ppt-generator/skills/mbb-ppt-generator/mbb_ppt/constants.py plugins/mbb-ppt-generator/NOTICE'
+          ALLOWED_FILES='MBB_PPT_QA_CHECKLIST.md CHANGELOG.md README.md NOTICE STATE.md BACKLOG.md RESUME.md HANDOFF.md reports/2026-06-11-v0.6.0-session-report.md plugins/mbb-ppt-generator/skills/mbb-ppt-generator/MAINTAINERS.md plugins/mbb-ppt-generator/skills/mbb-ppt-generator/SKILL.md plugins/mbb-ppt-generator/skills/mbb-ppt-generator/mbb_ppt/constants.py plugins/mbb-ppt-generator/NOTICE'
           FAIL=0
           for f in $BAD_FILES; do
             allowed=0
@@ -94,6 +94,27 @@ jobs:
             exit 1
           fi
           echo "Leakage scan: clean."
+
+      - name: Scan for CJK characters (skill is English-only; no Mandarin content)
+        run: |
+          # Policy: the payload ships no CJK text — upstream Chinese-language
+          # auto-fix patterns were replaced with English equivalents. Literal
+          # CJK characters anywhere in tracked source files fail the build.
+          # (\uXXXX escape sequences used for *detection* logic are fine —
+          # this scan matches literal characters only.)
+          set -e
+          BAD=$(git ls-files '*.py' '*.md' '*.yaml' '*.yml' '*.toml' '*.json' \
+            | xargs grep -l -P '[\x{4E00}-\x{9FFF}\x{3040}-\x{30FF}\x{AC00}-\x{D7AF}]' 2>/dev/null \
+            || true)
+          if [ -n "$BAD" ]; then
+            echo "CJK characters detected in:"
+            for f in $BAD; do
+              echo "── $f:"
+              grep -n -P '[\x{4E00}-\x{9FFF}\x{3040}-\x{30FF}\x{AC00}-\x{D7AF}]' "$f" | head -5
+            done
+            exit 1
+          fi
+          echo "CJK scan: clean."
 
       - name: Verify Apache 2.0 attribution chain still intact
         run: |

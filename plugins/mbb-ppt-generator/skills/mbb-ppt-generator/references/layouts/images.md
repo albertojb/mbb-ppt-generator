@@ -367,6 +367,6 @@ eng.two_col_image_grid(
 ## Cross-references
 
 - **Method index:** [`../framework/engine-api.md`](../framework/engine-api.md).
-- **Capacity matrix:** [`../layout-matrix.yaml`](../layout-matrix.yaml).
+- **Capacity matrix:** [`../api-schemas.yaml`](../api-schemas.yaml).
 - **Visual-relief slide rule (Rule 7 — at least one image slide in 8+ decks):** [`../framework/guard-rails.md`](../framework/guard-rails.md).
 - **`add_image_placeholder()` implementation:** `mbb_ppt/core.py`.

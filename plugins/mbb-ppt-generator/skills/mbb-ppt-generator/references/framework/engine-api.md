@@ -1,6 +1,6 @@
 # ExecEngine API — Quick Reference
 
-> **Loaded at S2 (Structure).** This file is a scannable index. Pick a layout method, then look up its capacity in [`layout-matrix.yaml`](../layout-matrix.yaml) and any layout-specific contract in `references/layouts/<category>.md`.
+> **Loaded at S2 (Structure).** This file is a scannable index. Pick a layout method, then look up its capacity row in [`api-cheatsheet.md`](../api-cheatsheet.md) (generated from `api-schemas.yaml`) and any layout-specific contract in `references/layouts/<category>.md`.
 >
 > The implementation lives in `mbb_ppt/engine.py`. Class is `MbbEngine`, documented as `ExecEngine`. All methods are instance methods on a single engine; each call adds one slide and increments the page counter.
 
@@ -29,7 +29,7 @@ Constructor: `MbbEngine(total_slides=30)`. Pass the actual slide count from your
 
 ## Method index
 
-The numbers in the right column point to the entry in [`layout-matrix.yaml`](../layout-matrix.yaml) where capacity limits and `char_budget` live. **Always consult the matrix before filling content** — the S3 gate enforces those numbers.
+The numbers in the right column point to the layout's entry in [`api-schemas.yaml`](../api-schemas.yaml), where capacity limits and char budgets live (surfaced in [`api-cheatsheet.md`](../api-cheatsheet.md)). **Always consult the cheatsheet before filling content** — the S3 gate enforces those numbers.
 
 ### Structure (5)
 
@@ -206,7 +206,7 @@ Backward-compat aliases retained: `FONT_HEADER` ≡ `HEADING_FONT`, `FONT_BODY` 
 
 ## Where to go next
 
-- **Capacity check before writing content:** [`../layout-matrix.yaml`](../layout-matrix.yaml).
+- **Capacity check before writing content:** [`../api-cheatsheet.md`](../api-cheatsheet.md).
 - **Production rules to validate against:** `guard-rails.md` (this directory).
 - **Layout-specific examples and wireframes:** `../layouts/<category>.md` (per layout family).
 - **Past defects and fixes:** `../../experiences/*.md` — read at S3 to avoid recurring traps.

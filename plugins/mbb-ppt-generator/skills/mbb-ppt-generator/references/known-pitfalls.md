@@ -27,11 +27,9 @@ The cover renders the title at 44pt across an 11" line. That fits **~28 effectiv
 
 Cover supports `\n` if you want explicit two-line layout — that's the safe choice for ≥ 30-char titles.
 
-## 3. Chart sub-title duplication (`grouped_bar`, `stacked_bar`)
+## 3. Chart sub-title duplication — FIXED, do not reintroduce
 
-Both chart layouts render the action title once at the top of the slide AND again at 13pt inside a 5"×0.3" box above the plot. With long action titles (≥ 38 chars), the inner sub-title wraps and pushes the chart down, triggering body-overflow at the render gate.
-
-Workaround until this is fixed in the engine: keep `title` ≤ 30 chars on chart slides, or accept the auto-fix shrink at S4.
+`grouped_bar` / `stacked_bar` (fixed v0.5.2) and `waterfall` / `line_chart` (fixed v0.6.0) used to render the action title a second time at 13pt inside a small box above the plot, which overflowed for titles ≥ 38 chars. The engine no longer does this anywhere. If you need an exhibit-level heading distinct from the action title, `insight_rail.chart.heading` + `.units` is the supported pattern — never re-render the slide title inside the chart area.
 
 ## 4. `executive_summary.desc` real budget is ~55, not 80
 
@@ -54,7 +52,7 @@ Two columns of unbroken prose is the most monotonous layout; the global S3 gate 
 `executive_summary` is the most permissive layout (3-tuple items, free-form desc) so the model funnels everything into it. The global gate caps it at 15% of content slides (≥ 1 always allowed). Substitute by content shape:
 
 - 3–4 numbered actions with rationale → `four_column` or `vertical_steps`
-- One headline number + supporting detail → `big_number_callout` or `content_right_image`
+- One headline number + supporting detail → `big_number` or `content_right_image`
 - Numbered items + side panel → `numbered_list_panel`
 - Two contrasting positions → `side_by_side` or `two_col_image_grid`
 - Ranked findings → `horizontal_bar` or `table_insight`
@@ -108,3 +106,19 @@ Anything else clamps or renders as empty.
 ## 15. Why the S3 gate ever shows `label_too_long` errors
 
 The gate enforces `max_chars` on tuple slots tagged `role: oval_label` in `api-schemas.yaml`. Char-budget violations on other slots are *not* hard-failed — they are budgets, not rules. If you see `label_too_long`, check that the value really is in slot 0 and not what you think is the title.
+
+## 16. `waterfall` accepts two `kind` vocabularies
+
+The bar kind slot accepts `'base'`/`'up'`/`'down'` (engine-native) **and** `'start'`/`'positive'`/`'negative'`/`'total'` (schema vocabulary). Before v0.6.0 the engine only matched the first set, so schema-conforming content rendered every bar as a falling bar. Both now work; `'total'` draws an absolute-value anchor bar like `'base'`.
+
+## 17. `line_chart.values` are normalized 0.0–1.0
+
+Values are fractions of the chart height, not data units — `0.85` means 85% up the y-axis. Scale your data before writing `content.json` and make the `y_labels` match the scale. (`insight_rail` charts take raw values and scale internally — the two are different on purpose.)
+
+## 18. Layout share cap — no layout > 25% of content slides
+
+Beyond the `executive_summary` 15% cap, the S3 gate fails any *other* layout driving more than 25% of content slides (floor of 2; decks under 6 content slides are exempt). If the repetition is a deliberate series — one slide per case study, per region, per option — give those slides the same `"theme"` string in `content.json`: a themed series counts as one occurrence. The gate also enforces that all slides in one theme use the *same* layout (`theme_consistency`). Vary across themes; stay consistent within a theme.
+
+## 19. `memo_text` — at most one slide per deck
+
+Like `two_column_text`, a prose memo is a document pattern, not a deck pattern. The global S3 gate caps it at one occurrence. Replace extras with `executive_summary`, `key_takeaway`, or `icon_ledger`.

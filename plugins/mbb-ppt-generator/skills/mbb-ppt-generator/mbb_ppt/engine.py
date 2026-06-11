@@ -2105,16 +2105,29 @@ class MbbEngine:
         self._footer(s, source)
         return s
 
+    # Accepted vocabulary for the waterfall bar kind. The engine's native
+    # vocabulary is 'base'/'up'/'down'/'total'; the synonyms exist because
+    # api-schemas.yaml documented 'start'/'positive'/'negative'/'total'
+    # before v0.6 and content written against either set must render
+    # correctly.
+    _WATERFALL_KINDS = {
+        'base': 'base', 'start': 'base',
+        'up': 'up', 'positive': 'up', 'increase': 'up',
+        'down': 'down', 'negative': 'down', 'decrease': 'down',
+        'total': 'total',
+    }
+
     def waterfall(self, title, items, max_val=None, legend_items=None,
-                  summary=None, source=''):
+                  summary=None, source='', group_brackets=None):
         """#49 Waterfall Chart — bridge from start to end.
-        items: list of (label, value, type) — type: 'base'|'up'|'down'.
+        items: list of (label, value, type) — type: 'base'/'start',
+               'up'/'positive', 'down'/'negative', or 'total'.
+        group_brackets: optional list of (label, first_idx, last_idx) —
+               bracket drawn under the x-axis spanning those bars
+               (inclusive, 0-based), labeling a cluster.
         """
         s = self._ns()
         add_action_title(s, title)
-        # Chart sub-title + legend
-        add_text(s, LM, Inches(1.2), Inches(6.0), Inches(0.3),
-                 title, font_size=Pt(13), font_color=DARK_GRAY, bold=True)
         if legend_items:
             for li, (ln, lc) in enumerate(legend_items):
                 lx = LM + Inches(8.0) + li * Inches(1.3)
@@ -2125,14 +2138,18 @@ class MbbEngine:
         sum_h = Inches(0.6)
         sum_y = SOURCE_Y - sum_h - Inches(0.05)  # summary flush to source
         cb = sum_y - Inches(0.4) if summary else SOURCE_Y - Inches(0.3)
+        if group_brackets:
+            # Reserve a band below the x labels for the brackets.
+            cb = min(cb, SOURCE_Y - Inches(0.85))
         cl = LM + Inches(0.3); ct = Inches(3.1); ch = cb - ct
         if max_val is None:
             max_val = max(abs(v) for _, v, _ in items) * 1.3
         bw = Inches(1.2); gp = Inches(0.4)
         running = 0; prev_top = 0
         for i, (label, val, typ) in enumerate(items):
+            typ = self._WATERFALL_KINDS.get(str(typ).lower(), 'down')
             bx = cl + i * (bw + gp)
-            if typ == 'base':
+            if typ in ('base', 'total'):
                 bh = int(ch * val / max_val); bt = cb - bh; color = NAVY; running = val
             elif typ == 'up':
                 bh = int(ch * val / max_val); bt = cb - int(ch * running / max_val) - bh
@@ -2144,13 +2161,24 @@ class MbbEngine:
             if i > 0:
                 add_hline(s, bx - gp, prev_top, gp + Inches(0.05), LINE_GRAY, Pt(0.75))
             prev_top = bt if typ != 'down' else bt + bh
-            vs = f'+{val}' if val > 0 and typ != 'base' else str(val)
+            vs = f'+{val}' if val > 0 and typ == 'up' else str(val)
             add_text(s, bx, bt - Inches(0.35), bw, Inches(0.3), vs,
                      font_size=BODY_SIZE, font_color=DARK_GRAY, bold=True,
                      alignment=PP_ALIGN.CENTER, font_name=FONT_HEADER)
             add_text(s, bx, cb + Inches(0.05), bw, Inches(0.3), label,
                      font_size=Pt(11), font_color=MED_GRAY, alignment=PP_ALIGN.CENTER)
         add_hline(s, cl, cb, Inches(11.5), LINE_GRAY, Pt(0.5))
+        if group_brackets:
+            by = cb + Inches(0.42)
+            for (g_label, i0, i1) in group_brackets:
+                x0 = cl + int(i0) * (bw + gp)
+                x1 = cl + int(i1) * (bw + gp) + bw
+                add_hline(s, x0, by, x1 - x0, MED_GRAY, Pt(1.0))
+                add_rect(s, x0, by - Inches(0.05), Pt(1.0), Inches(0.07), MED_GRAY)
+                add_rect(s, x1 - Pt(1.0), by - Inches(0.05), Pt(1.0), Inches(0.07), MED_GRAY)
+                add_text(s, x0, by + Inches(0.03), x1 - x0, Inches(0.25),
+                         g_label, font_size=FOOTNOTE_SIZE, font_color=MED_GRAY,
+                         alignment=PP_ALIGN.CENTER)
         if summary:
             add_rect(s, LM, sum_y, CW, sum_h, BG_GRAY)
             add_text(s, LM + Inches(0.3), sum_y, CW - Inches(0.6), sum_h,
@@ -2160,9 +2188,14 @@ class MbbEngine:
         return s
 
     def line_chart(self, title, x_labels, y_labels, values, legend_label='',
-                   summary=None, source=''):
+                   summary=None, source='', event_band=None, endpoint_chip=''):
         """#50 Line Chart — single line with dot approximation.
         x_labels: list[str], y_labels: list[str], values: list[float] 0.0-1.0 normalized.
+        event_band: optional (first_idx, last_idx, label) — light grey
+               vertical band over that x-range with an italic in-chart
+               annotation (event windows, downturns, policy periods).
+        endpoint_chip: optional short label (e.g. '+46%') rendered as a
+               primary-color chip at the last data point.
         """
         s = self._ns()
         add_action_title(s, title)
@@ -2172,9 +2205,19 @@ class MbbEngine:
         cb_val = sum_y - Inches(0.4) if summary else SOURCE_Y - Inches(0.3)
         cl = LM + Inches(0.8); cr = LM + CW - Inches(1.5); cw_ = cr - cl
         ct = Inches(2.5); cb = cb_val; ch = cb - ct
-        # Sub-title + legend
-        add_text(s, cl, Inches(1.2), Inches(5.0), Inches(0.3),
-                 title, font_size=Pt(13), font_color=DARK_GRAY, bold=True)
+        npt_band = max(len(x_labels) - 1, 1)
+        if event_band:
+            b0, b1, b_label = event_band
+            bx0 = cl + int(cw_ * int(b0) / npt_band)
+            bx1 = cl + int(cw_ * int(b1) / npt_band)
+            add_rect(s, bx0, ct, bx1 - bx0, cb - ct, RGBColor(0xEC, 0xEC, 0xEC))
+            if b_label:
+                t = add_text(s, bx0 - Inches(0.3), ct + Inches(0.08),
+                             (bx1 - bx0) + Inches(0.6), Inches(0.3), b_label,
+                             font_size=FOOTNOTE_SIZE, font_color=MED_GRAY,
+                             alignment=PP_ALIGN.CENTER)
+                for p in t.text_frame.paragraphs:
+                    p.font.italic = True
         if legend_label:
             add_rect(s, LM + Inches(9.0), Inches(1.25), Inches(0.3), Inches(0.15), NAVY)
             add_text(s, LM + Inches(9.4), Inches(1.2), Inches(1.5), Inches(0.3),
@@ -2201,6 +2244,24 @@ class MbbEngine:
             sw_ = x2 - x1; sy = min(y1, y2); sh_ = max(abs(y2 - y1), int(Pt(3)))
             add_rect(s, x1, sy, sw_, sh_, NAVY)
         add_hline(s, cl, cb, cw_, BLACK, Pt(0.5))
+        if endpoint_chip and values:
+            ex = cl + int(cw_ * (len(values) - 1) / max(npt - 1, 1))
+            ey = cb - int(ch * values[-1])
+            chip_w = Inches(0.32 + 0.09 * len(str(endpoint_chip)))
+            chip = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE,
+                                      min(ex - chip_w // 2, cr - chip_w),
+                                      ey - Inches(0.5), chip_w, Inches(0.34))
+            chip.fill.solid()
+            chip.fill.fore_color.rgb = NAVY
+            chip.line.fill.background()
+            _clean_shape(chip)
+            tf = chip.text_frame
+            tf.paragraphs[0].text = str(endpoint_chip)
+            tf.paragraphs[0].font.size = Pt(11)
+            tf.paragraphs[0].font.bold = True
+            tf.paragraphs[0].font.color.rgb = WHITE
+            tf.paragraphs[0].font.name = FONT_BODY
+            tf.paragraphs[0].alignment = PP_ALIGN.CENTER
         if summary:
             add_rect(s, LM, sum_y, CW, sum_h, BG_GRAY)
             add_text(s, LM + Inches(0.3), sum_y, CW - Inches(0.6), sum_h,
@@ -3789,6 +3850,487 @@ class MbbEngine:
             add_text(s, LM + Inches(4.2), ry, CW - Inches(4.4), row_h,
                      desc, font_size=BODY_SIZE, font_color=DARK_GRAY,
                      anchor=MSO_ANCHOR.MIDDLE, line_spacing=Pt(6))
+        self._footer(s, source)
+        return s
+
+    # ─── shared: bold-lead text ────────────────
+    def _add_lead_text(self, s, x, y, w, h, lead, rest,
+                       font_size=BODY_SIZE, lead_color=DARK_GRAY,
+                       rest_color=DARK_GRAY, font_name=FONT_BODY,
+                       anchor=MSO_ANCHOR.TOP):
+        """One paragraph in the consulting bullet grammar: a bold lead
+        phrase carrying the message, then regular supporting text.
+        Pass rest='' for an all-bold line.
+        """
+        txBox = s.shapes.add_textbox(x, y, w, h)
+        tf = txBox.text_frame
+        tf.word_wrap = True
+        tf.auto_size = None
+        bodyPr = tf._txBody.find(qn('a:bodyPr'))
+        anchor_map = {MSO_ANCHOR.MIDDLE: 'ctr', MSO_ANCHOR.BOTTOM: 'b',
+                      MSO_ANCHOR.TOP: 't'}
+        bodyPr.set('anchor', anchor_map.get(anchor, 't'))
+        for attr in ['lIns', 'tIns', 'rIns', 'bIns']:
+            bodyPr.set(attr, '45720')
+        p = tf.paragraphs[0]
+        p.line_spacing = Pt(font_size.pt * 1.35)
+        p.space_after = Pt(0)
+        r1 = p.add_run()
+        r1.text = str(lead) + ('. ' if rest and not str(lead).rstrip().endswith(
+            ('.', ':', '—', '-')) else (' ' if rest else ''))
+        r1.font.size = font_size
+        r1.font.name = font_name
+        r1.font.color.rgb = lead_color
+        r1.font.bold = True
+        if rest:
+            r2 = p.add_run()
+            r2.text = str(rest)
+            r2.font.size = font_size
+            r2.font.name = font_name
+            r2.font.color.rgb = rest_color
+            r2.font.bold = False
+        return txBox
+
+    def _mini_chart(self, s, chart, cl, ct, cr, cb):
+        """Draw a simple bar or line exhibit inside the given zone.
+        Used by insight_rail. chart: dict with kind ('bar'|'line'),
+        categories, values, and optional heading/units/color.
+        """
+        color = chart.get('color', NAVY)
+        cats = chart.get('categories', [])
+        vals = [float(v) for v in chart.get('values', [])]
+        zone_y = ct
+        if chart.get('heading'):
+            add_text(s, cl, zone_y, cr - cl, Inches(0.3), chart['heading'],
+                     font_size=Pt(13), font_color=DARK_GRAY, bold=True)
+            zone_y += Inches(0.3)
+        if chart.get('units'):
+            add_text(s, cl, zone_y, cr - cl, Inches(0.26), chart['units'],
+                     font_size=Pt(11), font_color=MED_GRAY)
+            zone_y += Inches(0.3)
+        gt = zone_y + Inches(0.15)           # chart grid top
+        gb = cb - Inches(0.35)               # leave room for x labels
+        gh = gb - gt
+        gw = cr - cl
+        max_val = max(vals) * 1.15 if vals else 1.0
+        add_hline(s, cl, gb, gw, BLACK, Pt(0.5))
+        n = max(len(vals), 1)
+        nd = max(n - 1, 1)                   # divisor for point spacing
+        if chart.get('kind') == 'line':
+            for j in range(len(vals) - 1):
+                x1 = cl + int(gw * j / nd); y1 = gb - int(gh * vals[j] / max_val)
+                x2 = cl + int(gw * (j + 1) / nd); y2 = gb - int(gh * vals[j + 1] / max_val)
+                add_rect(s, x1, min(y1, y2), x2 - x1,
+                         max(abs(y2 - y1), int(Pt(3))), color)
+        else:
+            slot = gw / n
+            bw = min(Inches(0.9), slot * 0.55)
+            for j, v in enumerate(vals):
+                bh = int(gh * v / max_val)
+                bx = cl + slot * j + (slot - bw) / 2
+                add_rect(s, bx, gb - bh, bw, bh, color)
+                add_text(s, bx - Inches(0.15), gb - bh - Inches(0.27),
+                         bw + Inches(0.3), Inches(0.25), f'{v:g}',
+                         font_size=FOOTNOTE_SIZE, font_color=DARK_GRAY,
+                         alignment=PP_ALIGN.CENTER)
+        for j, cat in enumerate(cats):
+            if chart.get('kind') == 'line':
+                xx = cl + int(gw * j / nd) - Inches(0.4)
+            else:
+                xx = cl + (gw / n) * j
+            add_text(s, xx, gb + Inches(0.05), gw / n if chart.get('kind') != 'line'
+                     else Inches(0.8), Inches(0.28), str(cat),
+                     font_size=SMALL_SIZE, font_color=MED_GRAY,
+                     alignment=PP_ALIGN.CENTER)
+
+    def insight_rail(self, title, chart, rail_items, rail_mode='bullets',
+                     rail_title='Key insights', source=''):
+        """#80 Insight rail — exhibit left (~2/3) + full-height primary-color
+        rail right (~1/3) carrying the so-what.
+
+        chart: dict — kind ('bar'|'line'), categories, values,
+               optional heading/units/color.
+        rail_mode 'bullets': rail_items = list of (lead, rest) — bold lead
+               phrase + supporting text; max 4.
+        rail_mode 'stats':   rail_items = list of (value, caption) — oversized
+               stat + one-line caption; max 3.
+        Rule: the rail extends the chart, it never repeats the action title.
+        """
+        s = self._ns()
+        add_action_title(s, title)
+        rail_x = LM + Inches(8.0)
+        rail_w = CW - Inches(8.0)
+        rail_y = CONTENT_TOP
+        rail_h = Inches(6.85) - rail_y
+        add_rect(s, rail_x, rail_y, rail_w, rail_h, NAVY)
+        pad = Inches(0.3)
+        ix = rail_x + pad
+        iw = rail_w - pad * 2
+        add_text(s, ix, rail_y + pad, iw, Inches(0.4), rail_title,
+                 font_size=SUB_HEADER_SIZE, font_color=WHITE, bold=True,
+                 font_name=FONT_HEADER)
+        add_hline(s, ix, rail_y + pad + Inches(0.5), Inches(1.2), WHITE, Pt(1.5))
+        items_y = rail_y + pad + Inches(0.8)
+        items_h = rail_h - pad - (items_y - rail_y)
+        if rail_mode == 'stats':
+            n = max(len(rail_items), 1)
+            cell_h = items_h / n
+            for i, (value, caption) in enumerate(rail_items):
+                cy = items_y + cell_h * i
+                add_text(s, ix, cy, iw, Inches(0.75), str(value),
+                         font_size=Pt(34), font_color=WHITE, bold=True,
+                         font_name=FONT_HEADER)
+                add_text(s, ix, cy + Inches(0.8), iw,
+                         cell_h - Inches(0.85), caption,
+                         font_size=SMALL_SIZE, font_color=LIGHT_GREEN)
+        else:
+            n = max(len(rail_items), 1)
+            cell_h = items_h / n
+            for i, item in enumerate(rail_items):
+                lead, rest = (item if isinstance(item, (list, tuple))
+                              else (item, ''))
+                self._add_lead_text(s, ix, items_y + cell_h * i, iw,
+                                    cell_h - Inches(0.1), lead, rest,
+                                    font_size=SMALL_SIZE, lead_color=WHITE,
+                                    rest_color=RGBColor(0xD5, 0xE0, 0xDA))
+        # Exhibit zone left of the rail
+        self._mini_chart(s, chart, LM, CONTENT_TOP + Inches(0.1),
+                         rail_x - Inches(0.4), Inches(6.7))
+        self._footer(s, source)
+        return s
+
+    def icon_ledger(self, title, columns, source=''):
+        """#81 Icon ledger — two titled columns of icon + label + description
+        rows separated by thin rules. Pure text-and-icon slide.
+
+        columns: list of exactly 2 dicts {header, rows}; each row is
+        (icon, label, text) where icon is an emoji or 2-char code and
+        text may be a str or (lead, rest) tuple.
+        """
+        s = self._ns()
+        add_action_title(s, title)
+        gap = Inches(0.5)
+        col_w = (CW - gap) / 2
+        for c, col in enumerate(columns[:2]):
+            cx = LM + (col_w + gap) * c
+            add_text(s, cx, CONTENT_TOP + Inches(0.05), col_w, Inches(0.4),
+                     col.get('header', ''), font_size=EMPHASIS_SIZE,
+                     font_color=NAVY, bold=True, font_name=FONT_HEADER)
+            add_hline(s, cx, CONTENT_TOP + Inches(0.5), col_w, NAVY, Pt(1.5))
+            rows = col.get('rows', [])
+            n = max(len(rows), 1)
+            rows_y = CONTENT_TOP + Inches(0.7)
+            row_h = (Inches(6.8) - rows_y) / n
+            for r, (icon, label, text) in enumerate(rows):
+                ry = rows_y + row_h * r
+                add_text(s, cx, ry + Inches(0.05), Inches(0.6), Inches(0.5),
+                         str(icon), font_size=Pt(20), font_color=NAVY,
+                         alignment=PP_ALIGN.CENTER)
+                add_text(s, cx, ry + Inches(0.55), Inches(1.25),
+                         row_h - Inches(0.6), label, font_size=Pt(11),
+                         font_color=NAVY, bold=True)
+                tx = cx + Inches(1.4)
+                tw = col_w - Inches(1.4)
+                if isinstance(text, (list, tuple)):
+                    self._add_lead_text(s, tx, ry + Inches(0.05), tw,
+                                        row_h - Inches(0.15), text[0], text[1],
+                                        font_size=SMALL_SIZE)
+                else:
+                    add_text(s, tx, ry + Inches(0.05), tw, row_h - Inches(0.15),
+                             text, font_size=SMALL_SIZE, font_color=DARK_GRAY)
+                if r < n - 1:
+                    add_hline(s, cx, ry + row_h - Inches(0.05), col_w,
+                              LINE_GRAY, Pt(0.5))
+        self._footer(s, source)
+        return s
+
+    def memo_text(self, title, paragraphs, source=''):
+        """#82 Memo text — 3-6 short prose paragraphs, bold key phrases,
+        no bullets, no exhibit. For narrative cases (deal announcements,
+        situation memos). Max one per deck (S3 gate).
+
+        paragraphs: list of (lead, rest) tuples or plain strings.
+        """
+        s = self._ns()
+        add_action_title(s, title)
+        body_w = CW * 0.85
+        n = max(len(paragraphs), 1)
+        top = CONTENT_TOP + Inches(0.2)
+        para_h = (Inches(6.8) - top) / n
+        for i, para in enumerate(paragraphs):
+            py = top + para_h * i
+            if isinstance(para, (list, tuple)):
+                self._add_lead_text(s, LM, py, body_w, para_h - Inches(0.1),
+                                    para[0], para[1], font_size=SMALL_SIZE)
+            else:
+                add_text(s, LM, py, body_w, para_h - Inches(0.1), para,
+                         font_size=SMALL_SIZE, font_color=DARK_GRAY)
+        self._footer(s, source)
+        return s
+
+    def ranked_table(self, title, headers, rows, emphasis_cells=None,
+                     col_widths=None, source=''):
+        """#83 Ranked table — rank + name + numeric columns. No cell fills;
+        structure from thin rules and whitespace. Numbers right-aligned;
+        selective bold steers the eye.
+
+        headers: list[str], first two usually ('#', 'Name').
+        rows: list of row lists (≤ 12); values rendered as str.
+        emphasis_cells: list of (row_idx, col_idx) rendered bold.
+        """
+        s = self._ns()
+        add_action_title(s, title)
+        emphasis = {(int(r), int(c)) for r, c in (emphasis_cells or [])}
+        ncol = max(len(headers), 1)
+        if col_widths:
+            widths = [Inches(w) for w in col_widths]
+        else:
+            rank_w = Inches(0.7)
+            name_w = Inches(3.2)
+            rest = (CW - rank_w - name_w) / max(ncol - 2, 1)
+            widths = [rank_w, name_w] + [rest] * (ncol - 2)
+        font_sz = SMALL_SIZE if len(rows) <= 8 else Pt(10)
+        row_h = min(Inches(0.46), (Inches(6.5) - CONTENT_TOP - Inches(0.45))
+                    / max(len(rows), 1))
+        # Header row — bold text over a single heavy rule, no fill
+        hx = LM
+        for c, h in enumerate(headers):
+            add_text(s, hx, CONTENT_TOP, widths[c], Inches(0.35), str(h),
+                     font_size=font_sz, font_color=DARK_GRAY, bold=True,
+                     alignment=PP_ALIGN.LEFT if c < 2 else PP_ALIGN.RIGHT)
+            hx += widths[c]
+        add_hline(s, LM, CONTENT_TOP + Inches(0.4), CW, BLACK, Pt(1.0))
+        y = CONTENT_TOP + Inches(0.45)
+        for r, row in enumerate(rows):
+            rx = LM
+            for c, cell in enumerate(row[:ncol]):
+                add_text(s, rx, y + Inches(0.04), widths[c], row_h - Inches(0.06),
+                         str(cell), font_size=font_sz,
+                         font_color=DARK_GRAY if (r, c) in emphasis else
+                         (MED_GRAY if c == 0 else DARK_GRAY),
+                         bold=(r, c) in emphasis or c == 0,
+                         alignment=PP_ALIGN.LEFT if c < 2 else PP_ALIGN.RIGHT)
+                rx += widths[c]
+            add_hline(s, LM, y + row_h, CW, LINE_GRAY, Pt(0.25))
+            y += row_h
+        self._footer(s, source)
+        return s
+
+    def mekko(self, title, columns, commentary=None, total_label='', source=''):
+        """#84 Mekko — 100% marimekko: column width encodes share of total,
+        stacked segments per column, optional right commentary column of
+        plain prose (no bullets).
+
+        columns: list of dicts {label, width, segments} where width is the
+                 column's share (any positive scale; normalized) and
+                 segments is [(name, pct, color?)] normalized to 100.
+        commentary: list of paragraphs (str or (lead, rest)); ≤ 3.
+        """
+        s = self._ns()
+        add_action_title(s, title)
+        seg_colors = [NAVY, ACCENT_BLUE, ACCENT_GREEN, ACCENT_ORANGE, MED_GRAY]
+        chart_r = LM + Inches(8.2) if commentary else LM + CW
+        ct = CONTENT_TOP + Inches(0.55)
+        cb = Inches(6.25)
+        ch = cb - ct
+        cw_ = chart_r - LM
+        if total_label:
+            add_text(s, LM, CONTENT_TOP, Inches(5.0), Inches(0.35), total_label,
+                     font_size=Pt(13), font_color=DARK_GRAY, bold=True,
+                     font_name=FONT_HEADER)
+        total_w = sum(float(col.get('width', 1)) for col in columns) or 1.0
+        x = LM
+        for col in columns:
+            w = int(cw_ * float(col.get('width', 1)) / total_w)
+            segs = col.get('segments', [])
+            total_pct = sum(float(p) for _, p, *_ in segs) or 1.0
+            y = ct
+            for si, seg in enumerate(segs):
+                name, pct = seg[0], float(seg[1])
+                color = seg[2] if len(seg) > 2 else seg_colors[si % len(seg_colors)]
+                h = int(ch * pct / total_pct)
+                add_rect(s, x + Pt(1), y, w - Pt(2), h - Pt(1), color)
+                if h >= Inches(0.4) and w >= Inches(1.0):
+                    add_text(s, x + Pt(1), y, w - Pt(2), h - Pt(1),
+                             f'{name} {pct:g}%', font_size=FOOTNOTE_SIZE,
+                             font_color=WHITE, alignment=PP_ALIGN.CENTER,
+                             anchor=MSO_ANCHOR.MIDDLE)
+                y += h
+            add_text(s, x, cb + Inches(0.06), w, Inches(0.3), col.get('label', ''),
+                     font_size=SMALL_SIZE, font_color=DARK_GRAY, bold=True,
+                     alignment=PP_ALIGN.CENTER)
+            share = 100.0 * float(col.get('width', 1)) / total_w
+            add_text(s, x, cb + Inches(0.34), w, Inches(0.25), f'{share:.0f}%',
+                     font_size=FOOTNOTE_SIZE, font_color=MED_GRAY,
+                     alignment=PP_ALIGN.CENTER)
+            x += w
+        if commentary:
+            cx = chart_r + Inches(0.35)
+            cw2 = LM + CW - cx
+            n = max(len(commentary), 1)
+            para_h = (cb - ct) / n
+            for i, para in enumerate(commentary):
+                if isinstance(para, (list, tuple)):
+                    self._add_lead_text(s, cx, ct + para_h * i, cw2,
+                                        para_h - Inches(0.1), para[0], para[1],
+                                        font_size=SMALL_SIZE)
+                else:
+                    add_text(s, cx, ct + para_h * i, cw2, para_h - Inches(0.1),
+                             para, font_size=SMALL_SIZE, font_color=DARK_GRAY)
+        self._footer(s, source)
+        return s
+
+    def box_roadmap(self, title, stacks, caveat='', source=''):
+        """#85 Box roadmap — 3-5 vertical stacks of boxes arranged left to
+        right as generations or options, numbered chips on arrows between
+        stacks, a name + caption under each, optional caveat box.
+
+        stacks: list of dicts {name, caption, boxes} where boxes is
+                [(text, tone)] bottom-up and tone is one of
+                'primary' | 'mid' | 'light' | 'outline'.
+        """
+        s = self._ns()
+        add_action_title(s, title)
+        tone_fill = {'primary': NAVY, 'mid': ACCENT_BLUE, 'light': LIGHT_GREEN}
+        n = max(len(stacks), 1)
+        gap = Inches(0.55)
+        stack_w = (CW - gap * (n - 1)) / n
+        boxes_bottom = Inches(5.55)
+        boxes_top = CONTENT_TOP + Inches(0.2)
+        max_boxes = max((len(st.get('boxes', [])) for st in stacks), default=1)
+        box_h = min(Inches(0.75), (boxes_bottom - boxes_top - Inches(0.08)
+                    * (max_boxes - 1)) / max_boxes)
+        for i, st in enumerate(stacks):
+            sx = LM + (stack_w + gap) * i
+            boxes = st.get('boxes', [])
+            for b, (text, tone) in enumerate(boxes):
+                by = boxes_bottom - (b + 1) * box_h - b * Inches(0.08)
+                if tone == 'outline':
+                    sh = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, sx, by,
+                                            stack_w, box_h)
+                    sh.fill.solid()
+                    sh.fill.fore_color.rgb = WHITE
+                    sh.line.color.rgb = NAVY
+                    sh.line.width = Pt(1.0)
+                    _clean_shape(sh)
+                else:
+                    add_rect(s, sx, by, stack_w, box_h,
+                             tone_fill.get(tone, NAVY))
+                add_text(s, sx + Inches(0.08), by, stack_w - Inches(0.16), box_h,
+                         text, font_size=Pt(10),
+                         font_color=DARK_GRAY if tone in ('light', 'outline')
+                         else WHITE,
+                         alignment=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+            add_text(s, sx, boxes_bottom + Inches(0.12), stack_w, Inches(0.3),
+                     st.get('name', ''), font_size=BODY_SIZE, font_color=NAVY,
+                     bold=True, alignment=PP_ALIGN.CENTER,
+                     font_name=FONT_HEADER)
+            add_text(s, sx, boxes_bottom + Inches(0.44), stack_w, Inches(0.3),
+                     st.get('caption', ''), font_size=FOOTNOTE_SIZE,
+                     font_color=MED_GRAY, alignment=PP_ALIGN.CENTER)
+            if i < n - 1:
+                ax = sx + stack_w + Inches(0.06)
+                ay = (boxes_top + boxes_bottom) / 2
+                add_hline(s, ax, ay, gap - Inches(0.12), MED_GRAY, Pt(1.5))
+                add_oval(s, ax + (gap - Inches(0.12)) / 2 - Inches(0.16),
+                         ay - Inches(0.16), str(i + 1), size=Inches(0.32))
+        if caveat:
+            cy = Inches(6.35)
+            add_rect(s, LM, cy, Inches(6.5), Inches(0.5), BG_GRAY)
+            t = add_text(s, LM + Inches(0.15), cy, Inches(6.2), Inches(0.5),
+                         caveat, font_size=FOOTNOTE_SIZE, font_color=MED_GRAY,
+                         anchor=MSO_ANCHOR.MIDDLE)
+            for p in t.text_frame.paragraphs:
+                p.font.italic = True
+        self._footer(s, source)
+        return s
+
+    def project_gantt(self, title, periods, rows, header_note='', source=''):
+        """#86 Project gantt — period columns over a light grid; per row a
+        start marker, a dotted early phase, a solid main phase, and a
+        right-aligned duration label. Optional primary-color header band.
+
+        periods: list of short column labels (≤ 16, e.g. years).
+        rows: list of dicts {label, phases, duration_label} where phases is
+              [(start, end, style)] in period units (floats allowed) and
+              style is 'dotted' | 'solid'.
+        """
+        s = self._ns()
+        add_action_title(s, title)
+        y_cursor = CONTENT_TOP + Inches(0.05)
+        if header_note:
+            add_rect(s, LM, y_cursor, CW, Inches(0.45), NAVY)
+            add_text(s, LM + Inches(0.2), y_cursor, CW - Inches(0.4),
+                     Inches(0.45), header_note, font_size=Pt(13),
+                     font_color=WHITE, bold=True, anchor=MSO_ANCHOR.MIDDLE,
+                     font_name=FONT_HEADER)
+            y_cursor += Inches(0.6)
+        # Legend strip
+        ly = y_cursor
+        lx = LM + CW - Inches(4.6)
+        add_rect(s, lx, ly + Inches(0.1), Inches(0.14), Inches(0.14), NAVY)
+        add_text(s, lx + Inches(0.2), ly, Inches(0.7), Inches(0.3), 'Start',
+                 font_size=FOOTNOTE_SIZE, font_color=MED_GRAY)
+        for d in range(3):
+            add_rect(s, lx + Inches(0.95) + d * Inches(0.12), ly + Inches(0.14),
+                     Inches(0.06), Inches(0.06), MED_GRAY)
+        add_text(s, lx + Inches(1.4), ly, Inches(1.1), Inches(0.3),
+                 'Early phase', font_size=FOOTNOTE_SIZE, font_color=MED_GRAY)
+        add_rect(s, lx + Inches(2.55), ly + Inches(0.12), Inches(0.5),
+                 Inches(0.12), NAVY)
+        add_text(s, lx + Inches(3.15), ly, Inches(1.3), Inches(0.3),
+                 'Main phase', font_size=FOOTNOTE_SIZE, font_color=MED_GRAY)
+        grid_top = y_cursor + Inches(0.4)
+        grid_bottom = Inches(6.3)
+        label_w = Inches(2.2)
+        gx = LM + label_w
+        gw = CW - label_w - Inches(0.9)     # room for duration labels
+        np_ = max(len(periods), 1)
+        # Light column grid + period labels
+        for i in range(np_ + 1):
+            vx = gx + int(gw * i / np_)
+            add_rect(s, vx, grid_top, Pt(0.5), grid_bottom - grid_top,
+                     RGBColor(0xE4, 0xE4, 0xE4))
+        for i, p_label in enumerate(periods):
+            add_text(s, gx + int(gw * i / np_), grid_bottom + Inches(0.05),
+                     int(gw / np_), Inches(0.28), str(p_label),
+                     font_size=FOOTNOTE_SIZE, font_color=MED_GRAY,
+                     alignment=PP_ALIGN.CENTER)
+        n_rows = max(len(rows), 1)
+        row_h = (grid_bottom - grid_top) / n_rows
+        for r, row in enumerate(rows):
+            ry = grid_top + row_h * r
+            bar_cy = ry + row_h / 2
+            add_text(s, LM, ry, label_w - Inches(0.15), row_h,
+                     row.get('label', ''), font_size=SMALL_SIZE,
+                     font_color=DARK_GRAY, bold=True, anchor=MSO_ANCHOR.MIDDLE)
+            phases = row.get('phases', [])
+            bar_end_x = gx
+            for (p_start, p_end, style) in phases:
+                x1 = gx + int(gw * float(p_start) / np_)
+                x2 = gx + int(gw * float(p_end) / np_)
+                bar_end_x = max(bar_end_x, x2)
+                if style == 'dotted':
+                    dot = Inches(0.07)
+                    step = Inches(0.14)
+                    x = x1
+                    while x + dot <= x2:
+                        add_rect(s, x, bar_cy - dot / 2, dot, dot, MED_GRAY)
+                        x += step
+                else:
+                    add_rect(s, x1, bar_cy - Inches(0.09), x2 - x1,
+                             Inches(0.18), NAVY)
+            if phases:
+                mx = gx + int(gw * float(phases[0][0]) / np_) - Inches(0.07)
+                add_rect(s, mx, bar_cy - Inches(0.07), Inches(0.14),
+                         Inches(0.14), NAVY)
+            if row.get('duration_label'):
+                add_text(s, bar_end_x + Inches(0.08), bar_cy - Inches(0.14),
+                         LM + CW - bar_end_x - Inches(0.08), Inches(0.28),
+                         row['duration_label'], font_size=FOOTNOTE_SIZE,
+                         font_color=NAVY, bold=True)
+            if r < n_rows - 1:
+                add_hline(s, gx, ry + row_h, gw, LINE_GRAY, Pt(0.25))
         self._footer(s, source)
         return s
 

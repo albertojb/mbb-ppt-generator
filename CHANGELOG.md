@@ -6,6 +6,56 @@ This project is an Apache 2.0-licensed adaptation of [`Mck-ppt-design-skill`](ht
 
 ---
 
+## [0.6.0] — 2026-06-11 (archetype layouts, layout-usage variability, skill audit)
+
+Three workstreams from `HANDOFF.md`: seven new layouts adapted from a 48-slide consulting-deck archetype study, mechanical layout-usage variability (the generalization of the v0.5.0 `executive_summary` cap), and a speed / token / contradicting-rules audit of the whole skill. Plus an English-only hardening pass requested alongside.
+
+### Added engine layouts (archetype batch)
+
+- **`insight_rail(title, chart, rail_items, rail_mode='bullets', rail_title='Key insights', source='')`** — exhibit left (~2/3, native bar or line with optional heading + units lines) + full-height primary-color rail right carrying the so-what, in two modes: `bullets` (≤ 4 bold-lead bullets) or `stats` (≤ 3 oversized numbers with captions). The single most common consulting-deck pattern that the engine lacked.
+- **`icon_ledger(title, columns, source='')`** — two titled columns of icon + label + bold-lead description rows separated by thin rules. Pure text-and-icon factor slide (drivers/enablers, demand/supply).
+- **`memo_text(title, paragraphs, source='')`** — 3-6 prose paragraphs with bold lead phrases; no bullets, no exhibit. For narrative cases (deal announcements). Hard-capped at 1 per deck.
+- **`ranked_table(title, headers, rows, emphasis_cells=None, col_widths=None, source='')`** — rank + name + numeric columns, ≤ 12 rows; no cell fills, thin rules only, numbers right-aligned, selective bold via `emphasis_cells`.
+- **`mekko(title, columns, commentary=None, total_label='', source='')`** — 100% marimekko (column width encodes share of total, normalized by the engine) with in-segment labels, per-column share line, optional total callout and right prose-commentary column.
+- **`box_roadmap(title, stacks, caveat='', source='')`** — 3-5 vertical stacks of toned boxes (`primary`/`mid`/`light`/`outline`) as generations or options, numbered chips on arrows between stacks, name + caption under each, optional italic caveat box.
+- **`project_gantt(title, periods, rows, header_note='', source='')`** — period grid (≤ 16 columns) with per-row start marker, dotted early phase, solid main phase, and right-aligned duration label; optional primary-color header band; legend strip generated automatically.
+
+### Extended engine layouts
+
+- **`waterfall`** — accepts both `kind` vocabularies (`'base'/'up'/'down'` engine-native **and** `'start'/'positive'/'negative'/'total'` as documented in the schema; before this, schema-conforming content rendered every bar as a falling bar — audit finding #1). New optional `group_brackets=[(label, first_idx, last_idx)]` draws labeled brackets under bar clusters. The duplicate 13pt chart sub-title (the defect v0.5.2 removed from `grouped_bar`/`stacked_bar`) is now removed here too.
+- **`line_chart`** — new optional `event_band=(first_idx, last_idx, label)` (grey band + italic in-chart annotation) and `endpoint_chip='+46%'` (primary-color chip at the last point). Duplicate sub-title removed as above.
+
+Archetypes deliberately **not** added, with reasons recorded in the session report: editorial cover (cover settled in v0.5.2), small multiples (`multi_bar_panel` covers it), prose exec summary (`executive_summary`/`key_takeaway` cover it), stat-card matrix (`metric_cards`/`three_stat` cover it), logo tables (require image assets the text-first engine doesn't ship), cost curve and survey waffle/rank-chips (deferred to backlog).
+
+### Layout-usage variability (S3 gate)
+
+- **Layout share cap** — no single layout may exceed 25% of content slides (floor allowance 2; decks under 6 content slides exempt; `executive_summary` keeps its stricter 15% check). New check `layout_share_cap`.
+- **Theme tags** — slides may declare `"theme": "<string>"` in `content.json`. A themed series counts as **one** occurrence toward the share cap (deliberate repetition — case studies, per-region pages — is consistency, not monotony), and the new `theme_consistency` check fails any theme that spans more than one layout. Vary across themes; stay consistent within a theme.
+- **Hard count caps generalized** — `two_column_text` (1) joined by `memo_text` (1) in a single `HARD_COUNT_CAPS` table.
+- `insight_rail`, `mekko`, `box_roadmap`, `project_gantt` count toward the visual-density floor.
+
+### Audit — speed / tokens / contradictions (fixes applied)
+
+- **Speed:** measured content gate 0.4 s and render gate 0.9 s for a 30-slide deck, save+cleanup 60 ms — runtime is not a cost driver; no code changes warranted. The cost drivers are token loading and gate round-trips (the latter stays on the roadmap as render-gate auto-fix).
+- **Tokens:** S2 no longer requires the full `api-schemas.yaml` (~18K tokens) — the generated cheatsheet is the S2 read and the schema is for single-layout spot-lookups (SKILL.md §4/§5, INDEX.md, HARD RULE 8). HARD RULE 8's "~10K tokens" undercount for the 12 layout files corrected to ~55K with stronger lazy-load wording. SKILL.md §6's hand-maintained capacity table (drift-prone duplicate of the schema) replaced by a pointer plus the cross-layout traps.
+- **Contradictions fixed:** schema-vs-engine `waterfall` kind vocabulary (above); `INDEX.md` routed S2 at the deleted `layout-matrix.yaml` and listed two nonexistent files (`color-palette.md`, `layout-catalog.md`); ~30 dangling `layout-matrix.yaml` links across `guard-rails.md`, `engine-api.md`, `planning-guide.md`, and all 12 `references/layouts/*.md`; SKILL.md §4 and §5 disagreed on S2 required reading; the SKILL.md quick-start example violated HARD RULE 9 (cover + closing by default); Rules 15/18 documented a 4:3-era content boundary (9.5") and page-number lock (9.3") that nothing enforces — docs now state the real enforcement (`qa.py` slide bounds; `add_page_number` at 12.2") and the dead constants in `constants.py` are marked legacy; the S3 gate's `executive_summary` message recommended nonexistent `big_number_callout` (now `big_number`, also fixed in known-pitfalls); stale "67 layout methods" counts in SKILL.md / plugin.json / README (now 83); `planning-guide.md` header mis-stated its own load stage and section numbers.
+
+### English-only hardening (no CJK, no Tencent)
+
+- Upstream Chinese auto-fix patterns in `review.py` (hedging/compression regexes and CJK punctuation handling) replaced with conservative English equivalents — the auto-fix path now actually does something for English decks instead of being a guaranteed no-op.
+- New CI step fails the build if any tracked source file contains literal CJK characters. (The Tencent Hunyuan integration was already deleted in v0.2.0; the engine has no network calls, and the existing brand-leakage scan already blocks `tencent`/`hunyuan` references.)
+- Checked upstream `likaku/Mck-ppt-design-skill` for portable updates: only a README edit since the `v2.3.3-harness-v2` fork point; nothing to port.
+
+### Tests
+
+- 44/44 passing (was 37/37). New: `test_v060_new_layouts_render_clean`, `test_v060_layouts_pass_content_gate`, `test_waterfall_accepts_both_kind_vocabularies`, `test_layout_share_cap_fails_on_untagged_repetition`, `test_layout_share_cap_allows_themed_series`, `test_theme_consistency_fails_on_mixed_layouts`, `test_memo_text_hard_cap`.
+
+### Roadmap note
+
+The process-discipline milestone formerly planned as v0.6.0 (S2 storyboarding gate, render-gate auto-fix, stronger section_divider) moves to **v0.7.0**, per `HANDOFF.md` which made this batch the v0.6.0 priority.
+
+---
+
 ## [0.5.4] — 2026-05-09 (round out the v0.5.x layout catalog)
 
 Closes the remaining four post-mortem § 4 layouts. Combined with v0.5.3, the engine now ships all eight new layouts the post-mortem requested.

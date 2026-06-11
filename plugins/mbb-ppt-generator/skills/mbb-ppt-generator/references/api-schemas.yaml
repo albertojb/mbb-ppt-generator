@@ -63,9 +63,26 @@ global_constraints:
   two_column_text:
     max_per_deck: 1
     rationale: "Two columns of unbroken prose is the most monotonous layout."
+  memo_text:
+    max_per_deck: 1
+    rationale: "Prose memo slide; more than one per deck reads as a document, not a deck."
   executive_summary:
     max_pct_of_content_slides: 0.15
     rationale: "Most permissive layout; over-using produces visually identical decks."
+  layout_share_cap:
+    max_pct_of_content_slides: 0.25
+    floor_allowance: 2
+    triggers_at_n_content_slides: 6
+    theme_exemption: >-
+      Slides may declare an optional "theme" string in content.json. All
+      slides of one layout sharing a theme count as ONE occurrence toward
+      the cap — a deliberate series (five case studies tagged
+      "case-studies") is consistency, not monotony. Does not bypass the
+      stricter executive_summary cap or hard per-deck caps.
+    rationale: "Vary layouts across themes; no single layout may dominate a deck."
+  theme_consistency:
+    rule: "All slides sharing a theme tag must use the same layout."
+    rationale: "Thematically parallel slides must reuse the same template so they read as one series."
   visual_density_floor:
     formula: "max(2, N // 4)"
     triggers_at_n_content_slides: 6
@@ -1036,25 +1053,30 @@ layouts:
     pattern: 50
     family: charts
     status: active
-    signature: "(title, x_labels, y_labels, values, legend_label='', summary=None, source='')"
-    summary: "#50 Single-line trend."
+    signature: "(title, x_labels, y_labels, values, legend_label='', summary=None, source='', event_band=None, endpoint_chip='')"
+    summary: "#50 Single-line trend; optional event band + endpoint delta chip."
     requires: [source, action_title]
     visual: true
     params:
       title:        {kind: scalar, type: str, required: true, max_chars: 30}
       x_labels:     {kind: list, required: true, max: 12, item: {kind: scalar, type: str, max_chars: 8}}
       y_labels:     {kind: list, required: true, item: {kind: scalar, type: str, max_chars: 8}}
-      values:       {kind: list, required: true, item: {kind: scalar, type: float}}
+      values:       {kind: list, required: true, item: {kind: scalar, type: float, notes: "Normalized 0.0-1.0 of chart height."}}
       legend_label: {kind: scalar, type: str, max_chars: 25}
       summary:      {kind: tuple, arity: 2}
       source:       {kind: scalar, type: str, max_chars: 80}
+      event_band:
+        kind: tuple
+        arity: 3
+        notes: "(first_idx, last_idx, label) — grey band over that x-range with italic annotation. Indices into x_labels."
+      endpoint_chip: {kind: scalar, type: str, max_chars: 8, notes: "Short delta label ('+46%') chip at the last point."}
 
   waterfall:
     pattern: 49
     family: charts
     status: active
-    signature: "(title, items, max_val=None, legend_items=None, summary=None, source='')"
-    summary: "#49 Waterfall bridge from start to end."
+    signature: "(title, items, max_val=None, legend_items=None, summary=None, source='', group_brackets=None)"
+    summary: "#49 Waterfall bridge from start to end; optional group brackets under the axis."
     requires: [source, action_title]
     visual: true
     params:
@@ -1068,12 +1090,22 @@ layouts:
           arity: 3
           slots:
             - {name: label, type: str, max_chars: 18}
-            - {name: value, type: float, notes: "Signed; positive bars rise, negative drop, 0 = total bar."}
-            - {name: kind,  type: str, notes: "'start' | 'positive' | 'negative' | 'total'."}
+            - {name: value, type: float, notes: "Signed; positive bars rise, negative drop. 'total' bars use the absolute end value."}
+            - {name: kind,  type: str, notes: "'base'/'start' | 'up'/'positive' | 'down'/'negative' | 'total' — both vocabularies accepted."}
       max_val:      {kind: scalar, type: float}
       legend_items: {kind: list, item: {kind: tuple, arity: 2}}
       summary:      {kind: tuple, arity: 2}
       source:       {kind: scalar, type: str, max_chars: 80}
+      group_brackets:
+        kind: list
+        item:
+          kind: tuple
+          arity: 3
+          slots:
+            - {name: label, type: str, max_chars: 22}
+            - {name: first_idx, type: int, notes: "0-based index of the first bar in the cluster."}
+            - {name: last_idx,  type: int, notes: "0-based index of the last bar (inclusive)."}
+        notes: "Brackets under the x-axis labeling bar clusters ('Primary supply')."
 
   pareto:
     pattern: 51
@@ -1748,4 +1780,230 @@ layouts:
         dict_keys:
           headline: {type: str, max_chars: 40}
           metrics:  {kind: list, item: {kind: tuple, arity: 2}, max: 4}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  # ────────────────────────────────────────────────────────────────
+  # v0.6.0 layouts — adapted from observed consulting-deck archetypes
+  # (exhibit + insight rail, icon ledger, memo, ranked table, mekko,
+  # box roadmap, project gantt). Forest-green token system throughout.
+  # ────────────────────────────────────────────────────────────────
+
+  insight_rail:
+    pattern: 80
+    family: charts
+    status: active
+    signature: "(title, chart, rail_items, rail_mode='bullets', rail_title='Key insights', source='')"
+    summary: "#80 Insight rail — exhibit left (~2/3) + full-height primary rail right with bullets or oversized stats."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 110}
+      chart:
+        kind: dict
+        required: true
+        dict_keys:
+          kind:       {type: str, required: true, notes: "'bar' | 'line'."}
+          categories: {kind: list, required: true, max: 8, item: {kind: scalar, type: str, max_chars: 8}}
+          values:     {kind: list, required: true, item: {kind: scalar, type: float}, notes: "Raw values; engine scales."}
+          heading:    {type: str, max_chars: 30, notes: "Bold exhibit name above the chart."}
+          units:      {type: str, max_chars: 30, notes: "Grey units line ('USD m', 'kt') under the heading."}
+          color:      {role: color}
+      rail_items:
+        kind: list
+        required: true
+        max: 4
+        item:
+          kind: tuple
+          arity: 2
+          slots:
+            - {name: lead_or_value, type: str, max_chars: 60, notes: "bullets mode: bold lead phrase. stats mode: oversized stat ('+65%') — keep under 8 chars."}
+            - {name: rest_or_caption, type: str, max_chars: 110, notes: "bullets mode: supporting text. stats mode: one-line caption."}
+      rail_mode:  {kind: scalar, type: str, default: bullets, notes: "'bullets' (max 4 items) | 'stats' (max 3 items)."}
+      rail_title: {kind: scalar, type: str, max_chars: 20, default: "Key insights"}
+      source:     {kind: scalar, type: str, max_chars: 80}
+
+  icon_ledger:
+    pattern: 81
+    family: frameworks
+    status: active
+    signature: "(title, columns, source='')"
+    summary: "#81 Icon ledger — two titled columns of icon + label + bold-lead description rows; thin rules between rows."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 110}
+      columns:
+        kind: list
+        required: true
+        exact: 2
+        item:
+          kind: dict
+          dict_keys:
+            header: {type: str, required: true, max_chars: 35}
+            rows:
+              kind: list
+              required: true
+              max: 4
+              item:
+                kind: tuple
+                arity: 3
+                slots:
+                  - {name: icon,  type: str, max_chars: 4, notes: "Single emoji or 2-char code."}
+                  - {name: label, type: str, max_chars: 12}
+                  - {name: text,  type: str, max_chars: 120, notes: "str, or (lead, rest) tuple for bold-lead grammar."}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  memo_text:
+    pattern: 82
+    family: narrative
+    status: active
+    signature: "(title, paragraphs, source='')"
+    summary: "#82 Memo text — 3-6 prose paragraphs with bold key phrases, no bullets, no exhibit. Max 1 per deck."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 110}
+      paragraphs:
+        kind: list
+        required: true
+        min: 2
+        max: 6
+        item:
+          kind: tuple
+          arity: 2
+          slots:
+            - {name: lead, type: str, max_chars: 60, notes: "Bold opening phrase carrying the message."}
+            - {name: rest, type: str, max_chars: 240}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  ranked_table:
+    pattern: 83
+    family: data
+    status: active
+    signature: "(title, headers, rows, emphasis_cells=None, col_widths=None, source='')"
+    summary: "#83 Ranked table — rank + name + numeric columns; no fills, thin rules, right-aligned numbers, selective bold."
+    requires: [source, action_title]
+    visual: false
+    params:
+      title:   {kind: scalar, type: str, required: true, max_chars: 110}
+      headers: {kind: list, required: true, max: 6, item: {kind: scalar, type: str, max_chars: 14}}
+      rows:
+        kind: list
+        required: true
+        max: 12
+        item: {kind: list, item: {kind: scalar, type: str, max_chars: 30}, notes: "First cell = rank, second = name, rest numeric (right-aligned). 'N/A' allowed."}
+      emphasis_cells: {kind: list, item: {kind: tuple, arity: 2}, notes: "(row_idx, col_idx) pairs rendered bold to direct the eye."}
+      col_widths:     {kind: list, item: {kind: scalar, type: float}, notes: "Optional Inches per column; defaults 0.7 rank + 3.2 name + even split."}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  mekko:
+    pattern: 84
+    family: charts
+    status: active
+    signature: "(title, columns, commentary=None, total_label='', source='')"
+    summary: "#84 Mekko — 100% marimekko (column width = share of total) + optional right prose commentary."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 110}
+      columns:
+        kind: list
+        required: true
+        min: 2
+        max: 6
+        item:
+          kind: dict
+          dict_keys:
+            label:   {type: str, required: true, max_chars: 14}
+            width:   {type: float, required: true, notes: "Column share of total (any positive scale; engine normalizes)."}
+            segments:
+              kind: list
+              required: true
+              max: 5
+              item:
+                kind: tuple
+                arity: 2
+                slots:
+                  - {name: name, type: str, max_chars: 12}
+                  - {name: pct,  type: float, notes: "Segment share within the column; engine normalizes to 100."}
+                notes: "An optional 3rd slot overrides the color (role: color)."
+      commentary:
+        kind: list
+        max: 3
+        item:
+          kind: tuple
+          arity: 2
+          slots:
+            - {name: lead, type: str, max_chars: 50}
+            - {name: rest, type: str, max_chars: 160}
+        notes: "Right-column prose paragraphs (no bullets). Omit to give the mekko full width."
+      total_label: {kind: scalar, type: str, max_chars: 40, notes: "Total callout above the chart ('Total = USD 4.2 bn, 2025')."}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  box_roadmap:
+    pattern: 85
+    family: frameworks
+    status: active
+    signature: "(title, stacks, caveat='', source='')"
+    summary: "#85 Box roadmap — 3-5 vertical stacks of toned boxes as generations/options, numbered chips on arrows, optional caveat."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title: {kind: scalar, type: str, required: true, max_chars: 110}
+      stacks:
+        kind: list
+        required: true
+        min: 3
+        max: 5
+        item:
+          kind: dict
+          dict_keys:
+            name:    {type: str, required: true, max_chars: 16}
+            caption: {type: str, max_chars: 28, notes: "Performance range under the name ('100-200 Wh/kg')."}
+            boxes:
+              kind: list
+              required: true
+              max: 4
+              item:
+                kind: tuple
+                arity: 2
+                slots:
+                  - {name: text, type: str, max_chars: 24}
+                  - {name: tone, type: str, notes: "'primary' | 'mid' | 'light' | 'outline' — encodes layer type."}
+                notes: "Boxes listed bottom-up."
+      caveat: {kind: scalar, type: str, max_chars: 110, notes: "Italic caveat box at bottom-left."}
+      source: {kind: scalar, type: str, max_chars: 80}
+
+  project_gantt:
+    pattern: 86
+    family: process
+    status: active
+    signature: "(title, periods, rows, header_note='', source='')"
+    summary: "#86 Project gantt — period grid; per row a start marker, dotted early phase, solid main phase, duration label."
+    requires: [source, action_title]
+    visual: true
+    params:
+      title:   {kind: scalar, type: str, required: true, max_chars: 110}
+      periods: {kind: list, required: true, max: 16, item: {kind: scalar, type: str, max_chars: 6}}
+      rows:
+        kind: list
+        required: true
+        max: 6
+        item:
+          kind: dict
+          dict_keys:
+            label: {type: str, required: true, max_chars: 22}
+            phases:
+              kind: list
+              required: true
+              max: 3
+              item:
+                kind: tuple
+                arity: 3
+                slots:
+                  - {name: start, type: float, notes: "In period units (0 = left edge of first period)."}
+                  - {name: end,   type: float}
+                  - {name: style, type: str, notes: "'dotted' (early phase) | 'solid' (main phase)."}
+            duration_label: {type: str, max_chars: 10, notes: "Right-aligned label after the bar ('11-15 yrs')."}
+      header_note: {kind: scalar, type: str, max_chars: 90, notes: "Primary-color band above the grid with a bold descriptor."}
       source: {kind: scalar, type: str, max_chars: 80}

@@ -2,7 +2,7 @@
 
 > **Loaded on demand at S4 (Render).** Open this file when rendering `timeline`, `vertical_steps`, `process_chevron`, `value_chain`, `decision_tree`, `agenda`, or `action_items`. Despite the filename, this covers all sequence / dependency layouts.
 >
-> Capacity in [`../layout-matrix.yaml`](../layout-matrix.yaml).
+> Capacity in [`../api-schemas.yaml`](../api-schemas.yaml).
 
 ---
 
@@ -444,6 +444,6 @@ eng.action_items(
 ## Cross-references
 
 - **Method index:** [`../framework/engine-api.md`](../framework/engine-api.md).
-- **Capacity matrix:** [`../layout-matrix.yaml`](../layout-matrix.yaml).
+- **Capacity matrix:** [`../api-schemas.yaml`](../api-schemas.yaml).
 - **Past process-layout defects:** [`../../experiences/overflow.md`](../../experiences/overflow.md), [`../../experiences/layout-pitfalls.md`](../../experiences/layout-pitfalls.md).
 - **Rule 8 (dynamic sizing for variable counts) + Rule 10 (horizontal overflow):** [`../framework/guard-rails.md`](../framework/guard-rails.md).

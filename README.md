@@ -54,7 +54,7 @@ In any Cowork session:
 
 - **Sober design**: forest-green primary, white background, sans-serif throughout (DM Sans + Arial). No McKinsey navy.
 - **Conclusion-led titles**: action titles stated as findings ("Margin pressure is concentrated in two product lines"), not topics ("Margin analysis").
-- **Visual variety**: 67 layout methods including charts (`grouped_bar`, `line_chart`, `donut`, `pareto`, `waterfall`), frameworks (`matrix_2x2`, `swot`, `risk_matrix`, `harvey_ball_table`), processes (`process_chevron`, `timeline`, `value_chain`), and dashboards.
+- **Visual variety**: 83 layout methods including charts (`grouped_bar`, `line_chart`, `donut`, `pareto`, `waterfall`), frameworks (`matrix_2x2`, `swot`, `risk_matrix`, `harvey_ball_table`), processes (`process_chevron`, `timeline`, `value_chain`), and dashboards.
 - **Machine-validated**: an S3 content gate enforces tuple arities, character budgets, and the visual-density floor (≥ 2 chart/diagram/image layouts in 6+ slide decks). An S4 render gate runs post-render QA. `passed` is a Python boolean derived by program logic, not a verbal claim.
 - **Self-refining**: pattern-level fixes accumulate in `experiences/*.md`. A missed defect today is a blocked defect tomorrow.
 - **Five-stage workflow**: brief → outline → content → render+QA → deliver. Fast Track activates automatically for ≤ 5 content slides.

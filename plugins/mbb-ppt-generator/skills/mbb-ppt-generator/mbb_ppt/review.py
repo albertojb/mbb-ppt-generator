@@ -307,40 +307,36 @@ class SlideReviewer:
 #   4. Restructure bullets — within the same box
 #   5. Font micro-adjust — shrink font within guard rails as last resort
 #
-# NOTE: The redundancy and compression patterns below target Chinese-language
-# verbose constructions (e.g. "从某种意义上说", "因为A所以B"). For an English
-# deck, these regex patterns simply do not match — the auto-fix path is a
-# no-op for English text. Retained verbatim from the upstream skill so a
-# future bilingual fork can re-enable them without code changes.
+# NOTE: This skill is English-only. The upstream Chinese-language patterns
+# were removed (policy: no CJK content anywhere in the payload — the CI
+# leakage scan enforces this). The patterns below are conservative English
+# equivalents: each removes filler that never changes meaning, so the
+# auto-fix path can shorten overflowing text without rewriting the message.
 #
 # Works directly on the .pptx shapes (post-generation fix).
 # ═══════════════════════════════════════════════════════════════
 
-# Mapping of English jargon → Chinese replacement
+# Jargon replacement map.
 # DISABLED: English domain terms (selling motion, business acumen, playbook,
-# deal review, etc.) are intentional professional vocabulary — do NOT translate.
+# deal review, etc.) are intentional professional vocabulary — do NOT replace.
 _LANG_REPLACEMENTS = {}
 
 # Redundancy patterns: (regex, replacement_or_empty)
 _REDUNDANCY_PATTERNS = [
-    # Remove weak hedging
-    (re.compile(r'(?:从某种意义上说|在一定程度上|可以说是)'), ''),
-    # Remove trailing "等" after a clear list
-    (re.compile(r'([^、]+、[^、]+)等(?=[。，])'), r'\1'),
-    # Collapse "进行XX" → "XX"
-    (re.compile(r'进行([\u4e00-\u9fff]{2,4})'), r'\1'),
-    # Remove "的话"
-    (re.compile(r'的话(?=[，。；])'), ''),
+    # Remove weak hedging openers at clause start
+    (re.compile(r'(?i)\b(?:in a sense|to some extent|it is worth noting that|'
+                r'it should be noted that|needless to say),?\s*'), ''),
+    # Remove filler adverbs that add no content
+    (re.compile(r'(?i)\b(?:basically|essentially|simply put),?\s+'), ''),
 ]
 
 # Sentence compression: simplify common verbose patterns
 _COMPRESSION_PATTERNS = [
-    # "因为A所以B" → "A → B"  (for bullet-style text)
-    (re.compile(r'因为(.{4,20})(?:，|,)所以(.{4,20})'), r'\1 → \2'),
-    # "不仅...而且..." → combine
-    (re.compile(r'不仅(.{3,15})(?:，|,)而且(.{3,15})'), r'\1，且\2'),
-    # "通过...来实现..." simplify
-    (re.compile(r'通过(.{3,15})来实现(.{3,15})'), r'\1实现\2'),
+    (re.compile(r'(?i)\bdue to the fact that\b'), 'because'),
+    (re.compile(r'(?i)\bin the event that\b'), 'if'),
+    (re.compile(r'(?i)\bin order to\b'), 'to'),
+    (re.compile(r'(?i)\bhas the ability to\b'), 'can'),
+    (re.compile(r'(?i)\bat this point in time\b'), 'now'),
 ]
 
 
@@ -617,9 +613,9 @@ class AutoFixPipeline:
                 text = original
                 for pattern, replacement in _COMPRESSION_PATTERNS:
                     text = pattern.sub(replacement, text)
-                # Also: strip trailing punctuation repetition
-                text = re.sub(r'[。]{2,}', '。', text)
-                text = re.sub(r'[，]{2,}', '，', text)
+                # Also: strip punctuation repetition and doubled spaces
+                text = re.sub(r',{2,}', ',', text)
+                text = re.sub(r' {2,}', ' ', text)
                 if text != original:
                     run.text = text
                     changed = True
@@ -638,17 +634,17 @@ class AutoFixPipeline:
                 original = text
 
                 # If text has semicolons with 3+ clauses, trim to first 2
-                if '；' in text:
-                    parts = text.split('；')
+                if ';' in text:
+                    parts = text.split(';')
                     if len(parts) > 2:
-                        text = '；'.join(parts[:2])
+                        text = ';'.join(parts[:2])
                         changed = True
 
                 # If text has commas with many clauses (>3), trim
-                if text.count('，') > 3:
-                    parts = text.split('，')
+                if text.count(',') > 3:
+                    parts = text.split(',')
                     if len(parts) > 4:
-                        text = '，'.join(parts[:3]) + '。'
+                        text = ','.join(parts[:3]) + '.'
                         changed = True
 
                 if text != original:

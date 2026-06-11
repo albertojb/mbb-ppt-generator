@@ -277,7 +277,7 @@ Never compute page-number position dynamically. Lock it.
 
 ## Cross-references
 
-- **Capacity limits per layout** (max items, char_budget): [`../layout-matrix.yaml`](../layout-matrix.yaml).
+- **Capacity limits per layout** (max items, char budgets, tuple shapes): [`../api-schemas.yaml`](../api-schemas.yaml) (single source of truth), surfaced per layout in [`../api-cheatsheet.md`](../api-cheatsheet.md).
 - **Anti-patterns and historic defects:** [`../../experiences/`](../../experiences/) — read at S3 before writing content.
 - **Gate scripts:** [`../scripts/gate_check_content.py`](../scripts/gate_check_content.py) (S3), [`../scripts/gate_check_render.py`](../scripts/gate_check_render.py) (S4).
 - **Engine source (authoritative):** `../../mbb_ppt/engine.py`, `../../mbb_ppt/core.py`.

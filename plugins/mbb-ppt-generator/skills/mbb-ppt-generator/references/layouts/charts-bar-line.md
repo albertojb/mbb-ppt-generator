@@ -306,6 +306,6 @@ eng.line_chart(
 ## Cross-references
 
 - **Method index:** [`../framework/engine-api.md`](../framework/engine-api.md).
-- **Capacity matrix:** [`../layout-matrix.yaml`](../layout-matrix.yaml).
+- **Capacity matrix:** [`../api-schemas.yaml`](../api-schemas.yaml).
 - **Past chart-capacity issues:** [`../../experiences/chart-limits.md`](../../experiences/chart-limits.md).
 - **Rule 4 (legend color consistency):** [`../framework/guard-rails.md`](../framework/guard-rails.md).

@@ -2,7 +2,7 @@
 
 > **Loaded on demand at S4 (Render).** Open this file when rendering `waterfall`, `pareto`, `stacked_area`, `bubble`, `kpi_tracker`, or `multi_bar_panel`. These are the more visually complex chart layouts; each has specific data shape requirements that are easy to get wrong.
 >
-> Capacity in [`../layout-matrix.yaml`](../layout-matrix.yaml).
+> Capacity in [`../api-schemas.yaml`](../api-schemas.yaml).
 
 ---
 
@@ -403,7 +403,7 @@ For most decks, use `grouped_bar` instead — it's simpler. Reach for `multi_bar
 ## Cross-references
 
 - **Method index:** [`../framework/engine-api.md`](../framework/engine-api.md).
-- **Capacity matrix:** [`../layout-matrix.yaml`](../layout-matrix.yaml).
+- **Capacity matrix:** [`../api-schemas.yaml`](../api-schemas.yaml).
 - **Past chart-capacity issues:** [`../../experiences/chart-limits.md`](../../experiences/chart-limits.md).
 - **Rule 4 (legend color consistency):** [`../framework/guard-rails.md`](../framework/guard-rails.md).
 - **Rule 9 (BLOCK_ARC for circular charts):** Not applicable to layouts in this file (these are bar/scatter); see [`charts-circular.md`](charts-circular.md) for the rule's coverage.

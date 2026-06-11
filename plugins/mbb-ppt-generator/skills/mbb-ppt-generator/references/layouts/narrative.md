@@ -2,7 +2,7 @@
 
 > **Loaded on demand at S4 (Render).** Open this file when rendering `executive_summary`, `key_takeaway`, `four_column`, `two_column_text`, `quote`, or `numbered_list_panel`. Two of these layouts (`executive_summary` and `key_takeaway`) anchor most of the slides 2–5 of any substantive deck; treat them as the default editorial choices.
 >
-> Capacity numbers are authoritative in [`../layout-matrix.yaml`](../layout-matrix.yaml).
+> Capacity numbers are authoritative in [`../api-schemas.yaml`](../api-schemas.yaml).
 
 ---
 
@@ -77,7 +77,7 @@ eng.executive_summary(
 
 ### Cross-references
 
-- Capacity: `executive_summary` row in [`../layout-matrix.yaml`](../layout-matrix.yaml).
+- Capacity: `executive_summary` row in [`../api-schemas.yaml`](../api-schemas.yaml).
 - Why slide 3: [`../framework/planning-guide.md`](../framework/planning-guide.md) § 4.
 
 ---
@@ -227,7 +227,7 @@ eng.four_column(
 
 ### Cross-references
 
-- Capacity: `four_column` row in [`../layout-matrix.yaml`](../layout-matrix.yaml).
+- Capacity: `four_column` row in [`../api-schemas.yaml`](../api-schemas.yaml).
 
 ---
 
@@ -441,7 +441,7 @@ eng.numbered_list_panel(
 ## Cross-references
 
 - **Method index:** [`../framework/engine-api.md`](../framework/engine-api.md).
-- **Capacity matrix:** [`../layout-matrix.yaml`](../layout-matrix.yaml).
+- **Capacity matrix:** [`../api-schemas.yaml`](../api-schemas.yaml).
 - **Production rules:** [`../framework/guard-rails.md`](../framework/guard-rails.md).
 - **When to lead with `executive_summary` vs `key_takeaway`:** [`../framework/planning-guide.md`](../framework/planning-guide.md) § 4.
 - **Past defects in these layouts:** [`../../experiences/`](../../experiences/).

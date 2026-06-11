@@ -1,8 +1,8 @@
 # Planning Guide
 
-> **Loaded optionally at S3 (Content)** when the structure is non-obvious. If you can sequence the deck and pick layouts confidently from the engine API alone, you do not need this file. Reach for it when the brief is ambiguous, when the topic is unfamiliar, or when slide diversity is sliding into monotony.
+> **Loaded at S2 (Structure)** — sections 3 *Layout selection by task* and 5 *Layout diversity* are required reading there; the rest of the file is optional and worth loading when the brief is ambiguous, the topic is unfamiliar, or slide diversity is sliding into monotony.
 >
-> This is a planning toolkit, not a reference manual. Decision tools are in section 2 (storyboard test) and section 4 (layout selection by task). Section 3 has narrative templates you can clone.
+> This is a planning toolkit, not a reference manual. The decision tools are in section 1 (storyboard test), section 3 (layout selection by task), and section 5 (diversity rules). Section 2 has narrative templates you can clone.
 
 ---
 
@@ -92,13 +92,18 @@ When the storyboard has the message but the layout is unclear, pick from this ma
 | **Two options to compare** | `side_by_side`, `before_after`, `metric_comparison` | generic two-column text |
 | **Three or four parallel ideas** | `table_insight`, `four_column`, `metric_cards`, `icon_grid` | bullet list |
 | **Causal chain or process** | `process_chevron` (≤ 5 steps), `vertical_steps`, `value_chain`, `timeline` | numbered text |
-| **Time-series trend** | `grouped_bar`, `line_chart`, `stacked_area`, `multi_bar_panel` | table only |
-| **Composition / share of total** | `donut`, `stacked_bar`, `horizontal_bar` | bullet list |
-| **Ranking / outlier** | `horizontal_bar`, `pareto`, `bubble` | unordered table |
+| **Time-series trend** | `grouped_bar`, `line_chart` (+ `event_band` / `endpoint_chip`), `stacked_area`, `multi_bar_panel` | table only |
+| **Composition / share of total** | `donut`, `stacked_bar`, `mekko` (when column widths carry meaning), `horizontal_bar` | bullet list |
+| **Ranking / outlier** | `horizontal_bar`, `pareto`, `bubble`, `ranked_table` (when exact figures matter) | unordered table |
+| **Chart + the so-what beside it** | `insight_rail` (bullets mode for argument, stats mode for impact numbers) | chart slide + separate text slide |
 | **Risk or prioritization** | `matrix_2x2`, `risk_matrix`, `swot`, `harvey_ball_table` | plain text |
 | **Quote or framing claim** | `quote`, `quote_bg_image` | textbox in a slide title |
 | **Case study** | `case_study`, `case_study_image`, `content_right_image` | dense paragraph |
-| **Roadmap / phased plan** | `timeline`, `process_chevron`, `vertical_steps` | bulleted "next steps" |
+| **Narrative memo (deal announcement, situation note)** | `memo_text` (max 1 per deck) | `two_column_text` |
+| **Two sets of parallel factors (drivers/enablers, demand/supply)** | `icon_ledger` | two bullet columns |
+| **Technology / option generations** | `box_roadmap` | nested bullets |
+| **Multi-year project phasing** | `project_gantt` | `timeline` stretched past 6 milestones |
+| **Roadmap / phased plan** | `timeline`, `process_chevron`, `vertical_steps`, `project_gantt` | bulleted "next steps" |
 | **Synthesis at end of section** | `key_takeaway`, `table_insight`, `executive_summary` | topic-only title + bullets |
 | **Action / next steps** | `action_items`, `vertical_steps` | "discussion items" placeholder |
 | **Team / people** | `meet_the_team` | photo grid without context |
@@ -139,9 +144,23 @@ This is the most common output failure of consulting-style skills: well-written 
 
 When the gate fires, the fix is in section 3 *Layout selection by task* — pick the layouts that match your data shape. If your deck is genuinely text-heavy (e.g. a legal brief in slide form), state that as a constraint in the brief and use the Fast Track exemption documented in `SKILL.md` § 5.
 
+### Hard cap — layout share (vary across themes)
+
+The S3 gate also enforces the inverse: **no single layout may drive more than 25% of content slides** (`executive_summary` is capped tighter at 15%; `two_column_text` and `memo_text` at one slide each). The post-mortem deck that motivated this used `executive_summary` 9× in 30 slides — well-written, visually dead.
+
+**The theme escape hatch — consistency within a theme.** When repetition is the *point* — one slide per case study, per region, per strategic option — tag those slides with the same `"theme"` string in `content.json`:
+
+```json
+{"idx": 12, "layout": "case_study", "theme": "case-studies", ...}
+{"idx": 13, "layout": "case_study", "theme": "case-studies", ...}
+{"idx": 14, "layout": "case_study", "theme": "case-studies", ...}
+```
+
+A themed series counts as **one** occurrence toward the share cap, and the gate separately enforces that every slide in a theme uses the **same** layout — a "case-studies" theme mixing `case_study` and `four_column` fails `theme_consistency`. The principle: vary across themes, stay consistent within a theme. Thematically parallel slides that look identical read as discipline; unrelated slides that look identical read as monotony.
+
 ### Soft rule — adjacency
 
-Two adjacent content slides should not use the same layout method **unless** the analytical structure genuinely demands repetition (e.g. three sequential `case_study` slides for three case studies in a portfolio).
+Two adjacent content slides should not use the same layout method **unless** they share a theme tag (the themed-series case above).
 
 **Diversity is not novelty for its own sake.** A 10-slide deck that uses 10 different layouts to show the same kind of content reads as showy and chaotic. The right rhythm is something like:
 
@@ -215,6 +234,6 @@ Everything else is a strong default with documented exceptions.
 ## Cross-references
 
 - **Method catalog and signatures:** [`engine-api.md`](engine-api.md).
-- **Capacity limits per layout:** [`../layout-matrix.yaml`](../layout-matrix.yaml).
+- **Capacity limits per layout:** [`../api-cheatsheet.md`](../api-cheatsheet.md) (generated from `api-schemas.yaml`).
 - **Production rules:** [`guard-rails.md`](guard-rails.md).
 - **Past structural failures and fixes:** [`../../experiences/layout-pitfalls.md`](../../experiences/layout-pitfalls.md).

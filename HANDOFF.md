@@ -1,5 +1,7 @@
 # HANDOFF — next-chat brief (layouts + variability + audit)
 
+> **✅ COMPLETED — shipped as `v0.6.0` on 2026-06-11.** All three goals below landed (plus English-only hardening): see `CHANGELOG.md` § 0.6.0 and `reports/2026-06-11-v0.6.0-session-report.md` for what was done and the audit findings. The next milestone is **v0.7.0 — process discipline** (see `RESUME.md` § 4). This file is kept for historical context only.
+
 > **Purpose.** Self-contained context for a fresh session continuing this skill. Read this first, then `RESUME.md` and `CHANGELOG.md`. Created 2026-05-09 after v0.5.4 shipped.
 
 ## What this project is

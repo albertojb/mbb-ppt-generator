@@ -4,7 +4,7 @@
 > Do not hand-edit this file — edit the schema and re-run the generator.
 > Convention: `eng = ExecEngine(total_slides=N)` then call methods one per slide. `eng.save(outpath)` finalizes.
 
-_Schema version: 1. 71 active layouts, 5 retired._
+_Schema version: 1. 78 active layouts, 5 retired._
 
 ## Structure
 
@@ -28,6 +28,7 @@ _Schema version: 1. 71 active layouts, 5 retired._
 | `four_column` | `(title, items, source='')` | #28 Four-column overview — 4 numbered vertical cards. | items=list[tuple3]≤4*, source=str(80) |
 | `numbered_tiles` | `(title, tiles, source='')` | #73 Numbered tiles (escalating fill) — 3 (or 4) tiered tiles, fill escalates left-to-right. | tiles=list[tuple3]≤4*, source=str(80) |
 | `index_callout` | `(title, items, callout, source='')` | #78 Index callout — left numbered list (4-7) + right detail panel for one anchor item. | items=list[tuple2]≤7*, callout=dict*, source=str(80) |
+| `memo_text` | `(title, paragraphs, source='')` | #82 Memo text — 3-6 prose paragraphs with bold key phrases, no bullets, no exhibit. Max 1 per deck. | paragraphs=list[tuple2]≤6*, source=str(80) |
 
 ## Data
 
@@ -41,6 +42,7 @@ _Schema version: 1. 71 active layouts, 5 retired._
 | `metric_comparison` | `(title, metrics, source='')` | #62 Metric comparison — before/after row cards with delta badges. | metrics=list[dict]≤4*, source=str(80) |
 | `table_insight` | `(title, headers, rows, insights, col_widths=None, insight_title='Insight:', source='', bottom_bar=None)` | Table + right insight panel — MBB-style editorial layout. | headers=list[str]*, rows=list[list]≤6*, insights=list[str]*, col_widths=list[float], … |
 | `big_number` | `(title, number, unit='', description='', detail_items=None, source='', bottom_bar=None)` | #8 Big number — large stat with context. | number=str(10)*, unit=str(8), description=str(60), detail_items=list[str]≤4, … |
+| `ranked_table` | `(title, headers, rows, emphasis_cells=None, col_widths=None, source='')` | #83 Ranked table — rank + name + numeric columns; no fills, thin rules, right-aligned numbers, selective bold. | headers=list[str]≤6*, rows=list[list]≤12*, emphasis_cells=list[tuple2], col_widths=list[float], … |
 | `two_stat` | `(title, stats, detail_items=None, source='')` | #9 Two-stat comparison — two big numbers side by side. | stats=list[tuple2]≤2*, detail_items=list[str]≤4, source=str(80) |
 
 ## Comparison
@@ -69,6 +71,7 @@ _Schema version: 1. 71 active layouts, 5 retired._
 | `ask` | `(title, decisions, footer_text='Decisions sought', source='')` | #72 Ask / decision points — closing slide with 3-5 numbered decisions (decision/owner/deadline/status). | decisions=list[dict]≤5*, footer_text=str(60), source=str(80) |
 | `journey_map` | `(title, stages, source='')` | #75 Journey map — chevron header (4-5 stages) + stakeholder + metric cards per stage. | stages=list[dict]≤5*, source=str(80) |
 | `cycle_4stage` | `(title, stages, center_label='', source='')` | #77 Cycle (4-stage loop) — 2×2 grid with clockwise arrows. Replaces legacy retired cycle(). | stages=list[tuple2]≤4*, center_label=str(30), source=str(80) |
+| `project_gantt` | `(title, periods, rows, header_note='', source='')` | #86 Project gantt — period grid; per row a start marker, dotted early phase, solid main phase, duration label. | periods=list[str]≤16*, rows=list[dict]≤6*, header_note=str(90), source=str(80), … |
 
 ## Frameworks
 
@@ -83,6 +86,8 @@ _Schema version: 1. 71 active layouts, 5 retired._
 | `swot` | `(title, quadrants, source='')` | #65 SWOT analysis — 2×2 colored grid. | quadrants=dict*, source=str(80) |
 | `concept_three` | `(title, concepts, source='')` | #74 Concept three — three large circles with arrows + descriptions below. | concepts=list[tuple2]≤3*, source=str(80) |
 | `pyramid_staircase` | `(title, steps, source='')` | #76 Pyramid staircase — 4-5 ascending steps, each wider and taller than the last. Use for maturity progression. | steps=list[tuple2]≤5*, source=str(80) |
+| `icon_ledger` | `(title, columns, source='')` | #81 Icon ledger — two titled columns of icon + label + bold-lead description rows; thin rules between rows. | columns=list[dict]≤2*, source=str(80) |
+| `box_roadmap` | `(title, stacks, caveat='', source='')` | #85 Box roadmap — 3-5 vertical stacks of toned boxes as generations/options, numbered chips on arrows, optional caveat. | stacks=list[dict]≤5*, caveat=str(110), source=str(80) |
 
 ## Charts
 
@@ -92,12 +97,14 @@ _Schema version: 1. 71 active layouts, 5 retired._
 | `stacked_bar` | `(title, periods, series, data, summary=None, source='')` | #38 Stacked (100%) bar — ≤ 6 categories. | periods=list[str]≤6*, series=list[tuple2]≤5*, data=list[list]*, summary=tuple2, … |
 | `horizontal_bar` | `(title, items, summary=None, source='')` | #39 Horizontal bar — ≤ 8 items. | items=list[tuple3]≤8*, summary=tuple2, source=str(80) |
 | `donut` | `(title, segments, center_label='', center_sub='', legend_x=None, summary=None, source='')` | #48 Donut — ≤ 6 segments. BLOCK_ARC native shape. | segments=list[tuple3]≤6*, center_label=str(8), center_sub=str(25), legend_x=float, … |
-| `waterfall` | `(title, items, max_val=None, legend_items=None, summary=None, source='')` | #49 Waterfall bridge from start to end. | items=list[tuple3]≤8*, max_val=float, legend_items=list[tuple2], summary=tuple2, … |
-| `line_chart` | `(title, x_labels, y_labels, values, legend_label='', summary=None, source='')` | #50 Single-line trend. | x_labels=list[str]≤12*, y_labels=list[str]*, values=list[float]*, legend_label=str(25), … |
+| `waterfall` | `(title, items, max_val=None, legend_items=None, summary=None, source='', group_brackets=None)` | #49 Waterfall bridge from start to end; optional group brackets under the axis. | items=list[tuple3]≤8*, max_val=float, legend_items=list[tuple2], summary=tuple2, … |
+| `line_chart` | `(title, x_labels, y_labels, values, legend_label='', summary=None, source='', event_band=None, endpoint_chip='')` | #50 Single-line trend; optional event band + endpoint delta chip. | x_labels=list[str]≤12*, y_labels=list[str]*, values=list[float]*, legend_label=str(25), … |
 | `pareto` | `(title, items, max_val=None, summary=None, source='')` | #51 Pareto — descending bars with cumulative %. | items=list[tuple2]≤8*, max_val=float, summary=tuple2, source=str(80), … |
 | `bubble` | `(title, bubbles, x_label='', y_label='', legend_items=None, summary=None, source='')` | #53 Bubble / scatter on XY plane. | bubbles=list[dict]≤10*, x_label=str(30), y_label=str(30), legend_items=list[tuple2], … |
 | `stacked_area` | `(title, years, series_data, max_val=None, summary=None, source='', currency_symbol='$', summary_label='Trend')` | #70 Stacked area approximation via stacked columns. | years=list[str]*, series_data=list[dict]≤5*, max_val=float, currency_symbol=str(3), … |
 | `multi_bar_panel` | `(title, panels, connectors=None, footnotes=None, source='')` | #71 Multi-bar panel — 2-3 side-by-side bar charts. | panels=list[dict]≤3*, connectors=list[str], footnotes=list[str], source=str(80), … |
+| `insight_rail` | `(title, chart, rail_items, rail_mode='bullets', rail_title='Key insights', source='')` | #80 Insight rail — exhibit left (~2/3) + full-height primary rail right with bullets or oversized stats. | chart=dict*, rail_items=list[tuple2]≤4*, rail_mode=str, rail_title=str(20), … |
+| `mekko` | `(title, columns, commentary=None, total_label='', source='')` | #84 Mekko — 100% marimekko (column width = share of total) + optional right prose commentary. | columns=list[dict]≤6*, commentary=list[tuple2]≤3, total_label=str(40), source=str(80), … |
 
 ## Image / visual layouts
 
@@ -143,9 +150,24 @@ _Schema version: 1. 71 active layouts, 5 retired._
 - max_per_deck: 1
 - rationale: Two columns of unbroken prose is the most monotonous layout.
 
+**memo_text**
+- max_per_deck: 1
+- rationale: Prose memo slide; more than one per deck reads as a document, not a deck.
+
 **executive_summary**
 - max_pct_of_content_slides: 0.15
 - rationale: Most permissive layout; over-using produces visually identical decks.
+
+**layout_share_cap**
+- max_pct_of_content_slides: 0.25
+- floor_allowance: 2
+- triggers_at_n_content_slides: 6
+- theme_exemption: Slides may declare an optional "theme" string in content.json. All slides of one layout sharing a theme count as ONE occurrence toward the cap — a deliberate series (five case studies tagged "case-studies") is consistency, not monotony. Does not bypass the stricter executive_summary cap or hard per-deck caps.
+- rationale: Vary layouts across themes; no single layout may dominate a deck.
+
+**theme_consistency**
+- rule: All slides sharing a theme tag must use the same layout.
+- rationale: Thematically parallel slides must reuse the same template so they read as one series.
 
 **visual_density_floor**
 - formula: max(2, N // 4)
