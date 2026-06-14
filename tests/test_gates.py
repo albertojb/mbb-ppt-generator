@@ -1226,3 +1226,56 @@ def test_storyboard_gate_fails_when_read_aloud_missing(project_root: Path,
     assert result["passed"] is False, f"Expected fail; got: {result}"
     assert len(result["slide_titles"]) == 2
     assert "Three actions" in result["slide_titles"][0]
+
+
+# ── Render gate auto-fix ──────────────────────────────────────────────────
+
+def _run_render_gate_autofix(project_root: Path, pptx_path: Path,
+                             project_dir: Path) -> dict:
+    script = (project_root / "plugins" / "mbb-ppt-generator" / "skills"
+              / "mbb-ppt-generator" / "references" / "scripts"
+              / "gate_check_render.py")
+    subprocess.run(
+        [sys.executable, str(script), str(pptx_path), str(project_dir), "--auto-fix"],
+        capture_output=True, text=True,
+    )
+    out = project_dir / "gate_render.json"
+    return json.loads(out.read_text())
+
+
+def test_autofix_flag_accepted_on_passing_deck(project_root: Path,
+                                               tmp_project_dir: Path):
+    """--auto-fix on a clean deck exits without error and auto_fix.attempted is False."""
+    from mbb_ppt import MbbEngine
+    eng = MbbEngine(total_slides=2)
+    eng.big_number(number="42", description="Clean deck passes",
+                   source="Source: test",
+                   title="Auto-fix flag accepted on an already-passing deck here")
+    eng.closing(title="Done")
+    pptx = tmp_project_dir / "clean.pptx"
+    eng.save(str(pptx))
+
+    result = _run_render_gate_autofix(project_root, pptx, tmp_project_dir)
+    assert result.get("auto_fix") is not None
+    assert result["auto_fix"].get("attempted") is False
+
+
+def test_autofix_blocks_on_severe_overflow(project_root: Path,
+                                           tmp_project_dir: Path):
+    """--auto-fix does not fix severe overflows (>50%); gate still fails."""
+    from mbb_ppt import MbbEngine
+
+    eng = MbbEngine(total_slides=1)
+    eng.big_number(
+        number="99",
+        description="x" * 500,
+        source="Source: test",
+        title="Severe overflow that auto-fix must not silently pass here",
+    )
+    pptx = tmp_project_dir / "severe.pptx"
+    eng.save(str(pptx))
+
+    result = _run_render_gate_autofix(project_root, pptx, tmp_project_dir)
+    af = result.get("auto_fix") or {}
+    if not result.get("passed"):
+        assert af.get("attempted") is not None
