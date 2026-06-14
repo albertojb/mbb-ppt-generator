@@ -462,12 +462,11 @@ class AutoFixPipeline:
 
         if fixes_count > 0:
             prs.save(self.filepath)
-            # Re-run full_cleanup to sanitize
             try:
                 from .core import full_cleanup
                 full_cleanup(self.filepath)
-            except Exception:
-                pass
+            except Exception as exc:
+                print(f"[review] warning: full_cleanup after overflow fix failed: {exc}")
 
         return fixes_count
 
@@ -554,8 +553,8 @@ class AutoFixPipeline:
             try:
                 from .core import full_cleanup
                 full_cleanup(self.filepath)
-            except Exception:
-                pass
+            except Exception as exc:
+                print(f"[review] warning: full_cleanup after peer-font harmonization failed: {exc}")
             if verbose:
                 print(f"  Adjusted {total_adjusted} shape(s) to keep peer-group fonts consistent.")
         else:
