@@ -247,6 +247,7 @@ Every project lives under a working directory named `ppt-project-{slug}/`. Each 
 ```json
 {
   "brief": {"audience": "Board", "goal": "Strategy review", "duration_minutes": 15},
+  "read_aloud_test": false,
   "slides": [
     {"idx": 1, "layout": "executive_summary", "title": "Three actions return revenue to growth",
      "key_point": "Premium mix, channel expansion, and cost simplification compose the recommendation."},
@@ -256,13 +257,24 @@ Every project lives under a working directory named `ppt-project-{slug}/`. Each 
 }
 ```
 
-**Gate S2 (self-check):**
+**Gate S2 — self-check (before running the machine gate):**
 - Slide count ≤ `duration_minutes × 1.2`.
 - Every `layout` exists in `api-schemas.yaml`.
 - Every action title is a complete clause (length > 10, contains a verb).
 - At most one `two_column_text` and one `memo_text` slide globally.
 - **Variability:** no single layout drives more than ~25% of content slides (`executive_summary` is capped tighter at 15%). If a layout repeats *deliberately* — one slide per case study, per region, per option — tag those slides with the same `"theme"` string in `outline.json`/`content.json`: a themed series counts as one occurrence, and all slides in one theme must use the same layout. Vary across themes; stay consistent within a theme. The S3 gate enforces all of this mechanically.
 - No `cover` or `closing` slides unless the operator explicitly requested one (Rule 9).
+
+**Gate S2 — storyboard gate (machine-readable, mandatory):**
+
+Read all slide titles aloud in order. If the sequence does not work as a 90-second spoken briefing, revise the outline before continuing. Then set `"read_aloud_test": true` in `outline.json` and run:
+
+```bash
+python references/scripts/gate_check_storyboard.py \
+    ppt-project-{slug}/outline.json  ppt-project-{slug}/
+```
+
+Do not proceed to S3 until this gate exits 0.
 
 ### S3 — Content
 

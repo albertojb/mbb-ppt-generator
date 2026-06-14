@@ -1171,3 +1171,58 @@ def test_memo_text_hard_cap(project_root: Path, tmp_project_dir: Path):
     bad = [i for i in result["fail_items"]
            if i.get("check") == "global_max" and i.get("layout") == "memo_text"]
     assert bad, f"2 memo_text should fail the hard cap; got {result['fail_items']}"
+
+
+# ── Storyboard gate ───────────────────────────────────────────────────────
+
+def _run_storyboard_gate(project_root: Path, outline_path: Path,
+                         project_dir: Path) -> dict:
+    script = (project_root / "plugins" / "mbb-ppt-generator" / "skills"
+              / "mbb-ppt-generator" / "references" / "scripts"
+              / "gate_check_storyboard.py")
+    subprocess.run(
+        [sys.executable, str(script), str(outline_path), str(project_dir)],
+        capture_output=True, text=True,
+    )
+    out = project_dir / "gate_storyboard.json"
+    return json.loads(out.read_text())
+
+
+def test_storyboard_gate_passes_when_read_aloud_true(project_root: Path,
+                                                     tmp_project_dir: Path):
+    """outline.json with read_aloud_test: true passes the storyboard gate."""
+    outline = {
+        "brief": {"audience": "Board", "goal": "Strategy review", "duration_minutes": 10},
+        "read_aloud_test": True,
+        "slides": [
+            {"idx": 1, "layout": "executive_summary",
+             "title": "Three actions return revenue to growth"},
+            {"idx": 2, "layout": "table_insight",
+             "title": "Premium mix shift drives the majority of upside"},
+        ],
+    }
+    outline_path = tmp_project_dir / "outline.json"
+    outline_path.write_text(json.dumps(outline))
+    result = _run_storyboard_gate(project_root, outline_path, tmp_project_dir)
+    assert result["passed"] is True, f"Expected pass; got: {result}"
+    assert len(result["slide_titles"]) == 2
+
+
+def test_storyboard_gate_fails_when_read_aloud_missing(project_root: Path,
+                                                        tmp_project_dir: Path):
+    """outline.json without read_aloud_test fails and lists all slide titles."""
+    outline = {
+        "brief": {"audience": "Board", "goal": "Strategy review", "duration_minutes": 10},
+        "slides": [
+            {"idx": 1, "layout": "executive_summary",
+             "title": "Three actions return revenue to growth"},
+            {"idx": 2, "layout": "grouped_bar",
+             "title": "Premium mix drives the majority of revenue upside"},
+        ],
+    }
+    outline_path = tmp_project_dir / "outline.json"
+    outline_path.write_text(json.dumps(outline))
+    result = _run_storyboard_gate(project_root, outline_path, tmp_project_dir)
+    assert result["passed"] is False, f"Expected fail; got: {result}"
+    assert len(result["slide_titles"]) == 2
+    assert "Three actions" in result["slide_titles"][0]
