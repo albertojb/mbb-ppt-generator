@@ -1,6 +1,6 @@
 # ROADMAP — MBB PPT Generator
 
-> **Draft.** Derived from actual shipped state as of v0.6.0 plus remaining work. Completed epics are marked done. Specs exist only for the first unfinished epic.
+> **Draft.** Derived from actual shipped state as of v0.7.0 plus remaining work. Completed epics are marked done. Specs exist only for the first unfinished epic.
 
 ---
 
@@ -22,11 +22,13 @@ Layout-share cap per deck. Theme-consistency gate (same layout for same-theme sl
 
 ---
 
-## Epic 5 — Process discipline (v0.7.0) ← next
+## ✅ Epic 5 — Process discipline (v0.7.0)
 
-S2 storyboarding gate, render-gate auto-fix, stronger `section_divider`. See `/specs/v0.7.0-process-discipline.md` for acceptance criteria.
+S2 storyboarding gate (`gate_check_storyboard.py`), render-gate `--auto-fix` (font-shrink, max 1 round), `section_divider` redesign (full-width accent bar + numeral + centered title + italic subtitle), `add_text(italic=)` param. 48/48 tests. Version bumped in all 4 locations.
 
-## Epic 6 — Multi-surface support: GitHub CLI + ZoComputer
+---
+
+## Epic 6 — Multi-surface support: GitHub CLI + ZoComputer ← next
 
 The skill currently works in Cowork and Claude Code CLI. Validate and adapt the workflow, install path, and gate invocations so it runs without friction in GitHub CLI and ZoComputer. Identify surface-specific constraints (file write access, subprocess availability, Python presence) and document them alongside the existing Cowork/install story. Do not regress the Cowork or terminal paths.
 
