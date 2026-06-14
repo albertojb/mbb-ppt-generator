@@ -172,20 +172,45 @@ class MbbEngine:
 
         return s
 
-    def section_divider(self, section_label, title, subtitle=''):
-        """#5 Section Divider — navy left bar, large title."""
+    def section_divider(self, number=None, title='', subtitle='',
+                        section_label=None):
+        """#5 Section Divider — full-width accent bar, large numeral, centered title.
+
+        number:       Optional bold numeral (e.g. '1', '01') displayed at 72pt.
+        title:        Section title at 32pt.
+        subtitle:     Optional italic subtitle at 14pt.
+        section_label: Deprecated alias for number; accepted for back-compat.
+        """
+        if section_label is not None and number is None:
+            number = section_label
+
         s = self._ns()
-        add_rect(s, 0, 0, Inches(0.6), SH, NAVY)
-        add_text(s, Inches(1.2), Inches(2.0), Inches(10), Inches(0.8),
-                 section_label, font_size=SUB_HEADER_SIZE,
-                 font_color=MED_GRAY, font_name=FONT_HEADER)
-        add_text(s, Inches(1.2), Inches(2.8), Inches(10), Inches(1.2),
-                 title, font_size=SECTION_TITLE_SIZE, font_color=NAVY,
-                 bold=True, font_name=FONT_HEADER)
+
+        # Full-width accent bar at top
+        add_rect(s, 0, 0, SW, Inches(0.18), NAVY)
+
+        # Vertical layout: numeral (optional) → title → subtitle, centered
+        if number:
+            num_y = Inches(1.8)
+            add_text(s, 0, num_y, SW, Inches(1.4),
+                     str(number), font_size=Pt(72), font_color=NAVY,
+                     bold=True, font_name=FONT_HEADER,
+                     alignment=PP_ALIGN.CENTER)
+            title_y = Inches(3.35)
+        else:
+            title_y = Inches(2.6)
+
+        add_text(s, 0, title_y, SW, Inches(0.8),
+                 title, font_size=Pt(32), font_color=DARK_GRAY,
+                 bold=True, font_name=FONT_HEADER,
+                 alignment=PP_ALIGN.CENTER)
+
         if subtitle:
-            add_text(s, Inches(1.2), Inches(4.2), Inches(10), Inches(0.6),
-                     subtitle, font_size=BODY_SIZE, font_color=DARK_GRAY)
-        add_page_number(s, self._page, self.total)
+            sub_y = title_y + Inches(0.95)
+            add_text(s, 0, sub_y, SW, Inches(0.45),
+                     subtitle, font_size=BODY_SIZE, font_color=MED_GRAY,
+                     italic=True, alignment=PP_ALIGN.CENTER)
+
         return s
 
     def toc(self, title='Table of Contents', items=None, source=''):
