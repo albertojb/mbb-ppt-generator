@@ -6,6 +6,27 @@ This project is an Apache 2.0-licensed adaptation of [`Mck-ppt-design-skill`](ht
 
 ---
 
+## [0.7.0] — 2026-06-14 (process discipline)
+
+Three tasks from the v0.7.0 spec (`specs/v0.7.0-process-discipline.md`).
+
+### Added
+
+- **S2 storyboard gate** (`references/scripts/gate_check_storyboard.py`): machine-readable gate that blocks progression from S2 to S3 until the operator sets `read_aloud_test: true` in `outline.json`. Prints all slide titles when the flag is missing so the operator reads them aloud first. SKILL.md S2 section updated to reference the gate.
+- **Render gate `--auto-fix` mode**: `gate_check_render.py --auto-fix` classifies `user_code_errors` into minor (text overflow ≤ 50%, body overflow ≤ 0.3") and severe; runs `AutoFixPipeline` (1 round, font-shrink) on minor text overflows, re-gates, and logs every fix to stdout and `gate_render.json["auto_fix"]`. Severe errors block auto-fix entirely. Baseline behavior unchanged without the flag.
+- `add_text()` in `core.py` now accepts an `italic` keyword argument.
+
+### Changed
+
+- **`section_divider` redesigned** (task 23): new signature `(number=None, title='', subtitle='', section_label=None)`. Renders a full-width forest-green accent bar at the top, an optional 72pt bold numeral, a 32pt centered title, and a 14pt italic subtitle. No content area, no source line, no page number — visually distinct from surrounding content slides. Old `section_label` positional and keyword usage remains backward-compatible via the `section_label` alias.
+- `api-schemas.yaml` updated for `section_divider`; cheatsheet regenerated.
+
+### Fixed
+
+- **Issue #2**: Two bare `except Exception: pass` blocks in `review.py` `AutoFixPipeline` (after `full_cleanup()` in overflow-fix and peer-font-harmonization phases) replaced with logged warnings so failures are no longer silently swallowed.
+
+---
+
 ## [0.6.0] — 2026-06-11 (archetype layouts, layout-usage variability, skill audit)
 
 Three workstreams from `HANDOFF.md`: seven new layouts adapted from a 48-slide consulting-deck archetype study, mechanical layout-usage variability (the generalization of the v0.5.0 `executive_summary` cap), and a speed / token / contradicting-rules audit of the whole skill. Plus an English-only hardening pass requested alongside.

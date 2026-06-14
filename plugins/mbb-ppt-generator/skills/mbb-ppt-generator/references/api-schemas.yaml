@@ -178,14 +178,15 @@ layouts:
     pattern: 5
     family: structure
     status: active
-    signature: "(section_label, title, subtitle='')"
-    summary: "#5 Section divider — primary left bar, large title."
+    signature: "(number=None, title='', subtitle='', section_label=None)"
+    summary: "#5 Section divider — full-width accent bar, 72pt numeral, centered title and subtitle. Visually distinct from content slides."
     requires: []
     visual: false
     params:
-      section_label: {kind: scalar, type: str, required: true, max_chars: 8, notes: "Short tag like 'PART II' or '1 / 4'."}
-      title:         {kind: scalar, type: str, required: true, max_chars: 40}
-      subtitle:      {kind: scalar, type: str, max_chars: 80}
+      number:       {kind: scalar, type: str, required: false, max_chars: 4, notes: "Bold 72pt numeral, e.g. '1', '01', 'III'. Omit for a title-only divider."}
+      title:        {kind: scalar, type: str, required: false, max_chars: 40}
+      subtitle:     {kind: scalar, type: str, required: false, max_chars: 80, notes: "Rendered italic at 14pt."}
+      section_label: {kind: scalar, type: str, required: false, notes: "Deprecated alias for number — accepted for back-compat."}
 
   appendix_title:
     pattern: 7

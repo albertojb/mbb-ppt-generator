@@ -14,7 +14,7 @@ def test_structure_layouts(tmp_project_dir: Path):
         ("1", "Section one", "First topic preview"),
         ("2", "Section two", "Second topic preview"),
     ])
-    eng.section_divider(section_label="01", title="A new section",
+    eng.section_divider(number="01", title="A new section",
                         subtitle="What this section covers")
     eng.appendix_title(title="Appendix", subtitle="Supporting analysis")
     eng.closing(title="Done", message="Structure test complete")

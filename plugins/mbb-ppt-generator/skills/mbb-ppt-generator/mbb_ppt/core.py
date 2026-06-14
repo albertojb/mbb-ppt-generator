@@ -74,7 +74,7 @@ def set_ea_font(run, typeface='KaiTi'):
 
 def add_text(slide, left, top, width, height, text,
              font_size=BODY_SIZE, font_name=FONT_BODY,
-             font_color=DARK_GRAY, bold=False,
+             font_color=DARK_GRAY, bold=False, italic=False,
              alignment=PP_ALIGN.LEFT, ea_font=FONT_EA,
              anchor=MSO_ANCHOR.TOP, line_spacing=Pt(6)):
     """Add a text box. Pass str for single line, list[str] for multi-line."""
@@ -95,6 +95,7 @@ def add_text(slide, left, top, width, height, text,
         p.font.name = font_name
         p.font.color.rgb = font_color
         p.font.bold = bold
+        p.font.italic = italic if italic else None
         p.alignment = alignment
         p.space_before = line_spacing if i > 0 else Pt(0)
         p.space_after = Pt(0)
