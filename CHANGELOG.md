@@ -6,6 +6,32 @@ This project is an Apache 2.0-licensed adaptation of [`Mck-ppt-design-skill`](ht
 
 ---
 
+## [0.8.0] — 2026-06-22 (architecture — gates module + surface adapters)
+
+Ponytail cleanup pass followed by two architecture candidates approved by the operator.
+
+### Added
+
+- **`mbb_ppt/gates.py`**: importlib facade over the three gate scripts. Any caller can now do `from mbb_ppt.gates import run_content_gate` without touching `references/scripts/` or hacking `sys.path`. Exposes `run_storyboard_gate`, `run_content_gate`, `run_render_gate`, `run_render_gate_autofix`. Gate scripts in `references/scripts/` are unchanged and still work standalone.
+- **`mbb_ppt/surfaces/` package**: surface adapter layer. `mcp_server.py` is a ~200-line MCP JSON-RPC 2.0 stdio server (no extra deps) that exposes `gate_storyboard`, `gate_content`, `gate_render`, and `render` as MCP tools for GitHub Copilot and any other MCP-capable client. Run `python3 -m mbb_ppt.surfaces.mcp_server --setup` to print config snippets for Claude Code `settings.json` and VS Code/Copilot.
+
+### Changed
+
+- **`mbb_ppt/__main__.py`** simplified: removed `_skill_root()`, `_import_gate_module()`, subprocess fallback, and `_read_passed()` (~108 lines). CLI now delegates to `mbb_ppt.gates` directly.
+- **`pyproject.toml`**: `mbb_ppt.surfaces` added to the packages list and package-dir map.
+
+### Removed
+
+- **`review.py`**: dead `_LANG_REPLACEMENTS` (empty dict) and `_fix_language()` (iterated over empty dict, always returned `False`). No behaviour change.
+- **`deck_builder.py`**: `build_from_module()` static method — zero callers anywhere in the codebase.
+- **Stale root docs** archived to gitignored `archive/`: BACKLOG.md, HANDOFF.md, MBB_PPT_QA_CHECKLIST.md, STATE.md, install_cowork.sh, v0.6.0 session report, v0.7.0 spec.
+
+### Fixed
+
+- **`AutoFixPipeline.run()` default** corrected to `max_rounds=1` (was accidentally 3 from initial implementation; DECISIONS.md already specified the cap at 1).
+
+---
+
 ## [0.7.0] — 2026-06-14 (process discipline)
 
 Three tasks from the v0.7.0 spec (`specs/v0.7.0-process-discipline.md`).

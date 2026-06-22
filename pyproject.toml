@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mbb-ppt-generator"
-version = "0.7.0"
+version = "0.8.0"
 description = "Executive-grade PowerPoint generation with consulting-style discipline. Self-contained skill with a five-stage workflow and machine-readable gates. Adapted from likaku's Mck-ppt-design-skill (Apache 2.0)."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -87,12 +87,13 @@ Upstream = "https://github.com/likaku/Mck-ppt-design-skill"
 # ── setuptools configuration ────────────────────────────────────────────
 
 [tool.setuptools]
-packages = ["mbb_ppt", "mbb_ppt.storylines"]
+packages = ["mbb_ppt", "mbb_ppt.storylines", "mbb_ppt.surfaces"]
 include-package-data = true
 
 [tool.setuptools.package-dir]
 mbb_ppt = "plugins/mbb-ppt-generator/skills/mbb-ppt-generator/mbb_ppt"
 "mbb_ppt.storylines" = "plugins/mbb-ppt-generator/skills/mbb-ppt-generator/mbb_ppt/storylines"
+"mbb_ppt.surfaces" = "plugins/mbb-ppt-generator/skills/mbb-ppt-generator/mbb_ppt/surfaces"
 
 [tool.setuptools.package-data]
 "*" = ["py.typed"]

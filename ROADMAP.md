@@ -1,6 +1,6 @@
 # ROADMAP — MBB PPT Generator
 
-> **Draft.** Derived from actual shipped state as of v0.7.0 plus remaining work. Completed epics are marked done. Specs exist only for the first unfinished epic.
+> **Draft.** Derived from actual shipped state as of v0.8.0 plus remaining work. Completed epics are marked done. Specs exist only for the first unfinished epic.
 
 ---
 
@@ -28,9 +28,17 @@ S2 storyboarding gate (`gate_check_storyboard.py`), render-gate `--auto-fix` (fo
 
 ---
 
-## Epic 6 — Multi-surface support: GitHub CLI + ZoComputer ← next
+## 🔄 Epic 6 — Multi-surface support (v0.8.0 partial) ← in progress
 
-The skill currently works in Cowork and Claude Code CLI. Validate and adapt the workflow, install path, and gate invocations so it runs without friction in GitHub CLI and ZoComputer. Identify surface-specific constraints (file write access, subprocess availability, Python presence) and document them alongside the existing Cowork/install story. Do not regress the Cowork or terminal paths.
+**Foundation shipped in v0.8.0:**
+- `mbb_ppt/gates.py` — clean importable seam over the three gate scripts; surfaces call this instead of path-hacking `references/scripts/`
+- `mbb_ppt/surfaces/mcp_server.py` — MCP JSON-RPC 2.0 stdio server for GitHub Copilot; run `python3 -m mbb_ppt.surfaces.mcp_server --setup` to get config snippets
+
+**Remaining in Epic 6:**
+- End-to-end validation with a real GitHub Copilot session (test all four MCP tools: `gate_storyboard`, `gate_content`, `gate_render`, `render`)
+- ZoComputer surface: determine file-write scope; if no local FS, document the API/prompt-injection integration pattern rather than a Python adapter
+- Add an MCP setup section to SKILL.md or README so operators know how to connect GitHub Copilot
+- Do not regress the Cowork or terminal paths
 
 ## Epic 7 — Adoption & discoverability
 

@@ -1,30 +1,30 @@
 # STATUS — MBB PPT Generator
 
-> **Next run starts here.** v0.7.0 shipped 2026-06-14. All three Epic 5 tasks are done and merged. Next milestone is Epic 6 — multi-surface support (GitHub CLI + ZoComputer). Read RESUME.md and CONTEXT.md before starting.
+> **Next run starts here.** v0.8.0 shipped 2026-06-22. Epic 6 architecture foundation is done (gates module + surface adapter + MCP server). Open Epic 6 items: GitHub Copilot end-to-end validation, ZoComputer surface documentation, SKILL.md MCP section. Read RESUME.md and CONTEXT.md before starting.
 
 ---
 
 ## Current state
 
-- **Version:** `0.7.0`
-- **Latest tag:** `v0.7.0` (to be pushed — see below)
+- **Version:** `0.8.0`
+- **Latest tag:** `v0.8.0`
 - **Tests:** 48/48 passing
 - **CI:** green on main (tests + leakage scan)
 - **Working tree:** clean
 
-## What shipped in v0.7.0 (2026-06-14)
+## What shipped in v0.8.0 (2026-06-22)
 
-| PR | Task | What landed |
-|---|---|---|
-| #15 | Task 21 | S2 storyboard gate (`gate_check_storyboard.py`). Blocks S3 until `read_aloud_test: true` in `outline.json`. SKILL.md updated. |
-| #16 | Task 22 + fix #2 | Render gate `--auto-fix` mode: font-shrink on minor text overflows (≤50%), re-gates once, logs every fix. Fixed two swallowed exceptions in `review.py`. |
-| #17 | Task 23 | `section_divider` redesigned: full-width accent bar + 72pt numeral + 32pt title + 14pt italic subtitle. No content area. `add_text()` gains `italic=` param. Schema + cheatsheet updated. Version bumped to 0.7.0 in all 4 locations. |
+| Commit | What landed |
+|---|---|
+| ponytail cleanup | Dead `_LANG_REPLACEMENTS` / `_fix_language()` removed from `review.py`. `AutoFixPipeline.run()` default corrected to `max_rounds=1`. `DeckBuilder.build_from_module()` deleted (zero callers). Stale docs archived to gitignored `archive/`. |
+| arch B: gates into package | New `mbb_ppt/gates.py` — importlib facade exposing `run_storyboard_gate`, `run_content_gate`, `run_render_gate`, `run_render_gate_autofix`. `__main__.py` loses ~108 lines of path-hacking. |
+| arch A: surface adapter | New `mbb_ppt/surfaces/` package. `mcp_server.py` is a ~200-line MCP JSON-RPC 2.0 stdio server exposing all four gates + render as MCP tools. Run `--setup` to get config snippets for Claude Code and VS Code/Copilot. |
 
-## Open issues after this run
+## Open items after this run
 
-- **Minors deferred (degunk backlog):** #7–#14 — carried forward, not filed as new issues.
-- **Issue #2** closed (bundled into PR #16).
+- **Epic 6 remaining:** GitHub Copilot end-to-end validation (test `mcp_server.py` with a real Copilot session), ZoComputer surface documentation, SKILL.md section for MCP setup.
+- **Degunk backlog:** #7–#14 still deferred.
 
 ## What's next
 
-**Epic 6 — Multi-surface support (GitHub CLI + ZoComputer).** See ROADMAP.md and CONTEXT.md.
+**Complete Epic 6** — validate the MCP surface with GitHub Copilot, document ZoComputer integration approach, add MCP setup section to SKILL.md or README. See ROADMAP.md.

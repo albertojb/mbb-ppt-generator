@@ -4,6 +4,15 @@ One line per key decision: **decision — why — which GOAL line it serves.**
 
 ---
 
+## v0.8.0 (Epic 6 — Multi-surface / architecture)
+
+- **`mbb_ppt/gates.py` as importlib facade over gate scripts** — gate scripts stay standalone CLI tools (tests and docs reference them by path); `gates.py` is the clean package-level seam for any surface adapter; `__main__.py` loses 108 lines of path-hacking in exchange — serves multiplatform goal
+- **MCP protocol implemented directly (~200 lines), not via `mcp` SDK** — avoids a new runtime dep on a still-maturing SDK; JSON-RPC 2.0 over stdio is stable and well-specified; add the SDK if the protocol surface grows materially — serves "no unrequested dependencies"
+- **Surface adapter creates only the MCP server; Cowork and CLI surfaces left as existing code paths** — CONTEXT.md install-story constraint forbids touching `install.py`; Cowork and CLI already work; ZoComputer requires API/prompt injection rather than a Python module — any ZoComputer adapter belongs in documentation, not a Python class — serves "additive, not a fork"
+- **Dead `_LANG_REPLACEMENTS` / `_fix_language()` removed from `review.py`** — iterated over an empty dict; removed at source rather than leaving inert code — serves codebase health
+- **`AutoFixPipeline.run()` default corrected to `max_rounds=1`** — was accidentally set to 3 from initial implementation; DECISIONS.md already said cap at 1 round — aligns code with existing decision
+- **`DeckBuilder.build_from_module()` deleted** — zero callers anywhere in the codebase; deletion test passed — serves "fewest lines possible"
+
 ## v0.7.0 (Epic 5 — Process discipline)
 
 - **Auto-fix trims font size in-pptx, not content.json** — mapping pptx shape names back to content.json fields is architecturally fragile; in-pptx font-shrink via `AutoFixPipeline` satisfies the acceptance criterion ("without operator intervention") more reliably — serves "machine-readable gates enforce the decision objectively"
