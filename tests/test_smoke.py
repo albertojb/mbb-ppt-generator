@@ -15,7 +15,7 @@ def test_package_imports():
     )
     from mbb_ppt.qa import PptQA
 
-    assert __version__ == "0.8.0"
+    assert __version__ == "0.8.1"
     assert HEADING_FONT == "DM Sans"
     assert BODY_FONT == "Arial"
     assert ACTION_TITLE_MAX_CHARS == 120

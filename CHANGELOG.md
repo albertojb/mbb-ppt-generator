@@ -6,6 +6,19 @@ This project is an Apache 2.0-licensed adaptation of [`Mck-ppt-design-skill`](ht
 
 ---
 
+## [0.8.1] — 2026-06-22 (patch — AGENT.md, gate-storyboard CLI, generic MCP setup)
+
+### Added
+
+- **`AGENT.md`**: generic agent instructions for any AI assistant without Claude-specific tooling (GitHub CLI, browser-based agents, etc.). Claude Cowork/Code users continue to use SKILL.md; AGENT.md header directs them there.
+- **`gate-storyboard` CLI subcommand**: `python3 -m mbb_ppt gate-storyboard outline.json` — closes the completeness gap so AGENT.md's five-stage workflow has a pure-CLI path for all three gates (S2/S3/S4).
+
+### Changed
+
+- **`mcp_server.py --setup` output** is now agent-agnostic — removed VS Code / GitHub Copilot framing; prints a generic MCP stdio config shape that works with any MCP-compatible client.
+
+---
+
 ## [0.8.0] — 2026-06-22 (architecture — gates module + surface adapters)
 
 Ponytail cleanup pass followed by two architecture candidates approved by the operator.
