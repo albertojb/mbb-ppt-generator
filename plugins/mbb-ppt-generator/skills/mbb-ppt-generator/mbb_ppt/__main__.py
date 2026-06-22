@@ -27,23 +27,10 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
-import subprocess
 import sys
 from pathlib import Path
 
-
-def _skill_root() -> Path:
-    """Locate the skill root (directory containing mbb_ppt/ and references/)."""
-    here = Path(__file__).resolve().parent.parent
-    if (here / "references" / "scripts" / "gate_check_render.py").is_file():
-        return here
-    cur = Path.cwd().resolve()
-    for _ in range(8):
-        if (cur / "references" / "scripts" / "gate_check_render.py").is_file():
-            return cur
-        cur = cur.parent
-    return here
+from mbb_ppt import gates as _gates
 
 
 def _is_rgb_triple(v) -> bool:
@@ -136,92 +123,43 @@ def _render(content_path: Path, out_path: Path) -> int:
     return 0
 
 
-def _import_gate_module(script_name: str):
-    """Import a gate script as a module so we can call its run_gate() in
-    the same Python process — no subprocess cold-start cost.
-
-    Falls back to subprocess if the import fails (defensive)."""
-    root = _skill_root()
-    script = root / "references" / "scripts" / script_name
-    if not script.is_file():
-        return None, f"gate script not found at {script}"
-
-    import importlib.util
-    spec = importlib.util.spec_from_file_location(
-        f"_mbb_gate_{script_name.replace('.', '_')}", script
-    )
-    if spec is None or spec.loader is None:
-        return None, f"could not load spec for {script}"
-    mod = importlib.util.module_from_spec(spec)
-    try:
-        spec.loader.exec_module(mod)
-    except Exception as e:
-        return None, f"could not exec {script}: {e}"
-    if not hasattr(mod, "run_gate"):
-        return None, f"{script} does not expose run_gate()"
-    return mod, None
-
-
-def _run_gate(script_name: str, args: list[str]) -> int:
-    """Run a gate in-process. args = [primary_path, project_dir]."""
-    if len(args) < 2:
-        print(f"ERROR: _run_gate needs (input_path, project_dir); got {args}", file=sys.stderr)
-        return 2
-    input_path, project_dir = args[0], args[1]
+def _run_content_gate(content_path: str, project_dir: str) -> int:
     Path(project_dir).mkdir(parents=True, exist_ok=True)
-
-    mod, err = _import_gate_module(script_name)
-    if mod is None:
-        # Fallback: subprocess (preserves prior behavior if import broke).
-        root = _skill_root()
-        script = root / "references" / "scripts" / script_name
-        if not script.is_file():
-            print(f"ERROR: {err}", file=sys.stderr)
-            return 2
-        proc = subprocess.run([sys.executable, str(script), *args], capture_output=True, text=True)
-        if proc.stdout:
-            sys.stdout.write(proc.stdout)
-        if proc.stderr:
-            sys.stderr.write(proc.stderr)
-        return proc.returncode
-
-    # In-process call.
     try:
-        result = mod.run_gate(input_path, project_dir)
+        result = _gates.run_content_gate(content_path, project_dir)
     except Exception as e:
-        print(f"ERROR: {script_name} run_gate raised: {e}", file=sys.stderr)
+        print(f"ERROR: content gate raised: {e}", file=sys.stderr)
         return 2
-
-    # Write the gate's JSON output (matching the standalone-script behavior).
-    out_name = "gate_render.json" if "render" in script_name else "gate_content.json"
-    out_path = Path(project_dir) / out_name
-    with open(out_path, "w", encoding="utf-8") as f:
+    out = Path(project_dir) / "gate_content.json"
+    with open(out, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
-
-    # Concise stdout summary; matches the standalone scripts' format closely.
-    label = "gate_render" if "render" in script_name else "gate_content"
-    print(f"[{label}] checking: {input_path}")
-    if "render" in script_name:
-        print(f"[{label}] score: {result.get('overall_score', 'n/a')}/100")
-        cl = result.get("checklist", {})
-        print(f"[{label}] user_code_errors: {cl.get('user_code_errors', 0)}")
-        print(f"[{label}] engine_bug_errors (whitelisted): {cl.get('engine_bug_errors', 0)}")
-        print(f"[{label}] warnings: {cl.get('warnings', 0)}")
-    else:
-        print(f"[{label}] slides: {result.get('total_slides', '?')}")
-        print(f"[{label}] fail items: {len(result.get('fail_items', []))}")
-    print(f"[{label}] verdict: {result.get('verdict', '')}")
-    print(f"[{label}] result written to: {out_path}")
-
+    print(f"[gate_content] checking: {content_path}")
+    print(f"[gate_content] slides: {result.get('total_slides', '?')}")
+    print(f"[gate_content] fail items: {len(result.get('fail_items', []))}")
+    print(f"[gate_content] verdict: {result.get('verdict', '')}")
+    print(f"[gate_content] result written to: {out}")
     return 0 if result.get("passed") else 1
 
 
-def _read_passed(json_path: Path) -> bool:
+def _run_render_gate(pptx_path: str, project_dir: str) -> int:
+    Path(project_dir).mkdir(parents=True, exist_ok=True)
     try:
-        with open(json_path) as f:
-            return bool(json.load(f).get("passed"))
-    except Exception:
-        return False
+        result = _gates.run_render_gate(pptx_path, project_dir)
+    except Exception as e:
+        print(f"ERROR: render gate raised: {e}", file=sys.stderr)
+        return 2
+    out = Path(project_dir) / "gate_render.json"
+    with open(out, "w", encoding="utf-8") as f:
+        json.dump(result, f, ensure_ascii=False, indent=2)
+    cl = result.get("checklist", {})
+    print(f"[gate_render] checking: {pptx_path}")
+    print(f"[gate_render] score: {result.get('overall_score', 'n/a')}/100")
+    print(f"[gate_render] user_code_errors: {cl.get('user_code_errors', 0)}")
+    print(f"[gate_render] engine_bug_errors (whitelisted): {cl.get('engine_bug_errors', 0)}")
+    print(f"[gate_render] warnings: {cl.get('warnings', 0)}")
+    print(f"[gate_render] verdict: {result.get('verdict', '')}")
+    print(f"[gate_render] result written to: {out}")
+    return 0 if result.get("passed") else 1
 
 
 def cmd_render(args) -> int:
@@ -234,13 +172,10 @@ def cmd_render(args) -> int:
     project_dir = out_path.parent
 
     if not args.skip_gates:
-        rc = _run_gate("gate_check_content.py", [str(content_path), str(project_dir)])
+        rc = _run_content_gate(str(content_path), str(project_dir))
         if rc != 0:
             print("S3 content gate failed; not rendering.", file=sys.stderr)
             return rc
-        if not _read_passed(project_dir / "gate_content.json"):
-            print(f"S3 content gate did not pass. See {project_dir / 'gate_content.json'}.", file=sys.stderr)
-            return 1
 
     rc = _render(content_path, out_path)
     if rc != 0:
@@ -248,33 +183,22 @@ def cmd_render(args) -> int:
     print(f"Rendered: {out_path}")
 
     if not args.skip_gates:
-        rc = _run_gate("gate_check_render.py", [str(out_path), str(project_dir)])
+        rc = _run_render_gate(str(out_path), str(project_dir))
         if rc != 0:
             print("S4 render gate failed.", file=sys.stderr)
             return rc
-        if not _read_passed(project_dir / "gate_render.json"):
-            print(f"S4 render gate did not pass. See {project_dir / 'gate_render.json'}.", file=sys.stderr)
-            return 1
         print("Both gates passed.")
     return 0
 
 
 def cmd_gate_content(args) -> int:
     content_path = Path(args.content_json).resolve()
-    project_dir = content_path.parent
-    rc = _run_gate("gate_check_content.py", [str(content_path), str(project_dir)])
-    if rc != 0:
-        return rc
-    return 0 if _read_passed(project_dir / "gate_content.json") else 1
+    return _run_content_gate(str(content_path), str(content_path.parent))
 
 
 def cmd_gate_render(args) -> int:
     deck_path = Path(args.deck_pptx).resolve()
-    project_dir = deck_path.parent
-    rc = _run_gate("gate_check_render.py", [str(deck_path), str(project_dir)])
-    if rc != 0:
-        return rc
-    return 0 if _read_passed(project_dir / "gate_render.json") else 1
+    return _run_render_gate(str(deck_path), str(deck_path.parent))
 
 
 def cmd_version(args) -> int:
