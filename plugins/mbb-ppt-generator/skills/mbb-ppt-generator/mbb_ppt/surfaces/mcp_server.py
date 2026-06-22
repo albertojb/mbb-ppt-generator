@@ -255,25 +255,23 @@ def _print_setup() -> None:
     server_path = os.path.abspath(__file__)
     print("MBB PPT Generator — MCP server setup")
     print()
-    print("Claude Code (.claude/settings.json or ~/.claude/settings.json):")
+    print("The server speaks MCP JSON-RPC 2.0 over stdio.")
+    print("Register it with any MCP-compatible agent client.")
+    print()
+    print("Generic config (most MCP clients accept this shape):")
     print()
     print(json.dumps({
         "mcpServers": {
-            "mbb-ppt-generator": {"command": "python3", "args": [server_path]},
-        }
-    }, indent=2))
-    print()
-    print("GitHub Copilot / VS Code (.vscode/settings.json):")
-    print()
-    print(json.dumps({
-        "mcp": {
-            "servers": {
-                "mbb-ppt-generator": {"command": "python3", "args": [server_path], "type": "stdio"},
+            "mbb-ppt-generator": {
+                "command": "python3",
+                "args": [server_path],
+                "type": "stdio",
             }
         }
     }, indent=2))
     print()
-    print(f"Server path: {server_path}")
+    print("Tools exposed: gate_storyboard, gate_content, gate_render, render")
+    print(f"Server path:   {server_path}")
 
 
 # ── Entry point ───────────────────────────────────────────────────────────

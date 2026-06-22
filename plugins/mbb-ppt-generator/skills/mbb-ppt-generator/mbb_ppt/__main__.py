@@ -3,6 +3,7 @@
 
 Subcommands:
     mbb-ppt render <content.json> [--out deck.pptx] [--skip-gates]
+    mbb-ppt gate-storyboard <outline.json>
     mbb-ppt gate-content <content.json>
     mbb-ppt gate-render <deck.pptx>
     mbb-ppt version
@@ -191,6 +192,25 @@ def cmd_render(args) -> int:
     return 0
 
 
+def cmd_gate_storyboard(args) -> int:
+    outline_path = Path(args.outline_json).resolve()
+    project_dir = outline_path.parent
+    project_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        result = _gates.run_storyboard_gate(str(outline_path), str(project_dir))
+    except Exception as e:
+        print(f"ERROR: storyboard gate raised: {e}", file=sys.stderr)
+        return 2
+    out = project_dir / "gate_storyboard.json"
+    with open(out, "w", encoding="utf-8") as f:
+        json.dump(result, f, ensure_ascii=False, indent=2)
+    print(f"[gate_storyboard] checking: {outline_path}")
+    print(f"[gate_storyboard] slides: {len(result.get('slide_titles', []))}")
+    print(f"[gate_storyboard] verdict: {result.get('verdict', '')}")
+    print(f"[gate_storyboard] result written to: {out}")
+    return 0 if result.get("passed") else 1
+
+
 def cmd_gate_content(args) -> int:
     content_path = Path(args.content_json).resolve()
     return _run_content_gate(str(content_path), str(content_path.parent))
@@ -219,6 +239,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_render.add_argument("--out", help="Output .pptx path (default: <content_dir>/deck.pptx)")
     p_render.add_argument("--skip-gates", action="store_true", help="Skip S3 + S4 gates (debug only)")
     p_render.set_defaults(func=cmd_render)
+
+    p_gs = sub.add_parser("gate-storyboard", help="Run the S2 storyboard gate on outline.json.")
+    p_gs.add_argument("outline_json")
+    p_gs.set_defaults(func=cmd_gate_storyboard)
 
     p_gc = sub.add_parser("gate-content", help="Run only the S3 content gate.")
     p_gc.add_argument("content_json")
