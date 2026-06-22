@@ -148,13 +148,3 @@ class DeckBuilder:
 
         return issues
 
-    @staticmethod
-    def build_from_module(module, output_path: str, **engine_kwargs) -> str:
-        """Build a deck from a storyline module.
-
-        The module must have a STORYLINE attribute (list of slide specs).
-        """
-        storyline = getattr(module, 'STORYLINE', None)
-        if storyline is None:
-            raise ValueError(f"Module {module.__name__} has no STORYLINE attribute")
-        return DeckBuilder.build(storyline, output_path, **engine_kwargs)

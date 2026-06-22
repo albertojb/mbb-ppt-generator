@@ -20,9 +20,9 @@ Usage:
     report = reviewer.run()          # read-only audit
     report.print_summary()
 
-    # Auto-fix (mutates the file in-place, up to max_rounds)
+    # Auto-fix (mutates the file in-place, 1 round by default)
     from mbb_ppt.review import AutoFixPipeline
-    result = AutoFixPipeline("output/deck.pptx").run(max_rounds=3)
+    result = AutoFixPipeline("output/deck.pptx").run()
     print(result)
 """
 
@@ -316,11 +316,6 @@ class SlideReviewer:
 # Works directly on the .pptx shapes (post-generation fix).
 # ═══════════════════════════════════════════════════════════════
 
-# Jargon replacement map.
-# DISABLED: English domain terms (selling motion, business acumen, playbook,
-# deal review, etc.) are intentional professional vocabulary — do NOT replace.
-_LANG_REPLACEMENTS = {}
-
 # Redundancy patterns: (regex, replacement_or_empty)
 _REDUNDANCY_PATTERNS = [
     # Remove weak hedging openers at clause start
@@ -350,7 +345,7 @@ class AutoFixPipeline:
     def __init__(self, filepath: str):
         self.filepath = filepath
 
-    def run(self, max_rounds: int = 3, verbose: bool = True) -> CombinedReport:
+    def run(self, max_rounds: int = 1, verbose: bool = True) -> CombinedReport:
         """Iterate: fix → re-check → fix ... up to max_rounds.
         After overflow fixes converge, harmonize peer font groups.
         """
@@ -425,15 +420,7 @@ class AutoFixPipeline:
                     print(f"    S{err.slide_num} [{err.shape_name}] ✂️  redundancy removed → fits")
                 continue
 
-            # Priority 2: Unify language (replace English jargon)
-            fixed = self._fix_language(tf)
-            if fixed and self._check_fits(tf, box_w, box_h):
-                fixes_count += 1
-                if verbose:
-                    print(f"    S{err.slide_num} [{err.shape_name}] 🔤 language unified → fits")
-                continue
-
-            # Priority 3: Compress sentences
+            # Priority 2: Compress sentences
             fixed = self._fix_compress(tf)
             if fixed and self._check_fits(tf, box_w, box_h):
                 fixes_count += 1
@@ -589,21 +576,7 @@ class AutoFixPipeline:
                     changed = True
         return changed
 
-    # ── Priority 2: Unify language ────────────────────────────
-    def _fix_language(self, tf) -> bool:
-        changed = False
-        for para in tf.paragraphs:
-            for run in para.runs:
-                text = run.text
-                original = text
-                for en, zh in _LANG_REPLACEMENTS.items():
-                    text = re.sub(re.escape(en), zh, text, flags=re.IGNORECASE)
-                if text != original:
-                    run.text = text
-                    changed = True
-        return changed
-
-    # ── Priority 3: Compress sentences ────────────────────────
+    # ── Priority 2: Compress sentences ────────────────────────
     def _fix_compress(self, tf) -> bool:
         changed = False
         for para in tf.paragraphs:
