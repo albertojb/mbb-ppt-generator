@@ -28,16 +28,18 @@ S2 storyboarding gate (`gate_check_storyboard.py`), render-gate `--auto-fix` (fo
 
 ---
 
-## 🔄 Epic 6 — Multi-surface support (v0.8.0 partial) ← in progress
+## 🔄 Epic 6 — Multi-surface support (v0.8.x partial) ← in progress
 
-**Foundation shipped in v0.8.0:**
-- `mbb_ppt/gates.py` — clean importable seam over the three gate scripts; surfaces call this instead of path-hacking `references/scripts/`
-- `mbb_ppt/surfaces/mcp_server.py` — MCP JSON-RPC 2.0 stdio server for GitHub Copilot; run `python3 -m mbb_ppt.surfaces.mcp_server --setup` to get config snippets
+**Shipped in v0.8.0–v0.8.1:**
+- `mbb_ppt/gates.py` — clean importable seam over the three gate scripts
+- `mbb_ppt/surfaces/mcp_server.py` — MCP JSON-RPC 2.0 stdio server; `--setup` prints generic config for any MCP-compatible client
+- `AGENT.md` — generic agent instructions for any AI assistant (GitHub CLI, ZoComputer, browser-based agents); pure-CLI workflow using all three gate subcommands
+- `gate-storyboard` CLI subcommand — closes the completeness gap for non-Claude agents
 
 **Remaining in Epic 6:**
-- End-to-end validation with a real GitHub Copilot session (test all four MCP tools: `gate_storyboard`, `gate_content`, `gate_render`, `render`)
-- ZoComputer surface: determine file-write scope; if no local FS, document the API/prompt-injection integration pattern rather than a Python adapter
-- Add an MCP setup section to SKILL.md or README so operators know how to connect GitHub Copilot
+- End-to-end validation with a real MCP client (test all four tools: `gate_storyboard`, `gate_content`, `gate_render`, `render`)
+- ZoComputer surface: if no local FS, document the API/prompt-injection integration pattern rather than a Python adapter
+- Add an MCP setup section to SKILL.md or README so Claude Code/Cowork operators know the MCP server exists
 - Do not regress the Cowork or terminal paths
 
 ## Epic 7 — Adoption & discoverability

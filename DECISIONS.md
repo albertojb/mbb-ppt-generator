@@ -4,6 +4,12 @@ One line per key decision: **decision — why — which GOAL line it serves.**
 
 ---
 
+## v0.8.1 (Epic 6 — Multi-agent reach)
+
+- **`AGENT.md` as a separate file rather than modifying `SKILL.md`** — ~70% of SKILL.md is reusable workflow logic; ~30% is Claude-specific (TodoWrite, Read/Write tools, path bootstrap); splitting keeps the Claude Cowork/Code path untouched and avoids confusing non-Claude agents with tool references they can't call — serves "works for any agent without breaking Cowork"
+- **`gate-storyboard` added as CLI subcommand rather than docs-only instruction** — AGENT.md's five-stage workflow needed a pure-CLI path for all three gates; S3 and S4 had subcommands, S2 did not; consistency closes the gap — serves "pure-CLI workflow for non-Claude agents"
+- **MCP `--setup` output is agent-agnostic (removed VS Code/Copilot framing)** — the server is a generic MCP stdio server; naming a specific client in the setup output is misleading — serves "any MCP-compatible client"
+
 ## v0.8.0 (Epic 6 — Multi-surface / architecture)
 
 - **`mbb_ppt/gates.py` as importlib facade over gate scripts** — gate scripts stay standalone CLI tools (tests and docs reference them by path); `gates.py` is the clean package-level seam for any surface adapter; `__main__.py` loses 108 lines of path-hacking in exchange — serves multiplatform goal
